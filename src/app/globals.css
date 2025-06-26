@@ -104,24 +104,21 @@ body {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  body {
+    background-color: white;
   }
-  main {
-    overflow-y: visible !important;
-  }
-  .printable-content, .printable-content * {
-    visibility: visible;
-  }
-  .printable-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    border: none !important;
-    box-shadow: none !important;
-  }
+  
   .no-print {
     display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .printable-content {
+    box-shadow: none !important;
+    border: none !important;
   }
 }
