@@ -22,8 +22,7 @@ const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
-  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
-  const [tomorrow, setTomorrow] = React.useState<Date | null>(null);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
     try {
@@ -41,17 +40,16 @@ export default function Home() {
       console.error("Failed to load appointments, using initial data.", error);
       setAppointments(getInitialAppointments(new Date()));
     }
-    const today = new Date();
-    setTomorrow(addDays(today, 1));
-    setSelectedDate(today);
-    setInitialLoadComplete(true);
+    
+    setSelectedDate(new Date());
+    setIsClient(true);
   }, []);
 
   React.useEffect(() => {
-    if (initialLoadComplete) {
+    if (isClient) {
       localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
     }
-  }, [appointments, initialLoadComplete]);
+  }, [appointments, isClient]);
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAppointment, setEditingAppointment] = React.useState<Appointment | undefined>(undefined);
@@ -69,11 +67,13 @@ export default function Home() {
   }, [appointments, selectedDate]);
   
   const tomorrowAppointments = React.useMemo(() => {
-    if (!tomorrow) return [];
+    if (!isClient) return [];
+    const tomorrow = addDays(new Date(), 1);
     return appointments.filter(apt => isSameDay(apt.dateTime, tomorrow));
-  }, [appointments, tomorrow]);
+  }, [appointments, isClient]);
 
   const upcomingAppointments = React.useMemo(() => {
+    if (!isClient) return [];
     const today = startOfDay(new Date());
     const sevenDaysFromNow = addDays(today, 8);
     
@@ -83,7 +83,7 @@ export default function Home() {
         return isAfter(aptDate, today) && isBefore(aptDate, sevenDaysFromNow);
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
-  }, [appointments]);
+  }, [appointments, isClient]);
 
   const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent'>) => {
     const newAppointment: Appointment = {
@@ -126,7 +126,7 @@ export default function Home() {
     ));
   };
   
-  if (!initialLoadComplete) {
+  if (!isClient) {
     return <div className="flex h-screen items-center justify-center">Cargando...</div>;
   }
 

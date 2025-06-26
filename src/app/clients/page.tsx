@@ -16,7 +16,7 @@ const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 
 export default function ClientsPage() {
     const [clients, setClients] = React.useState<Client[]>([]);
-    const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+    const [isClient, setIsClient] = React.useState(false);
 
     React.useEffect(() => {
         try {
@@ -27,14 +27,14 @@ export default function ClientsPage() {
         } catch (error) {
             console.error("Failed to load clients.", error);
         }
-        setInitialLoadComplete(true);
+        setIsClient(true);
     }, []);
 
     React.useEffect(() => {
-        if (initialLoadComplete) {
+        if (isClient) {
             localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
         }
-    }, [clients, initialLoadComplete]);
+    }, [clients, isClient]);
 
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [editingClient, setEditingClient] = React.useState<Client | undefined>(undefined);
@@ -71,7 +71,7 @@ export default function ClientsPage() {
         setIsDeleteConfirmOpen(true);
     };
 
-    if (!initialLoadComplete) {
+    if (!isClient) {
         return <div className="flex h-screen items-center justify-center">Cargando...</div>;
     }
 
