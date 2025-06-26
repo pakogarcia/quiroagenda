@@ -21,6 +21,7 @@ import { NoShowDialog } from '@/components/no-show-dialog';
 import { Badge } from '@/components/ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { SplashScreen } from '@/components/layout/splash-screen';
+import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
@@ -65,6 +66,7 @@ export default function Home() {
   const [isReminderDialogOpen, setIsReminderDialogOpen] = React.useState(false);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
   const [noShowAppointment, setNoShowAppointment] = React.useState<Appointment | null>(null);
+  const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
 
 
   const dailyAppointments = React.useMemo(() => {
@@ -139,14 +141,28 @@ export default function Home() {
     };
     setAppointments([...appointments, newAppointment]);
     setIsFormOpen(false);
+    setConfirmationAppointment(newAppointment);
   };
 
   const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
+    let confirmedAppointment: Appointment | undefined;
     setAppointments(
-      appointments.map((apt) => (apt.id === id ? { ...apt, ...data } : apt))
+      appointments.map((apt) => {
+        if (apt.id === id) {
+            confirmedAppointment = { 
+                ...apt, 
+                ...data 
+            };
+            return confirmedAppointment;
+        }
+        return apt;
+      })
     );
     setIsFormOpen(false);
     setEditingAppointment(undefined);
+    if(confirmedAppointment) {
+        setConfirmationAppointment(confirmedAppointment);
+    }
   };
 
   const handleDeleteAppointment = () => {
@@ -439,6 +455,11 @@ export default function Home() {
         appointment={noShowAppointment}
         onOpenChange={() => setNoShowAppointment(null)}
         onConfirm={handleMarkAsNoShow}
+      />
+
+      <NewAppointmentConfirmationDialog
+        appointment={confirmationAppointment}
+        onOpenChange={() => setConfirmationAppointment(null)}
       />
     </div>
   );
