@@ -36,16 +36,9 @@ const generateOfferWhatsappPrompt = ai.definePrompt({
   output: {schema: GenerateOfferWhatsappOutputSchema},
   prompt: `Eres un experto en marketing para un gabinete de masajes y estética. Tu tono es amigable, profesional y persuasivo.
 
-  Crea un mensaje de WhatsApp personalizado para informar a un cliente sobre una oferta especial.
+  Crea un mensaje de WhatsApp personalizado para informar a un cliente sobre una oferta especial, utilizando la siguiente plantilla y rellenando los datos proporcionados. No añadas ningún saludo o texto adicional.
 
-  Aquí están los detalles:
-  - Nombre del cliente: {{clientName}}
-  - Mensaje de la oferta: {{{offerMessage}}}
-  - Validez de la oferta: {{dateRange}}
-
-  El mensaje debe empezar con un saludo personalizado, presentar la oferta de forma atractiva, mencionar claramente el período de validez y terminar con una llamada a la acción clara para reservar una cita. Incluye algún emoji relevante para hacerlo más cercano.
-
-  Ejemplo de estructura del mensaje a generar:
+  Plantilla:
   "¡Hola {{clientName}}! 🥳 Queremos cuidarte y por eso te traemos una oferta especial. {{{offerMessage}}}. Esta promoción es válida {{dateRange}}. ¡No te la pierdas y reserva tu cita! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
   `,
 });
