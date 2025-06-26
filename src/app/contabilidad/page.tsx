@@ -13,6 +13,7 @@ import { CalendarIcon, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SplashScreen } from '@/components/layout/splash-screen';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
@@ -75,7 +76,7 @@ export default function ContabilidadPage() {
     };
 
     if (!isClient) {
-        return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+        return <SplashScreen />;
     }
 
     return (

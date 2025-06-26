@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ClientForm } from '@/components/client-form';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SplashScreen } from '@/components/layout/splash-screen';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 
@@ -85,7 +86,7 @@ export default function ClientsPage() {
     };
 
     if (!isClient) {
-        return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+        return <SplashScreen />;
     }
 
     return (

@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday } from 'date-fns';
+import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, UserX } from 'lucide-react';
@@ -20,12 +20,13 @@ import { OfferDialog } from '@/components/offer-dialog';
 import { NoShowDialog } from '@/components/no-show-dialog';
 import { Badge } from '@/components/ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { SplashScreen } from '@/components/layout/splash-screen';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -43,6 +44,7 @@ export default function Home() {
       console.error("Failed to load appointments, using initial data.", error);
       setAppointments(getInitialAppointments(new Date()));
     }
+    setSelectedDate(new Date());
     setIsClient(true);
   }, []);
 
@@ -79,13 +81,15 @@ export default function Home() {
   const upcomingAppointments = React.useMemo(() => {
     if (!isClient) return [];
     const today = startOfToday();
+    const nextWeek = addDays(today, 7);
     
     return appointments
       .filter(apt => {
-        const dayDiff = differenceInCalendarDays(apt.dateTime, today);
-        return dayDiff >= 1 && dayDiff <= 7;
+        const aptDay = startOfDay(apt.dateTime);
+        return isSameDay(aptDay, today) || (isBefore(aptDay, nextWeek) && !isBefore(aptDay, today));
       })
-      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
+      .slice(0, 7); // To ensure we only show a limited number
   }, [appointments, isClient]);
 
   const appointmentsByDay = React.useMemo(() => {
@@ -174,7 +178,7 @@ export default function Home() {
   };
   
   if (!isClient) {
-    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+    return <SplashScreen />;
   }
 
   return (
