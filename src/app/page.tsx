@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, startOfDay, isAfter, isBefore } from 'date-fns';
+import { addDays, format, isSameDay, differenceInCalendarDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus } from 'lucide-react';
@@ -70,13 +70,12 @@ export default function Home() {
 
   const upcomingAppointments = React.useMemo(() => {
     if (!isClient) return [];
-    const today = startOfDay(new Date());
-    const sevenDaysFromNow = addDays(today, 8);
+    const today = new Date();
     
     return appointments
       .filter(apt => {
-        const aptDate = startOfDay(apt.dateTime);
-        return isAfter(aptDate, today) && isBefore(aptDate, sevenDaysFromNow);
+        const dayDiff = differenceInCalendarDays(apt.dateTime, today);
+        return dayDiff > 0 && dayDiff <= 7;
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   }, [appointments, isClient]);
