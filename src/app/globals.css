@@ -87,17 +87,17 @@ body {
   }
 }
 
-.one-appointment .rdp-button {
+.rdp-button.one-appointment {
   background-color: #22c55e !important;
   color: white !important;
   border-radius: var(--radius) !important;
 }
-.two-appointments .rdp-button {
+.rdp-button.two-appointments {
   background-color: #f59e0b !important;
   color: white !important;
   border-radius: var(--radius) !important;
 }
-.three-or-more-appointments .rdp-button {
+.rdp-button.three-or-more-appointments {
   background-color: #ef4444 !important;
   color: white !important;
   border-radius: var(--radius) !important;
