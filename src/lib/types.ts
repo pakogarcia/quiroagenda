@@ -5,6 +5,7 @@ export type Appointment = {
   dateTime: Date;
   notes: string;
   reminderSent: boolean;
+  status: 'scheduled' | 'no-show';
 };
 
 export type Client = {

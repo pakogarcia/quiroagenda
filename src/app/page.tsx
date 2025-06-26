@@ -5,7 +5,7 @@ import * as React from 'react';
 import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, UserX } from 'lucide-react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { AppHeader } from '@/components/layout/header';
 import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
 import { OfferDialog } from '@/components/offer-dialog';
+import { NoShowDialog } from '@/components/no-show-dialog';
+import { Badge } from '@/components/ui/badge';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
@@ -32,6 +35,7 @@ export default function Home() {
         ? JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'id'> & { dateTime: string }) => ({
             ...apt,
             dateTime: new Date(apt.dateTime),
+            status: apt.status || 'scheduled',
           }))
         : getInitialAppointments(new Date());
       setAppointments(initialAppointments);
@@ -56,6 +60,8 @@ export default function Home() {
 
   const [isReminderDialogOpen, setIsReminderDialogOpen] = React.useState(false);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
+  const [noShowAppointment, setNoShowAppointment] = React.useState<Appointment | null>(null);
+
 
   const dailyAppointments = React.useMemo(() => {
     if (!selectedDate) return [];
@@ -118,17 +124,18 @@ export default function Home() {
     threeOrMoreAppointments: 'three-or-more-appointments',
   };
 
-  const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent'>) => {
+  const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
     const newAppointment: Appointment = {
       ...data,
       id: crypto.randomUUID(),
       reminderSent: false,
+      status: 'scheduled',
     };
     setAppointments([...appointments, newAppointment]);
     setIsFormOpen(false);
   };
 
-  const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent'>) => {
+  const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
     setAppointments(
       appointments.map((apt) => (apt.id === id ? { ...apt, ...data } : apt))
     );
@@ -157,6 +164,13 @@ export default function Home() {
     setAppointments(prev => prev.map(apt => 
       appointmentIds.includes(apt.id) ? { ...apt, reminderSent: true } : apt
     ));
+  };
+  
+  const handleMarkAsNoShow = (appointmentId: string) => {
+    setAppointments(prev => prev.map(apt => 
+      apt.id === appointmentId ? { ...apt, status: 'no-show' } : apt
+    ));
+    setNoShowAppointment(null);
   };
   
   if (!isClient) {
@@ -298,22 +312,59 @@ export default function Home() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="origin-top"
                   >
-                    <Card className="shadow-md hover:shadow-xl transition-shadow duration-300 group">
+                    <Card className={`shadow-md hover:shadow-xl transition-shadow duration-300 group ${apt.status === 'no-show' ? 'bg-muted/50' : ''}`}>
                       <CardHeader className="flex flex-row items-center justify-between">
                         <div className="flex flex-col">
-                           <CardTitle className="text-xl text-accent">{apt.clientName}</CardTitle>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-xl text-accent">{apt.clientName}</CardTitle>
+                                {apt.status === 'no-show' && (
+                                    <Badge variant="destructive">No Presentado</Badge>
+                                )}
+                            </div>
                            <CardDescription className="flex items-center gap-2 pt-1">
                                <Clock className="w-4 h-4"/>
                                {format(apt.dateTime, 'p', { locale: es })}
                            </CardDescription>
                         </div>
-                         <div className="flex items-center gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                            <Button variant="ghost" size="icon" onClick={() => openEditForm(apt)}>
-                                <Edit className="w-5 h-5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(apt.id)}>
-                                <Trash2 className="w-5 h-5 text-destructive" />
-                            </Button>
+                         <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                            {apt.status === 'scheduled' && differenceInCalendarDays(new Date(), apt.dateTime) >= 0 && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" onClick={() => setNoShowAppointment(apt)}>
+                                                <UserX className="w-5 h-5" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Marcar como no presentado</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={() => openEditForm(apt)} disabled={apt.status === 'no-show'}>
+                                            <Edit className="w-5 h-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Editar cita</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(apt.id)}>
+                                            <Trash2 className="w-5 h-5 text-destructive" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Eliminar cita</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                          </div>
                       </CardHeader>
                       <CardContent>
@@ -376,6 +427,12 @@ export default function Home() {
       <OfferDialog
         isOpen={isOfferDialogOpen}
         onOpenChange={setIsOfferDialogOpen}
+      />
+
+      <NoShowDialog 
+        appointment={noShowAppointment}
+        onOpenChange={() => setNoShowAppointment(null)}
+        onConfirm={handleMarkAsNoShow}
       />
     </div>
   );

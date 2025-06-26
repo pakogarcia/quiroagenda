@@ -10,6 +10,7 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       dateTime: set(baseDate, { hours: 10, minutes: 0, seconds: 0, milliseconds: 0 }),
       notes: 'Foco en la espalda baja y hombros. El cliente reportó algo de tensión.',
       reminderSent: true,
+      status: 'scheduled',
     },
     {
       id: '2',
@@ -18,6 +19,7 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       dateTime: set(baseDate, { hours: 12, minutes: 30, seconds: 0, milliseconds: 0 }),
       notes: 'Masaje de relajación general. Sin problemas específicos.',
       reminderSent: false,
+      status: 'scheduled',
     },
     {
       id: '3',
@@ -26,6 +28,7 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       dateTime: set(baseDate, { hours: 16, minutes: 0, seconds: 0, milliseconds: 0 }),
       notes: 'Masaje de tejido profundo para piernas, post-maratón.',
       reminderSent: false,
+      status: 'scheduled',
     },
     {
       id: '4',
@@ -34,6 +37,7 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       dateTime: set(subDays(baseDate, 1), { hours: 11, minutes: 0, seconds: 0, milliseconds: 0 }),
       notes: 'Cliente regular, sesión estándar.',
       reminderSent: true,
+      status: 'scheduled',
     },
       {
       id: '5',
@@ -42,6 +46,7 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       dateTime: set(addDays(baseDate, 1), { hours: 10, minutes: 0, seconds: 0, milliseconds: 0 }),
       notes: 'Cliente nuevo. Se necesita consulta.',
       reminderSent: false,
+      status: 'scheduled',
     },
     {
       id: '6',
@@ -50,6 +55,7 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       dateTime: set(addDays(baseDate, 1), { hours: 14, minutes: 0, seconds: 0, milliseconds: 0 }),
       notes: 'Seguimiento por dolor de cuello.',
       reminderSent: false,
+      status: 'scheduled',
     },
   ];
 };

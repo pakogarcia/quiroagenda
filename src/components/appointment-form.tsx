@@ -31,7 +31,7 @@ const appointmentSchema = z.object({
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
 type AppointmentFormProps = {
-  onSubmit: (data: Omit<Appointment, 'id' | 'reminderSent'>) => void;
+  onSubmit: (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => void;
   appointment?: Appointment;
   selectedDate?: Date;
 };

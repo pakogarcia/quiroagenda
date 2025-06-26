@@ -28,6 +28,7 @@ export default function ContabilidadPage() {
                 const parsedAppointments = JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'id'> & { dateTime: string }) => ({
                     ...apt,
                     dateTime: new Date(apt.dateTime),
+                    status: apt.status || 'scheduled',
                 }));
                 setAllAppointments(parsedAppointments);
             }
@@ -48,8 +49,8 @@ export default function ContabilidadPage() {
         return allAppointments
             .filter(apt => {
                 const aptDate = new Date(apt.dateTime);
-                // Only include appointments that have already passed
-                return isWithinInterval(aptDate, { start, end }) && aptDate <= new Date();
+                // Only include appointments that have already passed and were not "no-shows"
+                return isWithinInterval(aptDate, { start, end }) && aptDate <= new Date() && apt.status !== 'no-show';
             })
             .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
     }, [allAppointments, dateRange]);
