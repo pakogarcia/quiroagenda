@@ -15,7 +15,7 @@ type NoShowDialogProps = {
 export function NoShowDialog({ appointment, onOpenChange, onConfirm }: NoShowDialogProps) {
   if (!appointment) return null;
 
-  const message = `Hola ${appointment.clientName},\nNotamos que no pudiste asistir a la cita programada para hoy. Entiendo que pueden surgir imprevistos, aunque agradezco siempre que sea posible, se avise con antelación en esos casos. Si lo deseas puedes reprogramar una nueva fecha.\nSaludos cordiales`;
+  const message = `Hola ${appointment.clientName.split(' ')[0]},\nNotamos que no pudiste asistir a la cita programada para hoy. Entiendo que pueden surgir imprevistos, aunque agradezco siempre que sea posible, se avise con antelación en esos casos. Si lo deseas puedes reprogramar una nueva fecha.\nSaludos cordiales`;
   
   const whatsappLink = `https://wa.me/${appointment.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 
