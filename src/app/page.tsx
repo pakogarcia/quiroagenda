@@ -16,17 +16,42 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { AppHeader } from '@/components/layout/header';
 import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
 
+const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
+
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
-  const [isClient, setIsClient] = React.useState(false);
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+  const [tomorrow, setTomorrow] = React.useState<Date | null>(null);
 
+  // Load data from localStorage on initial client render
   React.useEffect(() => {
-    const now = new Date();
-    setAppointments(getInitialAppointments(now));
-    setSelectedDate(now);
-    setIsClient(true);
+    try {
+      const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
+      if (storedAppointments) {
+        const parsedAppointments = JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'dateTime'> & { dateTime: string }) => ({
+          ...apt,
+          dateTime: new Date(apt.dateTime),
+        }));
+        setAppointments(parsedAppointments);
+      } else {
+        setAppointments(getInitialAppointments(new Date()));
+      }
+    } catch (error) {
+      console.error("Failed to load appointments, using initial data.", error);
+      setAppointments(getInitialAppointments(new Date()));
+    }
+    setTomorrow(addDays(new Date(), 1));
+    setSelectedDate(new Date());
+    setInitialLoadComplete(true);
   }, []);
+
+  // Save data to localStorage whenever it changes
+  React.useEffect(() => {
+    if (initialLoadComplete) {
+      localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
+    }
+  }, [appointments, initialLoadComplete]);
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAppointment, setEditingAppointment] = React.useState<Appointment | undefined>(undefined);
@@ -44,10 +69,9 @@ export default function Home() {
   }, [appointments, selectedDate]);
   
   const tomorrowAppointments = React.useMemo(() => {
-    // This now safely runs only on the client
-    const tomorrow = addDays(new Date(), 1);
+    if (!tomorrow) return [];
     return appointments.filter(apt => isSameDay(apt.dateTime, tomorrow));
-  }, [appointments]);
+  }, [appointments, tomorrow]);
 
   const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent'>) => {
     const newAppointment: Appointment = {
@@ -90,7 +114,7 @@ export default function Home() {
     ));
   };
   
-  if (!isClient) {
+  if (!initialLoadComplete) {
     return <div className="flex h-screen items-center justify-center">Cargando...</div>;
   }
 
