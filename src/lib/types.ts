@@ -6,3 +6,9 @@ export type Appointment = {
   notes: string;
   reminderSent: boolean;
 };
+
+export type Client = {
+  id: string;
+  name: string;
+  phone: string;
+};

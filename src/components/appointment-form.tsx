@@ -9,12 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Appointment } from '@/lib/types';
+import type { Appointment, Client } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Label } from './ui/label';
+
+const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 
 const appointmentSchema = z.object({
   clientName: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
@@ -33,6 +37,8 @@ type AppointmentFormProps = {
 };
 
 export function AppointmentForm({ onSubmit, appointment, selectedDate }: AppointmentFormProps) {
+  const [clients, setClients] = React.useState<Client[]>([]);
+  
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -43,6 +49,25 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
       notes: appointment?.notes || '',
     },
   });
+
+  React.useEffect(() => {
+    try {
+        const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
+        if (storedClients) {
+            setClients(JSON.parse(storedClients));
+        }
+    } catch (error) {
+        console.error("Failed to load clients.", error);
+    }
+  }, []);
+
+  const handleClientChange = (clientId: string) => {
+      const selectedClient = clients.find(c => c.id === clientId);
+      if (selectedClient) {
+          form.setValue('clientName', selectedClient.name, { shouldValidate: true });
+          form.setValue('clientPhone', selectedClient.phone, { shouldValidate: true });
+      }
+  };
 
   const handleSubmit = (values: AppointmentFormValues) => {
     const [hours, minutes] = values.time.split(':').map(Number);
@@ -59,6 +84,25 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        
+        {clients.length > 0 && (
+            <div className="space-y-2">
+              <Label>Seleccionar Cliente Existente</Label>
+              <Select onValueChange={handleClientChange}>
+                  <SelectTrigger>
+                      <SelectValue placeholder="Elegir de la lista para autocompletar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {clients.map(client => (
+                          <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                          </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
+        )}
+
         <FormField
           control={form.control}
           name="clientName"

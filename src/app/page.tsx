@@ -4,7 +4,7 @@ import * as React from 'react';
 import { addDays, format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus } from 'lucide-react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -41,8 +41,9 @@ export default function Home() {
       console.error("Failed to load appointments, using initial data.", error);
       setAppointments(getInitialAppointments(new Date()));
     }
-    setTomorrow(addDays(new Date(), 1));
-    setSelectedDate(new Date());
+    const today = new Date();
+    setTomorrow(addDays(today, 1));
+    setSelectedDate(today);
     setInitialLoadComplete(true);
   }, []);
 
@@ -120,13 +121,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground font-body">
-      <AppHeader
-        onAddAppointment={() => {
-          setEditingAppointment(undefined);
-          setIsFormOpen(true);
-        }}
-        onSendReminders={() => setIsReminderDialogOpen(true)}
-      />
+      <AppHeader />
 
       <main className="flex-1 grid md:grid-cols-[auto_1fr] gap-8 p-4 md:p-8 overflow-hidden">
         <aside className="hidden md:flex flex-col gap-8 items-center">
@@ -145,38 +140,50 @@ export default function Home() {
         </aside>
 
         <section className="flex flex-col gap-4 overflow-y-auto pr-2">
-          <div className="flex items-center justify-between md:hidden">
-            <h2 className="text-2xl font-bold font-headline text-primary">
-              {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
-            </h2>
-             <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="outline" size="icon"><CalendarIcon className="h-4 w-4" /></Button>
-                </DialogTrigger>
-                <DialogContent className="w-auto">
-                   <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => {
-                            if (!date) return;
-                            const newDate = new Date(date);
-                            const oldDate = selectedDate ? new Date(selectedDate) : new Date();
-                            newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds(), oldDate.getMilliseconds());
-                            setSelectedDate(newDate);
-                            const dialogTrigger = document.querySelector('[aria-controls="radix-1"]');
-                            if (dialogTrigger instanceof HTMLElement) {
-                                dialogTrigger.click();
-                            }
-                        }}
-                        initialFocus
-                        locale={es}
-                    />
-                </DialogContent>
-            </Dialog>
-          </div>
-          <h2 className="hidden md:block text-3xl font-bold font-headline text-primary">
-            {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
-          </h2>
+            <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                     <h2 className="text-2xl md:text-3xl font-bold font-headline text-primary">
+                        {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
+                    </h2>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-auto">
+                           <Calendar
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={(date) => {
+                                    if (!date) return;
+                                    const newDate = new Date(date);
+                                    const oldDate = selectedDate ? new Date(selectedDate) : new Date();
+                                    newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds(), oldDate.getMilliseconds());
+                                    setSelectedDate(newDate);
+                                    const dialogTrigger = document.querySelector('[aria-controls="radix-1"]');
+                                    if (dialogTrigger instanceof HTMLElement) {
+                                        dialogTrigger.click();
+                                    }
+                                }}
+                                initialFocus
+                                locale={es}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setIsReminderDialogOpen(true)}>
+                        <Send className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">Enviar Recordatorios</span>
+                    </Button>
+                    <Button onClick={() => {
+                        setEditingAppointment(undefined);
+                        setIsFormOpen(true);
+                    }}>
+                        <Plus className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">Añadir Cita</span>
+                    </Button>
+                </div>
+            </div>
           
           {dailyAppointments.length > 0 ? (
             <motion.div layout className="space-y-4">
