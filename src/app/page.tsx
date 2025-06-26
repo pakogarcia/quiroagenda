@@ -21,14 +21,15 @@ const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
+    setSelectedDate(new Date());
     try {
       const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
       const initialAppointments = storedAppointments 
-        ? JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'dateTime'> & { dateTime: string }) => ({
+        ? JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'id'> & { dateTime: string }) => ({
             ...apt,
             dateTime: new Date(apt.dateTime),
           }))
