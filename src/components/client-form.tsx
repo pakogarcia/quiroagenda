@@ -11,6 +11,7 @@ import type { Client } from '@/lib/types';
 
 const clientSchema = z.object({
   name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
+  lastName: z.string().min(2, { message: 'El apellido debe tener al menos 2 caracteres.' }),
   phone: z.string().min(9, { message: 'Por favor, introduce un número de teléfono válido.' }),
 });
 
@@ -26,6 +27,7 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: client?.name || '',
+      lastName: client?.lastName || '',
       phone: client?.phone || '+34 ',
     },
   });
@@ -33,6 +35,7 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
   const handleSubmit = (values: ClientFormValues) => {
     onSubmit({
       name: values.name,
+      lastName: values.lastName,
       phone: values.phone,
     });
   };
@@ -47,7 +50,20 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
             <FormItem>
               <FormLabel>Nombre del Cliente</FormLabel>
               <FormControl>
-                <Input placeholder="p. ej., Ana Pérez" {...field} />
+                <Input placeholder="p. ej., Ana" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="lastName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Apellidos del Cliente</FormLabel>
+              <FormControl>
+                <Input placeholder="p. ej., Pérez García" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

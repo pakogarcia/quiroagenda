@@ -22,7 +22,12 @@ export default function ClientsPage() {
         try {
             const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
             if (storedClients) {
-                setClients(JSON.parse(storedClients));
+                const parsedClients = JSON.parse(storedClients);
+                const migratedClients = parsedClients.map((client: any) => ({
+                    ...client,
+                    lastName: client.lastName || '',
+                }));
+                setClients(migratedClients);
             }
         } catch (error) {
             console.error("Failed to load clients.", error);
@@ -44,12 +49,20 @@ export default function ClientsPage() {
 
     const handleAddClient = (data: Omit<Client, 'id'>) => {
         const newClient: Client = { ...data, id: crypto.randomUUID() };
-        setClients(prev => [...prev, newClient].sort((a,b) => a.name.localeCompare(b.name)));
+        setClients(prev => [...prev, newClient].sort((a, b) => {
+            const nameComp = a.name.localeCompare(b.name);
+            if (nameComp !== 0) return nameComp;
+            return (a.lastName || '').localeCompare(b.lastName || '');
+        }));
         setIsFormOpen(false);
     };
 
     const handleUpdateClient = (id: string, data: Omit<Client, 'id'>) => {
-        setClients(prev => prev.map((client) => (client.id === id ? { ...client, ...data } : client)).sort((a,b) => a.name.localeCompare(b.name)));
+        setClients(prev => prev.map((client) => (client.id === id ? { ...client, ...data } : client)).sort((a, b) => {
+            const nameComp = a.name.localeCompare(b.name);
+            if (nameComp !== 0) return nameComp;
+            return (a.lastName || '').localeCompare(b.lastName || '');
+        }));
         setIsFormOpen(false);
         setEditingClient(undefined);
     };
@@ -103,7 +116,7 @@ export default function ClientsPage() {
                                   <CardHeader>
                                       <div className="flex justify-between items-start">
                                           <div>
-                                              <CardTitle className="text-xl text-accent flex items-center gap-2"><User className="w-5 h-5"/>{client.name}</CardTitle>
+                                              <CardTitle className="text-xl text-accent flex items-center gap-2"><User className="w-5 h-5"/>{`${client.name} ${client.lastName}`}</CardTitle>
                                               <CardDescription className="flex items-center gap-2 pt-2">
                                                   <Phone className="w-4 h-4"/>
                                                   {client.phone}

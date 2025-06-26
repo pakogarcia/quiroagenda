@@ -54,7 +54,12 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
     try {
         const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
         if (storedClients) {
-            setClients(JSON.parse(storedClients));
+            const parsedClients = JSON.parse(storedClients);
+            const migratedClients = parsedClients.map((client: any) => ({
+                ...client,
+                lastName: client.lastName || '',
+            }));
+            setClients(migratedClients);
         }
     } catch (error) {
         console.error("Failed to load clients.", error);
@@ -64,7 +69,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
   const handleClientChange = (clientId: string) => {
       const selectedClient = clients.find(c => c.id === clientId);
       if (selectedClient) {
-          form.setValue('clientName', selectedClient.name, { shouldValidate: true });
+          form.setValue('clientName', `${selectedClient.name} ${selectedClient.lastName || ''}`.trim(), { shouldValidate: true });
           form.setValue('clientPhone', selectedClient.phone, { shouldValidate: true });
       }
   };
@@ -95,7 +100,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                   <SelectContent>
                       {clients.map(client => (
                           <SelectItem key={client.id} value={client.id}>
-                              {client.name}
+                              {`${client.name} ${client.lastName}`}
                           </SelectItem>
                       ))}
                   </SelectContent>

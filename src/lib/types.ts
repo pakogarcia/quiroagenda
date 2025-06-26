@@ -11,5 +11,6 @@ export type Appointment = {
 export type Client = {
   id: string;
   name: string;
+  lastName: string;
   phone: string;
 };
