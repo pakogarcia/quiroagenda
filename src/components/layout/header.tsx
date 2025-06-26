@@ -13,6 +13,12 @@ export function AppHeader() {
         <h1 className="text-2xl font-bold font-headline">QuiroAgenda</h1>
       </Link>
       <nav className="flex items-center gap-2">
+        <Link href="/quien-eres">
+          <Button variant="outline">
+            <Info className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Quién eres</span>
+          </Button>
+        </Link>
          <Link href="/">
            <Button variant="outline">
             <CalendarDays className="h-4 w-4 md:mr-2" />
@@ -35,12 +41,6 @@ export function AppHeader() {
           <Button variant="outline">
             <BookOpen className="h-4 w-4 md:mr-2" />
             <span className="hidden md:inline">Manual</span>
-          </Button>
-        </Link>
-        <Link href="/quien-eres">
-          <Button variant="outline">
-            <Info className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">Quién eres</span>
           </Button>
         </Link>
       </nav>
