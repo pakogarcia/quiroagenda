@@ -56,7 +56,7 @@ export default function ContabilidadPage() {
                 // Only include appointments that have already passed and were not "no-shows"
                 return isWithinInterval(aptDate, { start, end }) && aptDate <= new Date() && apt.status !== 'no-show';
             })
-            .sort((a, b) => b.dateTime.getTime() - b.dateTime.getTime());
+            .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
     }, [allAppointments, dateRange]);
     
     const setPresetRange = (preset: 'lastWeek' | 'lastMonth' | 'yearToDate') => {
@@ -87,7 +87,7 @@ export default function ContabilidadPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground font-body">
+        <div className="flex flex-col h-screen bg-background text-foreground font-body contabilidad-page-container">
             <AppHeader className="no-print" />
             <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                 <div className="flex justify-between items-center mb-6 no-print">

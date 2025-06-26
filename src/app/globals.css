@@ -105,18 +105,24 @@ body {
 
 @media print {
   body {
-    background-color: white;
+    background-color: white !important;
   }
-  
+
   .no-print {
     display: none !important;
   }
 
+  /* Reset layout for the specific page container */
+  .contabilidad-page-container {
+    height: auto !important;
+  }
+  
   main {
-    padding: 0 !important;
     overflow: visible !important;
+    padding: 1rem 0; /* Add some padding for the printout */
   }
 
+  /* Remove decoration from the printable card */
   .printable-content {
     box-shadow: none !important;
     border: none !important;
