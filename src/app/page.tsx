@@ -1,7 +1,8 @@
+
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay } from 'date-fns';
+import { addDays, format, isSameDay, startOfDay, isAfter, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus } from 'lucide-react';
@@ -20,11 +21,10 @@ const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
   const [tomorrow, setTomorrow] = React.useState<Date | null>(null);
 
-  // Load data from localStorage on initial client render
   React.useEffect(() => {
     try {
       const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
@@ -47,7 +47,6 @@ export default function Home() {
     setInitialLoadComplete(true);
   }, []);
 
-  // Save data to localStorage whenever it changes
   React.useEffect(() => {
     if (initialLoadComplete) {
       localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
@@ -73,6 +72,18 @@ export default function Home() {
     if (!tomorrow) return [];
     return appointments.filter(apt => isSameDay(apt.dateTime, tomorrow));
   }, [appointments, tomorrow]);
+
+  const upcomingAppointments = React.useMemo(() => {
+    const today = startOfDay(new Date());
+    const sevenDaysFromNow = addDays(today, 8);
+    
+    return appointments
+      .filter(apt => {
+        const aptDate = startOfDay(apt.dateTime);
+        return isAfter(aptDate, today) && isBefore(aptDate, sevenDaysFromNow);
+      })
+      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+  }, [appointments]);
 
   const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent'>) => {
     const newAppointment: Appointment = {
@@ -124,8 +135,8 @@ export default function Home() {
       <AppHeader />
 
       <main className="flex-1 grid md:grid-cols-[auto_1fr] gap-8 p-4 md:p-8 overflow-hidden">
-        <aside className="hidden md:flex flex-col gap-8 items-center">
-          <Card className="shadow-lg">
+        <aside className="hidden md:flex flex-col gap-8 items-center w-full max-w-sm">
+          <Card className="shadow-lg w-full">
             <CardContent className="p-0">
               <Calendar
                 mode="single"
@@ -137,6 +148,31 @@ export default function Home() {
               />
             </CardContent>
           </Card>
+          
+          <Card className="shadow-lg w-full">
+              <CardHeader>
+                  <CardTitle className="text-xl">Próximas Citas</CardTitle>
+                  <CardDescription>En los próximos 7 días</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  {upcomingAppointments.length > 0 ? (
+                      <ul className="space-y-4 max-h-60 overflow-y-auto pr-2">
+                          {upcomingAppointments.map(apt => (
+                              <li key={apt.id} className="flex justify-between items-center text-sm">
+                                  <div>
+                                      <p className="font-semibold">{apt.clientName}</p>
+                                      <p className="text-muted-foreground">{format(apt.dateTime, 'EEEE, d MMM', { locale: es })}</p>
+                                  </div>
+                                  <p className="font-semibold">{format(apt.dateTime, 'p', { locale: es })}</p>
+                              </li>
+                          ))}
+                      </ul>
+                  ) : (
+                      <p className="text-sm text-muted-foreground text-center">No hay citas próximas.</p>
+                  )}
+              </CardContent>
+          </Card>
+
         </aside>
 
         <section className="flex flex-col gap-4 overflow-y-auto pr-2">
