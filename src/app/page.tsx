@@ -19,10 +19,13 @@ import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
-    setAppointments(getInitialAppointments());
-    setSelectedDate(new Date());
+    const now = new Date();
+    setAppointments(getInitialAppointments(now));
+    setSelectedDate(now);
+    setIsClient(true);
   }, []);
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -41,6 +44,7 @@ export default function Home() {
   }, [appointments, selectedDate]);
   
   const tomorrowAppointments = React.useMemo(() => {
+    // This now safely runs only on the client
     const tomorrow = addDays(new Date(), 1);
     return appointments.filter(apt => isSameDay(apt.dateTime, tomorrow));
   }, [appointments]);
@@ -86,7 +90,7 @@ export default function Home() {
     ));
   };
   
-  if (!selectedDate) {
+  if (!isClient) {
     return <div className="flex h-screen items-center justify-center">Cargando...</div>;
   }
 
@@ -210,7 +214,7 @@ export default function Home() {
             <AppointmentForm 
               onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment}
               appointment={editingAppointment}
-              selectedDate={selectedDate}
+              selectedDate={selectedDate!}
             />
         </DialogContent>
       </Dialog>
