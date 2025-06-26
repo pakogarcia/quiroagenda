@@ -37,7 +37,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       clientName: appointment?.clientName || '',
-      clientPhone: appointment?.clientPhone || '',
+      clientPhone: appointment?.clientPhone || '+34 ',
       date: appointment?.dateTime || selectedDate || new Date(),
       time: appointment ? format(appointment.dateTime, 'HH:mm') : '10:00',
       notes: appointment?.notes || '',

@@ -171,7 +171,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
 }
 
 function Card({ reminder }: { reminder: Reminder }) {
-    const whatsappLink = `https://wa.me/${reminder.clientPhone.replace(/\+/g, '')}?text=${encodeURIComponent(reminder.message)}`;
+    const whatsappLink = `https://wa.me/${reminder.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(reminder.message)}`;
     return (
         <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
