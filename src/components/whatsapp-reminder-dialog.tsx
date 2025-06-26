@@ -45,9 +45,8 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
       try {
         const result = await generateWhatsappReminder({
           clientName: apt.clientName,
-          appointmentDateTime: format(apt.dateTime, 'PPPP p', { locale: es }),
+          appointmentDateTime: format(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
           clientPhoneNumber: apt.clientPhone,
-          businessName: 'QuiroAgenda',
         });
         generatedReminders.push({
           appointmentId: apt.id,

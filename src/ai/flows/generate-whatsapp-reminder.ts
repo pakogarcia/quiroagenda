@@ -13,9 +13,8 @@ import {z} from 'genkit';
 
 const GenerateWhatsappReminderInputSchema = z.object({
   clientName: z.string().describe('The name of the client.'),
-  appointmentDateTime: z.string().describe('The date and time of the appointment (e.g., YYYY-MM-DD HH:MM).'),
+  appointmentDateTime: z.string().describe('The date and time of the appointment, pre-formatted for display.'),
   clientPhoneNumber: z.string().describe('The client phone number to send the whatsapp reminder.'),
-  businessName: z.string().describe('The name of the business.'),
 });
 
 export type GenerateWhatsappReminderInput = z.infer<typeof GenerateWhatsappReminderInputSchema>;
@@ -34,14 +33,12 @@ const generateWhatsappReminderPrompt = ai.definePrompt({
   name: 'generateWhatsappReminderPrompt',
   input: {schema: GenerateWhatsappReminderInputSchema},
   output: {schema: GenerateWhatsappReminderOutputSchema},
-  prompt: `Eres un experto en crear mensajes de recordatorio de citas personalizados para WhatsApp.
+  prompt: `Eres un experto en crear mensajes de recordatorio de citas para WhatsApp.
 
-  Crea un mensaje de WhatsApp amigable y profesional para recordarle a {{clientName}} sobre su próxima cita con {{businessName}} el {{appointmentDateTime}}.
-  El mensaje debe incluir la fecha y hora de la cita y una solicitud amigable para confirmar o reprogramar si es necesario.
-  Asegúrate de usar emojis para que el mensaje sea más amigable y acogedor.
+  Crea un mensaje de WhatsApp amigable y profesional para recordarle a {{clientName}} sobre su próxima cita.
 
-  Ejemplo:
-  Hola {{clientName}}, este es un recordatorio amigable sobre tu cita con {{businessName}} para el {{appointmentDateTime}}. Por favor, confirma o reprograma si es necesario. ¡Nos vemos pronto! 😊
+  El mensaje debe seguir este formato exacto, incluyendo los emojis y el formato de negrita (asteriscos):
+  'Hola {{clientName}} 👋, este es un recordatorio sobre tu próxima cita para el *{{appointmentDateTime}}*. Por favor, confirma o reprograma si es necesario. ¡Nos vemos pronto!'
   `,
 });
 
