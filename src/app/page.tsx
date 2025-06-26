@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, differenceInCalendarDays } from 'date-fns';
+import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus } from 'lucide-react';
@@ -25,7 +25,6 @@ export default function Home() {
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
-    setSelectedDate(new Date());
     try {
       const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
       const initialAppointments = storedAppointments 
@@ -39,6 +38,7 @@ export default function Home() {
       console.error("Failed to load appointments, using initial data.", error);
       setAppointments(getInitialAppointments(new Date()));
     }
+    setSelectedDate(new Date());
     setIsClient(true);
   }, []);
 
@@ -90,20 +90,26 @@ export default function Home() {
     return counts;
   }, [appointments]);
 
-  const modifiers = React.useMemo(() => ({
-    oneAppointment: (date: Date) => {
+  const modifiers = React.useMemo(() => {
+    const today = startOfToday();
+    return {
+      oneAppointment: (date: Date) => {
+        if (isBefore(date, today)) return false;
         const day = format(date, 'yyyy-MM-dd');
         return appointmentsByDay[day] === 1;
-    },
-    twoAppointments: (date: Date) => {
+      },
+      twoAppointments: (date: Date) => {
+        if (isBefore(date, today)) return false;
         const day = format(date, 'yyyy-MM-dd');
         return appointmentsByDay[day] === 2;
-    },
-    threeOrMoreAppointments: (date: Date) => {
+      },
+      threeOrMoreAppointments: (date: Date) => {
+        if (isBefore(date, today)) return false;
         const day = format(date, 'yyyy-MM-dd');
         return appointmentsByDay[day] >= 3;
-    },
-  }), [appointmentsByDay]);
+      },
+    };
+  }, [appointmentsByDay]);
 
   const modifierClassNames = {
     oneAppointment: 'one-appointment',
