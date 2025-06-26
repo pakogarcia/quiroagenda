@@ -154,6 +154,7 @@ export default function ClientsPage() {
                     <ClientForm 
                         onSubmit={editingClient ? (data) => handleUpdateClient(editingClient.id, data) : handleAddClient}
                         client={editingClient}
+                        allClients={clients}
                     />
                 </DialogContent>
             </Dialog>

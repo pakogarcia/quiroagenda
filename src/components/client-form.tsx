@@ -9,20 +9,40 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import type { Client } from '@/lib/types';
 
-const clientSchema = z.object({
-  name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
-  lastName: z.string().min(2, { message: 'El apellido debe tener al menos 2 caracteres.' }),
-  phone: z.string().min(9, { message: 'Por favor, introduce un número de teléfono válido.' }),
-});
+const createClientSchema = (allClients: Client[], editingClientId?: string) => 
+  z.object({
+    name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
+    lastName: z.string().min(2, { message: 'El apellido debe tener al menos 2 caracteres.' }),
+    phone: z.string().min(9, { message: 'Por favor, introduce un número de teléfono válido.' }),
+  }).superRefine((data, ctx) => {
+    const phoneExists = allClients.some(
+      (c) => c.phone === data.phone && c.id !== editingClientId
+    );
+    if (phoneExists) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Este número de teléfono ya está registrado.',
+        path: ['phone'],
+      });
+    }
+  });
 
-type ClientFormValues = z.infer<typeof clientSchema>;
+const baseSchema = z.object({
+  name: z.string(),
+  lastName: z.string(),
+  phone: z.string(),
+});
+type ClientFormValues = z.infer<typeof baseSchema>;
 
 type ClientFormProps = {
   onSubmit: (data: Omit<Client, 'id'>) => void;
   client?: Client;
+  allClients: Client[];
 };
 
-export function ClientForm({ onSubmit, client }: ClientFormProps) {
+export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
+  const clientSchema = createClientSchema(allClients, client?.id);
+
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
