@@ -110,9 +110,6 @@ body {
   body {
     background: white !important;
   }
-  main > *:not(.printable-content) {
-    display: none;
-  }
   .printable-content {
     display: block;
     box-shadow: none !important;
