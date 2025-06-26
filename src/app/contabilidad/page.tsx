@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { type DateRange } from 'react-day-picker';
 import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -56,7 +56,7 @@ export default function ContabilidadPage() {
                 // Only include appointments that have already passed and were not "no-shows"
                 return isWithinInterval(aptDate, { start, end }) && aptDate <= new Date() && apt.status !== 'no-show';
             })
-            .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
+            .sort((a, b) => b.dateTime.getTime() - b.dateTime.getTime());
     }, [allAppointments, dateRange]);
     
     const setPresetRange = (preset: 'lastWeek' | 'lastMonth' | 'yearToDate') => {
