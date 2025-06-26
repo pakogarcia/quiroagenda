@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -26,11 +27,13 @@ export default function ContabilidadPage() {
         try {
             const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
             if (storedAppointments) {
-                const parsedAppointments = JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'id'> & { dateTime: string }) => ({
-                    ...apt,
-                    dateTime: new Date(apt.dateTime),
-                    status: apt.status || 'scheduled',
-                }));
+                const parsedAppointments = JSON.parse(storedAppointments)
+                    .map((apt: any) => ({
+                        ...apt,
+                        dateTime: new Date(apt.dateTime),
+                        status: apt.status || 'scheduled',
+                    }))
+                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()));
                 setAllAppointments(parsedAppointments);
             }
         } catch (error) {

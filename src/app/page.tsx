@@ -32,12 +32,14 @@ export default function Home() {
   React.useEffect(() => {
     try {
       const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-      const initialAppointments = storedAppointments 
-        ? JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'id'> & { dateTime: string }) => ({
-            ...apt,
-            dateTime: new Date(apt.dateTime),
-            status: apt.status || 'scheduled',
-          }))
+      const initialAppointments = storedAppointments
+        ? JSON.parse(storedAppointments)
+            .map((apt: any) => ({
+              ...apt,
+              dateTime: new Date(apt.dateTime),
+              status: apt.status || 'scheduled',
+            }))
+            .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()))
         : getInitialAppointments(new Date());
       setAppointments(initialAppointments);
     } catch (error) {
