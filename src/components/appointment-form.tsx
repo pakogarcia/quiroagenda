@@ -3,7 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { format, parse, set } from 'date-fns';
+import { format, set } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -102,7 +103,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                         )}
                         >
                         {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "PPP", { locale: es })
                         ) : (
                             <span>Elige una fecha</span>
                         )}
@@ -116,6 +117,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
+                        locale={es}
                     />
                     </PopoverContent>
                 </Popover>

@@ -1,10 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, parse } from 'date-fns';
+import { addDays, format, isSameDay } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, User, Clock, Edit, Trash2, Send, CheckCircle, XCircle } from 'lucide-react';
-import { initialAppointments } from '@/lib/data';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle } from 'lucide-react';
+import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -20,7 +21,7 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
 
   React.useEffect(() => {
-    setAppointments(initialAppointments);
+    setAppointments(getInitialAppointments());
     setSelectedDate(new Date());
   }, []);
 
@@ -109,6 +110,7 @@ export default function Home() {
                 onSelect={setSelectedDate}
                 className="rounded-md"
                 fixedWeeks
+                locale={es}
               />
             </CardContent>
           </Card>
@@ -117,7 +119,7 @@ export default function Home() {
         <section className="flex flex-col gap-4 overflow-y-auto pr-2">
           <div className="flex items-center justify-between md:hidden">
             <h2 className="text-2xl font-bold font-headline text-primary">
-              {selectedDate ? format(selectedDate, 'PPP') : 'Selecciona una fecha'}
+              {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
             </h2>
              <Dialog>
                 <DialogTrigger asChild>
@@ -139,12 +141,13 @@ export default function Home() {
                             }
                         }}
                         initialFocus
+                        locale={es}
                     />
                 </DialogContent>
             </Dialog>
           </div>
           <h2 className="hidden md:block text-3xl font-bold font-headline text-primary">
-            {selectedDate ? format(selectedDate, 'PPP') : 'Selecciona una fecha'}
+            {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
           </h2>
           
           {dailyAppointments.length > 0 ? (
@@ -165,7 +168,7 @@ export default function Home() {
                            <CardTitle className="text-xl text-accent">{apt.clientName}</CardTitle>
                            <CardDescription className="flex items-center gap-2 pt-1">
                                <Clock className="w-4 h-4"/>
-                               {format(apt.dateTime, 'p')}
+                               {format(apt.dateTime, 'p', { locale: es })}
                            </CardDescription>
                         </div>
                          <div className="flex items-center gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
