@@ -29,9 +29,9 @@ const prompt = ai.definePrompt({
   name: 'generateAppointmentSummaryPrompt',
   input: {schema: GenerateAppointmentSummaryInputSchema},
   output: {schema: GenerateAppointmentSummaryOutputSchema},
-  prompt: `You are a helpful assistant to a massage therapist. Please summarize the following notes from a massage therapy appointment. Be concise and focus on key details.
+  prompt: `Eres un asistente virtual para un masoterapeuta. Por favor, resume las siguientes notas de una cita de masoterapia. Sé conciso y céntrate en los detalles clave.
 
-Notes: {{{notes}}}`,
+Notas: {{{notes}}}`,
 });
 
 const generateAppointmentSummaryFlow = ai.defineFlow(

@@ -9,7 +9,7 @@ export const initialAppointments: Appointment[] = [
     clientName: 'Elena Rodríguez',
     clientPhone: '+34600112233',
     dateTime: set(now, { hours: 10, minutes: 0, seconds: 0, milliseconds: 0 }),
-    notes: 'Focus on lower back and shoulders. Client reported some tension.',
+    notes: 'Foco en la espalda baja y hombros. El cliente reportó algo de tensión.',
     reminderSent: true,
   },
   {
@@ -17,7 +17,7 @@ export const initialAppointments: Appointment[] = [
     clientName: 'Carlos Gómez',
     clientPhone: '+34611223344',
     dateTime: set(now, { hours: 12, minutes: 30, seconds: 0, milliseconds: 0 }),
-    notes: 'General relaxation massage. No specific issues.',
+    notes: 'Masaje de relajación general. Sin problemas específicos.',
     reminderSent: false,
   },
   {
@@ -25,7 +25,7 @@ export const initialAppointments: Appointment[] = [
     clientName: 'Ana Pérez',
     clientPhone: '+34622334455',
     dateTime: set(now, { hours: 16, minutes: 0, seconds: 0, milliseconds: 0 }),
-    notes: 'Deep tissue for legs, post-marathon.',
+    notes: 'Masaje de tejido profundo para piernas, post-maratón.',
     reminderSent: false,
   },
   {
@@ -33,7 +33,7 @@ export const initialAppointments: Appointment[] = [
     clientName: 'Javier Fernández',
     clientPhone: '+34633445566',
     dateTime: set(subDays(now, 1), { hours: 11, minutes: 0, seconds: 0, milliseconds: 0 }),
-    notes: 'Client is a regular, standard session.',
+    notes: 'Cliente regular, sesión estándar.',
     reminderSent: true,
   },
     {
@@ -41,7 +41,7 @@ export const initialAppointments: Appointment[] = [
     clientName: 'Lucía Morales',
     clientPhone: '+34644556677',
     dateTime: set(addDays(now, 1), { hours: 10, minutes: 0, seconds: 0, milliseconds: 0 }),
-    notes: 'First time client. Consultation needed.',
+    notes: 'Cliente nuevo. Se necesita consulta.',
     reminderSent: false,
   },
   {
@@ -49,7 +49,7 @@ export const initialAppointments: Appointment[] = [
     clientName: 'Miguel Santos',
     clientPhone: '+34655667788',
     dateTime: set(addDays(now, 1), { hours: 14, minutes: 0, seconds: 0, milliseconds: 0 }),
-    notes: 'Follow-up for neck pain.',
+    notes: 'Seguimiento por dolor de cuello.',
     reminderSent: false,
   },
 ];

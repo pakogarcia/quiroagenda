@@ -17,12 +17,12 @@ export function AppHeader({ onAddAppointment, onSendReminders }: AppHeaderProps)
       </div>
       <div className="flex items-center gap-2">
         <Button variant="outline" onClick={onSendReminders}>
-          <Send className="mr-2 h-4 w-4" />
-          Send Reminders
+          <Send className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">Enviar Recordatorios</span>
         </Button>
         <Button onClick={onAddAppointment}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Appointment
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">Añadir Cita</span>
         </Button>
       </div>
     </header>

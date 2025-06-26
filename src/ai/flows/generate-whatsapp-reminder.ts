@@ -34,14 +34,14 @@ const generateWhatsappReminderPrompt = ai.definePrompt({
   name: 'generateWhatsappReminderPrompt',
   input: {schema: GenerateWhatsappReminderInputSchema},
   output: {schema: GenerateWhatsappReminderOutputSchema},
-  prompt: `You are an expert at crafting personalized WhatsApp reminder messages for appointments.
+  prompt: `Eres un experto en crear mensajes de recordatorio de citas personalizados para WhatsApp.
 
-  Create a friendly and professional WhatsApp message to remind {{clientName}} about their upcoming appointment with {{businessName}} on {{appointmentDateTime}}.
-  The message should include the date and time of the appointment and a friendly request to confirm or reschedule if needed.
-  Make sure to use emojis to make the message more friendly and inviting.
+  Crea un mensaje de WhatsApp amigable y profesional para recordarle a {{clientName}} sobre su próxima cita con {{businessName}} el {{appointmentDateTime}}.
+  El mensaje debe incluir la fecha y hora de la cita y una solicitud amigable para confirmar o reprogramar si es necesario.
+  Asegúrate de usar emojis para que el mensaje sea más amigable y acogedor.
 
-  Example:
-  Hi {{clientName}}, this is a friendly reminder about your appointment with {{businessName}} on {{appointmentDateTime}}. Please confirm or reschedule if needed. See you soon! 😊
+  Ejemplo:
+  Hola {{clientName}}, este es un recordatorio amigable sobre tu cita con {{businessName}} para el {{appointmentDateTime}}. Por favor, confirma o reprograma si es necesario. ¡Nos vemos pronto! 😊
   `,
 });
 
@@ -56,4 +56,3 @@ const generateWhatsappReminderFlow = ai.defineFlow(
     return output!;
   }
 );
-

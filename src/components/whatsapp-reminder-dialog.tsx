@@ -117,9 +117,9 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
         return (
              <Alert>
                 <CheckCircle className="h-4 w-4" />
-                <AlertTitle>All Set!</AlertTitle>
+                <AlertTitle>¡Todo listo!</AlertTitle>
                 <AlertDescription>
-                    All reminders for tomorrow's appointments have already been sent.
+                    Todos los recordatorios para las citas de mañana ya han sido enviados.
                 </AlertDescription>
             </Alert>
         )
@@ -129,7 +129,11 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
         <div className="text-center py-8">
             <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/50" />
             <p className="mt-4 text-muted-foreground">
-                Generate friendly WhatsApp reminders for tomorrow's {appointmentsToRemind.length} unsent appointment(s).
+              {`Genera recordatorios de WhatsApp para ${
+                appointmentsToRemind.length === 1
+                  ? '1 cita pendiente'
+                  : `${appointmentsToRemind.length} citas pendientes`
+              } para mañana.`}
             </p>
         </div>
     )
@@ -139,9 +143,9 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Send WhatsApp Reminders</DialogTitle>
+          <DialogTitle>Enviar Recordatorios de WhatsApp</DialogTitle>
           <DialogDescription>
-            Generate and send reminders for appointments scheduled for tomorrow.
+            Genera y envía recordatorios para las citas de mañana.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">{renderContent()}</div>
@@ -149,14 +153,14 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
             {isGenerated && reminders.length > 0 ? (
                 <Button variant="default" onClick={handleMarkAsSent}>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Mark All as Sent
+                    Marcar Todos como Enviados
                 </Button>
             ) : <div />}
 
             {!isGenerated && (
                 <Button onClick={handleGenerateReminders} disabled={isLoading || appointmentsToRemind.length === 0}>
                     <Send className="mr-2 h-4 w-4" />
-                    {isLoading ? 'Generating...' : 'Generate Reminders'}
+                    {isLoading ? 'Generando...' : 'Generar Recordatorios'}
                 </Button>
             )}
         </DialogFooter>
@@ -173,7 +177,7 @@ function Card({ reminder }: { reminder: Reminder }) {
                 <div className="font-semibold text-primary flex items-center gap-2"><Smartphone className="w-4 h-4"/>{reminder.clientName}</div>
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                     <Button variant="ghost" size="sm">
-                        <Send className="mr-2 h-4 w-4" /> Send
+                        <Send className="mr-2 h-4 w-4" /> Enviar
                     </Button>
                 </a>
             </div>

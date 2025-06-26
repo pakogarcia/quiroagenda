@@ -16,8 +16,13 @@ import { AppHeader } from '@/components/layout/header';
 import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
 
 export default function Home() {
-  const [appointments, setAppointments] = React.useState<Appointment[]>(initialAppointments);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+  const [appointments, setAppointments] = React.useState<Appointment[]>([]);
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+
+  React.useEffect(() => {
+    setAppointments(initialAppointments);
+    setSelectedDate(new Date());
+  }, []);
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAppointment, setEditingAppointment] = React.useState<Appointment | undefined>(undefined);
@@ -79,6 +84,10 @@ export default function Home() {
       appointmentIds.includes(apt.id) ? { ...apt, reminderSent: true } : apt
     ));
   };
+  
+  if (!selectedDate) {
+    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground font-body">
@@ -108,7 +117,7 @@ export default function Home() {
         <section className="flex flex-col gap-4 overflow-y-auto pr-2">
           <div className="flex items-center justify-between md:hidden">
             <h2 className="text-2xl font-bold font-headline text-primary">
-              {selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}
+              {selectedDate ? format(selectedDate, 'PPP') : 'Selecciona una fecha'}
             </h2>
              <Dialog>
                 <DialogTrigger asChild>
@@ -135,7 +144,7 @@ export default function Home() {
             </Dialog>
           </div>
           <h2 className="hidden md:block text-3xl font-bold font-headline text-primary">
-            {selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}
+            {selectedDate ? format(selectedDate, 'PPP') : 'Selecciona una fecha'}
           </h2>
           
           {dailyAppointments.length > 0 ? (
@@ -159,7 +168,7 @@ export default function Home() {
                                {format(apt.dateTime, 'p')}
                            </CardDescription>
                         </div>
-                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <div className="flex items-center gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                             <Button variant="ghost" size="icon" onClick={() => openEditForm(apt)}>
                                 <Edit className="w-5 h-5" />
                             </Button>
@@ -172,7 +181,7 @@ export default function Home() {
                         <p className="text-muted-foreground">{apt.notes}</p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-4">
                             {apt.reminderSent ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-slate-400" />}
-                            <span>Reminder {apt.reminderSent ? 'Sent' : 'Not Sent'}</span>
+                            <span>{apt.reminderSent ? 'Recordatorio Enviado' : 'Recordatorio No Enviado'}</span>
                         </div>
                       </CardContent>
                     </Card>
@@ -183,8 +192,8 @@ export default function Home() {
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
                 <CalendarIcon className="w-16 h-16 text-muted-foreground/50 mb-4" />
-                <h3 className="text-xl font-semibold text-muted-foreground">No appointments scheduled for this day.</h3>
-                <p className="text-muted-foreground mt-1">Select another date or add a new appointment.</p>
+                <h3 className="text-xl font-semibold text-muted-foreground">No hay citas programadas para este día.</h3>
+                <p className="text-muted-foreground mt-1">Selecciona otra fecha o añade una nueva cita.</p>
             </div>
           )}
         </section>
@@ -193,7 +202,7 @@ export default function Home() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>{editingAppointment ? 'Edit Appointment' : 'Add New Appointment'}</DialogTitle>
+                <DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle>
             </DialogHeader>
             <AppointmentForm 
               onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment}
@@ -206,14 +215,14 @@ export default function Home() {
       <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the appointment.
+              Esta acción no se puede deshacer. Esto eliminará permanentemente la cita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAppointment} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAppointment} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
