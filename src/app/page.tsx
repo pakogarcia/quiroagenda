@@ -9,7 +9,7 @@ import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointment-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AppHeader } from '@/components/layout/header';
@@ -119,7 +119,15 @@ export default function Home() {
                         mode="single"
                         selected={selectedDate}
                         onSelect={(date) => {
-                            setSelectedDate(date);
+                            if (!date) return;
+                            const newDate = new Date(date);
+                            const oldDate = selectedDate ? new Date(selectedDate) : new Date();
+                            newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds(), oldDate.getMilliseconds());
+                            setSelectedDate(newDate);
+                            const dialogTrigger = document.querySelector('[aria-controls="radix-1"]');
+                            if (dialogTrigger instanceof HTMLElement) {
+                                dialogTrigger.click();
+                            }
                         }}
                         initialFocus
                     />
