@@ -40,7 +40,7 @@ export function AppHeader() {
         <Link href="/manual">
           <Button variant="outline">
             <BookOpen className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">Manual</span>
+            <span className="hidden md:inline">Ayuda</span>
           </Button>
         </Link>
       </nav>
