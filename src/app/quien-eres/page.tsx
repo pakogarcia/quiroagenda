@@ -108,7 +108,7 @@ export default function ProfilePage() {
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Domicilio</FormLabel>
+                      <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
                       <FormControl>
                         <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
                       </FormControl>
