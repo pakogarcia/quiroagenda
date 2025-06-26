@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: 'QuiroAgenda',
-  description: 'Gestión de citas para masoterapia.',
+  description: 'Gestión de citas para gabinetes de masajes y estética.',
 };
 
 export default function RootLayout({

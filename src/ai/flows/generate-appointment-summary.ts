@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateAppointmentSummaryInputSchema = z.object({
-  notes: z.string().describe('The notes taken during the massage therapy appointment.'),
+  notes: z.string().describe('The notes taken during the appointment.'),
 });
 export type GenerateAppointmentSummaryInput = z.infer<typeof GenerateAppointmentSummaryInputSchema>;
 
@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
   name: 'generateAppointmentSummaryPrompt',
   input: {schema: GenerateAppointmentSummaryInputSchema},
   output: {schema: GenerateAppointmentSummaryOutputSchema},
-  prompt: `Eres un asistente virtual para un masoterapeuta. Por favor, resume las siguientes notas de una cita de masoterapia. Sé conciso y céntrate en los detalles clave.
+  prompt: `Eres un asistente virtual para un gabinete de masajes y estética. Por favor, resume las siguientes notas de una cita. Sé conciso y céntrate en los detalles clave.
 
 Notas: {{{notes}}}`,
 });
