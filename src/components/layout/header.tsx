@@ -4,10 +4,11 @@
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Leaf, Users, Calculator, Info, BookOpen } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
-export function AppHeader() {
+export function AppHeader({ className }: { className?: string }) {
   return (
-    <header className="flex items-center justify-between p-4 border-b bg-card">
+    <header className={cn("flex items-center justify-between p-4 border-b bg-card", className)}>
       <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors">
         <Leaf className="h-8 w-8" />
         <h1 className="text-2xl font-bold font-headline">QuiroAgenda</h1>

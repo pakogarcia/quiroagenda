@@ -102,3 +102,22 @@ body {
   color: white !important;
   border-radius: var(--radius) !important;
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body,
+  .print-section {
+    background: white !important;
+    color: black !important;
+  }
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .printable-content {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

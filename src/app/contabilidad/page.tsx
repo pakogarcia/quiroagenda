@@ -10,7 +10,7 @@ import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, st
 import { es } from 'date-fns/locale';
 import type { Appointment } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Calculator } from 'lucide-react';
+import { CalendarIcon, Calculator, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -78,19 +78,23 @@ export default function ContabilidadPage() {
         setDateRange({ from: fromDate, to: today });
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     if (!isClient) {
         return <SplashScreen />;
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground font-body">
-            <AppHeader />
+        <div className="flex flex-col h-screen bg-background text-foreground font-body print-section">
+            <AppHeader className="no-print" />
             <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-6 no-print">
                     <h1 className="text-3xl font-bold font-headline text-primary">Contabilidad</h1>
                 </div>
 
-                <Card className="mb-6 shadow-md">
+                <Card className="mb-6 shadow-md no-print">
                     <CardHeader>
                         <CardTitle>Seleccionar Rango de Fechas</CardTitle>
                     </CardHeader>
@@ -143,7 +147,7 @@ export default function ContabilidadPage() {
 
                 {dateRange?.from && dateRange?.to ? (
                     <div className="space-y-6">
-                        <Card className="shadow-md">
+                        <Card className="shadow-md no-print">
                              <CardHeader>
                                 <CardTitle>Resumen del Período</CardTitle>
                             </CardHeader>
@@ -155,9 +159,15 @@ export default function ContabilidadPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className="shadow-md">
+                        <Card className="shadow-md printable-content">
                             <CardHeader>
-                                <CardTitle>Detalle de Citas</CardTitle>
+                                <div className="flex justify-between items-center">
+                                    <CardTitle>Detalle de Citas</CardTitle>
+                                    <Button variant="outline" onClick={handlePrint} className="no-print">
+                                        <Printer className="h-4 w-4 mr-2" />
+                                        Imprimir Listado
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <Table>
@@ -188,7 +198,7 @@ export default function ContabilidadPage() {
                         </Card>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-64 text-center p-8 border-2 border-dashed rounded-lg">
+                    <div className="flex flex-col items-center justify-center h-64 text-center p-8 border-2 border-dashed rounded-lg no-print">
                         <Calculator className="w-16 h-16 text-muted-foreground/50 mb-4" />
                         <h3 className="text-xl font-semibold text-muted-foreground">Selecciona un rango de fechas.</h3>
                         <p className="text-muted-foreground mt-1">Elige un período para ver el resumen de contabilidad.</p>
