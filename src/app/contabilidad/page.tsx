@@ -87,11 +87,17 @@ export default function ContabilidadPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground font-body print-section">
+        <div className="flex flex-col h-screen bg-background text-foreground font-body">
             <AppHeader className="no-print" />
             <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                 <div className="flex justify-between items-center mb-6 no-print">
                     <h1 className="text-3xl font-bold font-headline text-primary">Contabilidad</h1>
+                    {dateRange?.from && dateRange.to && (
+                         <Button variant="outline" onClick={handlePrint}>
+                            <Printer className="h-4 w-4 mr-2" />
+                            Imprimir Listado
+                        </Button>
+                    )}
                 </div>
 
                 <Card className="mb-6 shadow-md no-print">
@@ -161,13 +167,10 @@ export default function ContabilidadPage() {
 
                         <Card className="shadow-md printable-content">
                             <CardHeader>
-                                <div className="flex justify-between items-center">
-                                    <CardTitle>Detalle de Citas</CardTitle>
-                                    <Button variant="outline" onClick={handlePrint} className="no-print">
-                                        <Printer className="h-4 w-4 mr-2" />
-                                        Imprimir Listado
-                                    </Button>
-                                </div>
+                                <CardTitle>Detalle de Citas</CardTitle>
+                                <CardDescription>
+                                     Período del {format(dateRange.from, "P", { locale: es })} al {format(dateRange.to, "P", { locale: es })}
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Table>

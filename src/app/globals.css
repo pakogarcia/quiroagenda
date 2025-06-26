@@ -107,16 +107,14 @@ body {
   .no-print {
     display: none !important;
   }
-  body,
-  .print-section {
+  body {
     background: white !important;
-    color: black !important;
   }
-  main {
-    padding: 0 !important;
-    overflow: visible !important;
+  main > *:not(.printable-content) {
+    display: none;
   }
   .printable-content {
+    display: block;
     box-shadow: none !important;
     border: none !important;
   }
