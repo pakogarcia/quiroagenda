@@ -5,7 +5,7 @@ import * as React from 'react';
 import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift } from 'lucide-react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,13 @@ import { AppointmentForm } from '@/components/appointment-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AppHeader } from '@/components/layout/header';
 import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
+import { OfferDialog } from '@/components/offer-dialog';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -38,7 +39,6 @@ export default function Home() {
       console.error("Failed to load appointments, using initial data.", error);
       setAppointments(getInitialAppointments(new Date()));
     }
-    setSelectedDate(new Date());
     setIsClient(true);
   }, []);
 
@@ -55,6 +55,7 @@ export default function Home() {
   const [deletingAppointmentId, setDeletingAppointmentId] = React.useState<string | null>(null);
 
   const [isReminderDialogOpen, setIsReminderDialogOpen] = React.useState(false);
+  const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
 
   const dailyAppointments = React.useMemo(() => {
     if (!selectedDate) return [];
@@ -71,12 +72,12 @@ export default function Home() {
 
   const upcomingAppointments = React.useMemo(() => {
     if (!isClient) return [];
-    const today = new Date();
+    const today = startOfToday();
     
     return appointments
       .filter(apt => {
         const dayDiff = differenceInCalendarDays(apt.dateTime, today);
-        return dayDiff > 0 && dayDiff <= 7;
+        return dayDiff >= 1 && dayDiff <= 7;
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   }, [appointments, isClient]);
@@ -243,6 +244,10 @@ export default function Home() {
                     </Dialog>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setIsOfferDialogOpen(true)}>
+                        <Gift className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">Crear Oferta</span>
+                    </Button>
                     <Button variant="outline" onClick={() => setIsReminderDialogOpen(true)}>
                         <Send className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Enviar Recordatorios</span>
@@ -366,6 +371,11 @@ export default function Home() {
         onOpenChange={setIsReminderDialogOpen}
         appointments={tomorrowAppointments}
         onRemindersSent={handleSetRemindersSent}
+      />
+
+      <OfferDialog
+        isOpen={isOfferDialogOpen}
+        onOpenChange={setIsOfferDialogOpen}
       />
     </div>
   );
