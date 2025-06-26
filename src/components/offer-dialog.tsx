@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { generateOfferWhatsapp } from '@/ai/flows/generate-offer-whatsapp';
-import type { Client } from '@/lib/types';
+import type { Client, BusinessProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare } from 'lucide-react';
@@ -21,6 +21,7 @@ import { type DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
+const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 
 type Offer = {
   clientId: string;
@@ -41,30 +42,33 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
 
   React.useEffect(() => {
-    // Load clients from localStorage when the component mounts
-    try {
-      const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-      if (storedClients) {
-        setClients(JSON.parse(storedClients));
+    if (isOpen) {
+      try {
+        const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
+        if (storedClients) {
+          setClients(JSON.parse(storedClients));
+        }
+        const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (storedProfile) {
+          setBusinessProfile(JSON.parse(storedProfile));
+        }
+      } catch (error) {
+        console.error("Failed to load data from storage.", error);
       }
-    } catch (error) {
-      console.error("Failed to load clients.", error);
-    }
-
-    // Reset state when dialog is closed
-    if (!isOpen) {
+    } else {
       setIsGenerated(false);
       setGeneratedOffers([]);
       setOfferMessage('');
       setDateRange(undefined);
+      setBusinessProfile(null);
     }
   }, [isOpen]);
 
   const handleGenerateOffers = useCallback(async () => {
     if (!dateRange?.from || !offerMessage || clients.length === 0) {
-      // Maybe show a toast message here in a future iteration
       return;
     }
 
@@ -81,6 +85,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
           clientName: client.name,
           offerMessage: offerMessage,
           dateRange: formattedDateRange,
+          businessName: businessProfile?.name,
         });
         newOffers.push({
           clientId: client.id,
@@ -88,7 +93,6 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
           clientPhone: client.phone,
           message: result.whatsappMessage,
         });
-        // Update state progressively to show results as they come
         setGeneratedOffers([...newOffers]);
       } catch (error) {
         console.error('Failed to generate offer for', client.name, error);
@@ -97,7 +101,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
     
     setIsLoading(false);
     setIsGenerated(true);
-  }, [dateRange, offerMessage, clients]);
+  }, [dateRange, offerMessage, clients, businessProfile]);
 
   const renderContent = () => {
     if (isLoading) {

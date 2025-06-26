@@ -1,0 +1,142 @@
+'use client';
+
+import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { AppHeader } from '@/components/layout/header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import type { BusinessProfile } from '@/lib/types';
+import { Building, Phone, MapPin } from 'lucide-react';
+import { SplashScreen } from '@/components/layout/splash-screen';
+
+const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
+
+const profileSchema = z.object({
+  name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
+export default function ProfilePage() {
+  const [isClient, setIsClient] = React.useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: '',
+      address: '',
+      phone: '',
+    },
+  });
+
+  React.useEffect(() => {
+    try {
+      const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+      if (storedProfile) {
+        const profileData: BusinessProfile = JSON.parse(storedProfile);
+        form.reset(profileData);
+      }
+    } catch (error) {
+      console.error('Failed to load profile.', error);
+    }
+    setIsClient(true);
+  }, [form]);
+
+  const onSubmit = (data: ProfileFormValues) => {
+    try {
+      const profileToSave: BusinessProfile = {
+          name: data.name,
+          address: data.address || '',
+          phone: data.phone || ''
+      };
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileToSave));
+      toast({
+        title: 'Perfil guardado',
+        description: 'La información de tu negocio ha sido actualizada.',
+      });
+    } catch (error) {
+      console.error('Failed to save profile.', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudo guardar la información de tu negocio.',
+      });
+    }
+  };
+
+  if (!isClient) {
+    return <SplashScreen />;
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-background text-foreground font-body">
+      <AppHeader />
+      <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <Card className="w-full max-w-lg shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
+            <CardDescription>
+              Completa la información de tu negocio. Se usará para personalizar los mensajes automáticos.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
+                      <FormControl>
+                        <Input placeholder="p. ej., Centro de Masajes Zen" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Domicilio</FormLabel>
+                      <FormControl>
+                        <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+34 987 654 321" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full">
+                  Guardar Información
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}

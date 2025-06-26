@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Leaf, Users, Calculator } from 'lucide-react';
+import { CalendarDays, Leaf, Users, Calculator, Info } from 'lucide-react';
 import Link from 'next/link';
 
 export function AppHeader() {
@@ -28,6 +28,12 @@ export function AppHeader() {
           <Button variant="outline">
             <Calculator className="h-4 w-4 md:mr-2" />
             <span className="hidden md:inline">Contabilidad</span>
+          </Button>
+        </Link>
+        <Link href="/quien-eres">
+          <Button variant="outline">
+            <Info className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Quién eres</span>
           </Button>
         </Link>
       </nav>

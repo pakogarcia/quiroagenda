@@ -14,3 +14,9 @@ export type Client = {
   lastName: string;
   phone: string;
 };
+
+export type BusinessProfile = {
+  name: string;
+  address: string;
+  phone: string;
+};

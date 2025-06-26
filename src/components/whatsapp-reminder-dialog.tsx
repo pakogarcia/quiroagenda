@@ -9,10 +9,12 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { generateWhatsappReminder } from '@/ai/flows/generate-whatsapp-reminder';
-import type { Appointment } from '@/lib/types';
+import type { Appointment, BusinessProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MessageSquare, Send, CheckCircle, Smartphone } from 'lucide-react';
+
+const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 
 type Reminder = {
   appointmentId: string;
@@ -32,8 +34,26 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
 
   const appointmentsToRemind = appointments.filter(apt => !apt.reminderSent);
+  
+  React.useEffect(() => {
+    if (isOpen) {
+      try {
+        const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (storedProfile) {
+          setBusinessProfile(JSON.parse(storedProfile));
+        }
+      } catch (error) {
+        console.error("Failed to load business profile.", error);
+      }
+    } else {
+        setIsGenerated(false);
+        setReminders([]);
+        setBusinessProfile(null);
+    }
+  }, [isOpen]);
 
   const handleGenerateReminders = useCallback(async () => {
     setIsLoading(true);
@@ -47,6 +67,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
           clientName: apt.clientName.split(' ')[0],
           appointmentDateTime: format(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
           clientPhoneNumber: apt.clientPhone,
+          businessName: businessProfile?.name,
         });
         generatedReminders.push({
           appointmentId: apt.id,
@@ -62,20 +83,13 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
     setReminders(generatedReminders);
     setIsLoading(false);
     setIsGenerated(true);
-  }, [appointmentsToRemind]);
+  }, [appointmentsToRemind, businessProfile]);
 
   const handleMarkAsSent = () => {
     const sentIds = reminders.map(r => r.appointmentId);
     onRemindersSent(sentIds);
     onOpenChange(false);
   };
-  
-  React.useEffect(() => {
-    if (!isOpen) {
-      setIsGenerated(false);
-      setReminders([]);
-    }
-  }, [isOpen]);
 
   const renderContent = () => {
     if (isLoading) {

@@ -15,6 +15,7 @@ const GenerateWhatsappReminderInputSchema = z.object({
   clientName: z.string().describe('The name of the client.'),
   appointmentDateTime: z.string().describe('The date and time of the appointment, pre-formatted for display.'),
   clientPhoneNumber: z.string().describe('The client phone number to send the whatsapp reminder.'),
+  businessName: z.string().optional().describe('The name of the business sending the reminder.'),
 });
 
 export type GenerateWhatsappReminderInput = z.infer<typeof GenerateWhatsappReminderInputSchema>;
@@ -38,7 +39,7 @@ const generateWhatsappReminderPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp amigable y profesional para recordarle a {{clientName}} sobre su próxima cita.
 
   El mensaje debe seguir este formato exacto, incluyendo los emojis y el formato de negrita (asteriscos):
-  'Hola {{clientName}} 👋, este es un recordatorio sobre tu próxima cita para el *{{appointmentDateTime}}*. Por favor, confirma o reprograma si es necesario. ¡Nos vemos pronto!'
+  'Hola {{clientName}} 👋, este es un recordatorio sobre tu próxima cita para el *{{appointmentDateTime}}*. Por favor, confirma o reprograma si es necesario. ¡Nos vemos pronto!{{#if businessName}}\n\n_{{businessName}}_{{/if}}'
   `,
 });
 

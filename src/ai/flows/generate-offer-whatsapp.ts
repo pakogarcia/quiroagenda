@@ -15,6 +15,7 @@ const GenerateOfferWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the client.'),
   offerMessage: z.string().describe('The core message of the promotional offer.'),
   dateRange: z.string().describe('The formatted date range for when the offer is valid.'),
+  businessName: z.string().optional().describe('The name of the business sending the offer.'),
 });
 
 export type GenerateOfferWhatsappInput = z.infer<typeof GenerateOfferWhatsappInputSchema>;
@@ -44,8 +45,8 @@ const generateOfferWhatsappPrompt = ai.definePrompt({
 
   El mensaje debe empezar con un saludo personalizado, presentar la oferta de forma atractiva, mencionar claramente el período de validez y terminar con una llamada a la acción clara para reservar una cita. Incluye algún emoji relevante para hacerlo más cercano.
 
-  Ejemplo de estructura:
-  "¡Hola {{clientName}}! 🥳 Queremos cuidarte y por eso te traemos una oferta especial. {{{offerMessage}}}. Esta promoción es válida {{dateRange}}. ¡No te la pierdas y reserva tu cita! ✨"
+  Ejemplo de estructura del mensaje a generar:
+  "¡Hola {{clientName}}! 🥳 Queremos cuidarte y por eso te traemos una oferta especial. {{{offerMessage}}}. Esta promoción es válida {{dateRange}}. ¡No te la pierdas y reserva tu cita! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
   `,
 });
 
