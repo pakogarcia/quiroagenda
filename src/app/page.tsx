@@ -220,6 +220,30 @@ export default function Home() {
                     </Button>
                 </div>
             </div>
+
+            <Card className="shadow-lg w-full md:hidden mb-4">
+              <CardHeader>
+                  <CardTitle className="text-xl">Próximas Citas</CardTitle>
+                  <CardDescription>En los próximos 7 días</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  {upcomingAppointments.length > 0 ? (
+                      <ul className="space-y-4 pr-2">
+                          {upcomingAppointments.map(apt => (
+                              <li key={apt.id} className="flex justify-between items-center text-sm">
+                                  <div>
+                                      <p className="font-semibold">{apt.clientName}</p>
+                                      <p className="text-muted-foreground">{format(apt.dateTime, 'EEEE, d MMM', { locale: es })}</p>
+                                  </div>
+                                  <p className="font-semibold">{format(apt.dateTime, 'p', { locale: es })}</p>
+                              </li>
+                          ))}
+                      </ul>
+                  ) : (
+                      <p className="text-sm text-muted-foreground text-center">No hay citas próximas.</p>
+                  )}
+              </CardContent>
+            </Card>
           
           {dailyAppointments.length > 0 ? (
             <motion.div layout className="space-y-4">
