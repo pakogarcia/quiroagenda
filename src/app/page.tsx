@@ -21,27 +21,23 @@ const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
     try {
       const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-      if (storedAppointments) {
-        const parsedAppointments = JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'dateTime'> & { dateTime: string }) => ({
-          ...apt,
-          dateTime: new Date(apt.dateTime),
-        }));
-        setAppointments(parsedAppointments);
-      } else {
-        setAppointments(getInitialAppointments(new Date()));
-      }
+      const initialAppointments = storedAppointments 
+        ? JSON.parse(storedAppointments).map((apt: Omit<Appointment, 'dateTime'> & { dateTime: string }) => ({
+            ...apt,
+            dateTime: new Date(apt.dateTime),
+          }))
+        : getInitialAppointments(new Date());
+      setAppointments(initialAppointments);
     } catch (error) {
       console.error("Failed to load appointments, using initial data.", error);
       setAppointments(getInitialAppointments(new Date()));
     }
-    
-    setSelectedDate(new Date());
     setIsClient(true);
   }, []);
 
@@ -84,6 +80,36 @@ export default function Home() {
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   }, [appointments, isClient]);
+
+  const appointmentsByDay = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    appointments.forEach(apt => {
+        const day = format(apt.dateTime, 'yyyy-MM-dd');
+        counts[day] = (counts[day] || 0) + 1;
+    });
+    return counts;
+  }, [appointments]);
+
+  const modifiers = React.useMemo(() => ({
+    oneAppointment: (date: Date) => {
+        const day = format(date, 'yyyy-MM-dd');
+        return appointmentsByDay[day] === 1;
+    },
+    twoAppointments: (date: Date) => {
+        const day = format(date, 'yyyy-MM-dd');
+        return appointmentsByDay[day] === 2;
+    },
+    threeOrMoreAppointments: (date: Date) => {
+        const day = format(date, 'yyyy-MM-dd');
+        return appointmentsByDay[day] >= 3;
+    },
+  }), [appointmentsByDay]);
+
+  const modifierClassNames = {
+    oneAppointment: 'one-appointment',
+    twoAppointments: 'two-appointments',
+    threeOrMoreAppointments: 'three-or-more-appointments',
+  };
 
   const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent'>) => {
     const newAppointment: Appointment = {
@@ -145,6 +171,8 @@ export default function Home() {
                 className="rounded-md"
                 fixedWeeks
                 locale={es}
+                modifiers={modifiers}
+                modifiersClassNames={modifierClassNames}
               />
             </CardContent>
           </Card>
@@ -202,6 +230,8 @@ export default function Home() {
                                 }}
                                 initialFocus
                                 locale={es}
+                                modifiers={modifiers}
+                                modifiersClassNames={modifierClassNames}
                             />
                         </DialogContent>
                     </Dialog>

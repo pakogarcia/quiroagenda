@@ -86,3 +86,13 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.one-appointment .rdp-button:not([aria-selected="true"]):not(.rdp-day_today) {
+  border: 2px solid #22c55e;
+}
+.two-appointments .rdp-button:not([aria-selected="true"]):not(.rdp-day_today) {
+  border: 2px solid #f59e0b;
+}
+.three-or-more-appointments .rdp-button:not([aria-selected="true"]):not(.rdp-day_today) {
+  border: 2px solid #ef4444;
+}
