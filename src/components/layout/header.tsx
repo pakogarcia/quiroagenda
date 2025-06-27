@@ -8,10 +8,10 @@ import { cn } from '@/lib/utils';
 export function AppHeader({ className }: { className?: string }) {
   return (
     <header className={cn(
-      "flex flex-col md:flex-row md:items-center md:justify-between p-4 border-b bg-card gap-4 md:gap-2", 
+      "flex flex-wrap items-center justify-between p-4 border-b bg-card gap-x-4 gap-y-2", 
       className
     )}>
-      <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors self-start">
+      <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors">
         <Leaf className="h-8 w-8" />
         <h1 className="text-2xl font-bold font-headline">QuiroAgenda</h1>
       </Link>
