@@ -4,7 +4,7 @@
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserX, UserCog, Bot, BookOpen } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserX, UserCog, Bot, BookOpen, Euro, Lock, Smartphone } from 'lucide-react';
 
 export default function ManualPage() {
   return (
@@ -33,25 +33,29 @@ export default function ManualPage() {
                   <AccordionTrigger>Visualización y Navegación</AccordionTrigger>
                   <AccordionContent className="space-y-2">
                     <p>Navega por un calendario visual e intuitivo. Los días con citas se marcan con colores para que veas de un vistazo tu ocupación futura: verde (1 cita), naranja (2 citas) y rojo (3 o más).</p>
-                    <p>Consulta un resumen de tus próximas 7 citas directamente en la página principal para anticipar tu semana.</p>
+                    <p>Los días que hayas bloqueado aparecerán en gris y no permitirán nuevas citas.</p>
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>Creación y Edición de Citas</AccordionTrigger>
-                  <AccordionContent>
-                    Añade nuevas citas en segundos. Rellena los datos del cliente (o selecciónalo de tu lista), elige fecha y hora, y añade notas. ¿Un cambio de planes? Edita o elimina citas con un solo clic.
+                 <AccordionItem value="item-2">
+                  <AccordionTrigger>Finalizar una Cita (Cobro y Ausencias)</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p>En las citas pasadas, verás un icono de Euro (€). Al pulsarlo, se abre un diálogo para finalizar la cita:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li><strong>Registrar Pago:</strong> Anota el importe y el método de pago (Efectivo, Bizum, PayPal o Bono).</li>
+                      <li><strong>Marcar como No Presentado:</strong> Si el cliente no acude, esta opción lo registrará y la cita no contará en tu contabilidad.</li>
+                    </ul>
                   </AccordionContent>
                 </AccordionItem>
-                 <AccordionItem value="item-3">
-                  <AccordionTrigger>Confirmación Instantánea por WhatsApp</AccordionTrigger>
+                <AccordionItem value="item-3">
+                  <AccordionTrigger>Bloqueo de Días</AccordionTrigger>
                   <AccordionContent>
-                    Al crear o modificar una cita, QuiroAgenda genera al instante un mensaje de confirmación profesional para enviar por WhatsApp. Incluye todos los detalles: nombre del cliente, fecha, hora y la dirección de tu negocio. ¡Cero esfuerzo, máxima profesionalidad!
+                    ¿Necesitas un día libre? Selecciona un día en el calendario y pulsa el botón con el icono de candado (<Lock className="inline h-4 w-4"/>). El día se marcará como no disponible y no podrás agendar citas en él. Vuelve a pulsarlo para desbloquearlo.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-4">
-                  <AccordionTrigger>Gestión de Ausencias (No Presentados)</AccordionTrigger>
+                  <AccordionTrigger>Confirmación por WhatsApp</AccordionTrigger>
                   <AccordionContent>
-                    Marca a un cliente como "No Presentado" con un botón. Esto te permite enviar un mensaje de seguimiento por WhatsApp y asegura que la cita no se cuente en tu contabilidad, manteniendo tus informes limpios y precisos.
+                    Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Incluye todos los detalles: nombre del cliente, fecha, hora y la dirección de tu negocio.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -60,21 +64,21 @@ export default function ManualPage() {
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Users /> Fichero de Clientes Centralizado</CardTitle>
-              <CardDescription>Conoce a tus clientes y construye relaciones duraderas.</CardDescription>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Users /> Fichero de Clientes y Bonos</CardTitle>
+              <CardDescription>Conoce a tus clientes y fidelízalos con bonos.</CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger>Base de Datos Completa</AccordionTrigger>
+                  <AccordionTrigger>Gestión de Bonos por Cliente</AccordionTrigger>
                   <AccordionContent>
-                    Guarda y gestiona la información de tus clientes: nombre, apellidos y teléfono. La aplicación evita números de teléfono duplicados para mantener tus datos organizados y sin errores.
+                    Desde la ficha de un cliente, puedes asignarle o modificar un bono, especificando el número de sesiones y su precio. Cuando un cliente pague con bono, se descontará una sesión automáticamente.
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>Autocompletado Inteligente</AccordionTrigger>
+                 <AccordionItem value="item-2">
+                  <AccordionTrigger>Notificación de Sesiones Restantes</AccordionTrigger>
                   <AccordionContent>
-                    Al crear una nueva cita, simplemente selecciona un cliente existente y sus datos se rellenarán automáticamente. ¡Menos teclear, más agilidad!
+                    Tras pagar una cita con bono, la aplicación generará un mensaje de WhatsApp listo para enviar, informando al cliente de las sesiones que le quedan. ¡Un detalle que marca la diferencia!
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -83,21 +87,21 @@ export default function ManualPage() {
           
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Gift /> Marketing y Comunicación Automatizada</CardTitle>
-              <CardDescription>Fideliza a tus clientes y aumenta tus ingresos sin esfuerzo.</CardDescription>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Gift /> Marketing y Comunicación</CardTitle>
+              <CardDescription>Fideliza a tus clientes y aumenta tus ingresos.</CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger><Send className="w-4 h-4 mr-2" /> Recordatorios de Citas</AccordionTrigger>
+                  <AccordionTrigger><Send className="w-4 h-4 mr-2" /> Recordatorios de Citas Flexibles</AccordionTrigger>
                   <AccordionContent>
-                    Reduce las ausencias enviando recordatorios por WhatsApp para las citas del día siguiente. QuiroAgenda detecta quiénes no han recibido recordatorio y genera mensajes personalizados, listos para enviar con un clic.
+                    Reduce las ausencias enviando recordatorios por WhatsApp. Ahora puedes seleccionar cualquier cita futura pendiente de la lista y generar sus recordatorios, sin estar limitado a las del día siguiente.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-2">
                   <AccordionTrigger><Gift className="w-4 h-4 mr-2" /> Campañas de Ofertas</AccordionTrigger>
                   <AccordionContent>
-                    Crea ofertas especiales para un período de tiempo determinado. Nuestra IA redactará un mensaje persuasivo y personalizado para cada uno de tus clientes, listo para ser enviado por WhatsApp. ¡Una potente herramienta de marketing a tu alcance!
+                    Crea ofertas especiales para un período determinado. La IA redactará un mensaje persuasivo y personalizado para cada cliente, listo para enviar por WhatsApp.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -106,11 +110,15 @@ export default function ManualPage() {
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Calculator /> Contabilidad Simplificada</CardTitle>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Calculator /> Contabilidad Avanzada</CardTitle>
               <CardDescription>Toma el control de tus finanzas con informes claros.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p>Selecciona un rango de fechas (pasadas) y obtén un resumen instantáneo de las citas completadas. Visualiza un listado detallado para tener un control total sobre tu facturación. Usa los filtros rápidos para ver la última semana, el último mes o todo el año.</p>
+            <CardContent className="space-y-4">
+              <p>Selecciona un rango de fechas y obtén un resumen financiero completo. Visualiza ingresos totales, un gráfico de tarta con el desglose por método de pago (Efectivo, Bizum, PayPal) y el número de bonos usados.</p>
+              <div>
+                <h4 className="font-semibold flex items-center gap-2 mb-2"><ShoppingCart className="w-4 h-4"/> Venta de Bonos</h4>
+                <p>Desde la página de Contabilidad, puedes registrar la venta de un nuevo bono a un cliente. Esta transacción se reflejará en los informes financieros y actualizará automáticamente la ficha del cliente.</p>
+              </div>
             </CardContent>
           </Card>
           
