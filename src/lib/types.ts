@@ -1,5 +1,7 @@
+export type PaymentMethod = 'cash' | 'bizum' | 'voucher' | 'paypal';
+
 export type Payment = {
-  method: 'cash' | 'bizum' | 'voucher';
+  method: PaymentMethod;
   amount: number;
 };
 
@@ -32,4 +34,14 @@ export type BusinessProfile = {
   name: string;
   address: string;
   phone: string;
+};
+
+export type VoucherSale = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  date: Date;
+  sessions: number;
+  amount: number;
+  paymentMethod: 'cash' | 'bizum' | 'paypal';
 };

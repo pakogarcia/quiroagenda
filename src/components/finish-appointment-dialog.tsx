@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { type Appointment, type Client, type BusinessProfile, Payment, Voucher } from '@/lib/types';
+import { type Appointment, type Client, type BusinessProfile, Payment, Voucher, PaymentMethod } from '@/lib/types';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { useToast } from '@/hooks/use-toast';
 import { Send } from 'lucide-react';
@@ -20,10 +20,10 @@ const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 
 const paymentSchema = z.object({
-  paymentMethod: z.enum(['cash', 'bizum', 'voucher']),
+  paymentMethod: z.enum(['cash', 'bizum', 'voucher', 'paypal']),
   amount: z.coerce.number().optional(),
 }).refine(data => {
-    if (data.paymentMethod === 'cash' || data.paymentMethod === 'bizum') {
+    if (data.paymentMethod === 'cash' || data.paymentMethod === 'bizum' || data.paymentMethod === 'paypal') {
         return data.amount !== undefined && data.amount > 0;
     }
     return true;
@@ -87,7 +87,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     if (!appointment) return;
 
     const payment: Payment = {
-      method: data.paymentMethod,
+      method: data.paymentMethod as PaymentMethod,
       amount: data.paymentMethod === 'voucher' ? 0 : data.amount || 0,
     };
     
@@ -101,9 +101,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             const newClients = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
             localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(newClients));
             
-            // Generate message and update UI, but don't close dialog yet.
             generateAndShowVoucherMessage(updatedClient.name.split(' ')[0], updatedVoucher.sessions);
-            // The onAppointmentFinished will be called when the user closes the voucher message dialog.
             
         } catch (error) {
             console.error("Failed to update client voucher.", error);
@@ -114,12 +112,11 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             });
         }
     } else {
-        // For cash or bizum, finish appointment and close dialog immediately.
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         onAppointmentFinished(updatedAppointment);
         toast({
           title: 'Pago registrado',
-          description: `Se ha registrado un pago de ${(data.amount || 0).toFixed(2)}€ con ${data.paymentMethod === 'cash' ? 'Efectivo' : 'Bizum'}.`,
+          description: `Se ha registrado un pago de ${(data.amount || 0).toFixed(2)}€ con ${data.paymentMethod}.`,
         });
     }
   };
@@ -196,6 +193,12 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                             </FormControl>
                             <FormLabel className="font-normal">Bizum</FormLabel>
                           </FormItem>
+                           <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="paypal" />
+                            </FormControl>
+                            <FormLabel className="font-normal">PayPal</FormLabel>
+                          </FormItem>
                           {client?.voucher && client.voucher.sessions > 0 && (
                               <FormItem className="flex items-center space-x-3 space-y-0">
                                   <FormControl>
@@ -216,7 +219,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                             <FormItem>
                                 <FormLabel>Importe Abonado (€)</FormLabel>
                                 <FormControl>
-                                <Input type="number" step="0.01" placeholder="p. ej., 40" {...field} />
+                                <Input type="number" step="0.01" placeholder="p. ej., 40" {...field} value={field.value ?? ''} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

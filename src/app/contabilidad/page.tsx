@@ -8,24 +8,30 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { type DateRange } from 'react-day-picker';
 import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Appointment, Payment } from '@/lib/types';
+import type { Appointment, Payment, VoucherSale } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift } from 'lucide-react';
+import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
+const VOUCHER_SALES_STORAGE_KEY = 'quiroagenda_voucher_sales';
+
+type Transaction = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
 
 export default function ContabilidadPage() {
     const [isClient, setIsClient] = React.useState(false);
     const [allAppointments, setAllAppointments] = React.useState<Appointment[]>([]);
+    const [allVoucherSales, setAllVoucherSales] = React.useState<VoucherSale[]>([]);
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
+    const [isVoucherSaleDialogOpen, setIsVoucherSaleDialogOpen] = React.useState(false);
 
-    React.useEffect(() => {
+    const loadData = React.useCallback(() => {
         try {
             const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
             if (storedAppointments) {
@@ -39,13 +45,26 @@ export default function ContabilidadPage() {
                     .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()));
                 setAllAppointments(parsedAppointments);
             }
+            const storedVoucherSales = localStorage.getItem(VOUCHER_SALES_STORAGE_KEY);
+            if (storedVoucherSales) {
+                const parsedVoucherSales = JSON.parse(storedVoucherSales)
+                    .map((sale: any) => ({
+                        ...sale,
+                        date: new Date(sale.date),
+                    }));
+                setAllVoucherSales(parsedVoucherSales);
+            }
         } catch (error) {
-            console.error("Failed to load appointments.", error);
+            console.error("Failed to load data.", error);
         }
         setIsClient(true);
     }, []);
+
+    React.useEffect(() => {
+        loadData();
+    }, [loadData]);
     
-    const filteredAppointments = React.useMemo(() => {
+    const filteredTransactions = React.useMemo(() => {
         if (!dateRange?.from || !dateRange?.to) {
             return [];
         }
@@ -53,49 +72,62 @@ export default function ContabilidadPage() {
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to);
 
-        return allAppointments
-            .filter(apt => {
-                const aptDate = new Date(apt.dateTime);
-                // Only include completed appointments
-                return isWithinInterval(aptDate, { start, end }) && apt.status === 'completed';
-            })
-            .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
-    }, [allAppointments, dateRange]);
+        const completedAppointments: Transaction[] = allAppointments
+            .filter(apt => isWithinInterval(apt.dateTime, { start, end }) && apt.status === 'completed')
+            .map(apt => ({ ...apt, type: 'appointment' }));
+        
+        const voucherSalesInRange: Transaction[] = allVoucherSales
+            .filter(sale => isWithinInterval(sale.date, { start, end }))
+            .map(sale => ({ ...sale, type: 'voucher_sale' }));
+
+        return [...completedAppointments, ...voucherSalesInRange]
+            .sort((a, b) => (b.type === 'appointment' ? b.dateTime.getTime() : b.date.getTime()) - (a.type === 'appointment' ? a.dateTime.getTime() : a.date.getTime()));
+            
+    }, [allAppointments, allVoucherSales, dateRange]);
 
     const financialSummary = React.useMemo(() => {
         const summary = {
             totalRevenue: 0,
             cashRevenue: 0,
             bizumRevenue: 0,
+            paypalRevenue: 0,
             vouchersUsed: 0,
-            completedAppointments: filteredAppointments.length,
+            completedAppointments: 0,
         };
 
-        for (const apt of filteredAppointments) {
-            if (apt.payment) {
-                if (apt.payment.method === 'cash' || apt.payment.method === 'bizum') {
-                    summary.totalRevenue += apt.payment.amount;
-                    if (apt.payment.method === 'cash') {
-                        summary.cashRevenue += apt.payment.amount;
-                    } else {
-                        summary.bizumRevenue += apt.payment.amount;
+        for (const transaction of filteredTransactions) {
+            if (transaction.type === 'appointment') {
+                summary.completedAppointments += 1;
+                if (transaction.payment) {
+                     if (transaction.payment.method === 'cash' || transaction.payment.method === 'bizum' || transaction.payment.method === 'paypal') {
+                        summary.totalRevenue += transaction.payment.amount;
+                        if (transaction.payment.method === 'cash') summary.cashRevenue += transaction.payment.amount;
+                        else if (transaction.payment.method === 'bizum') summary.bizumRevenue += transaction.payment.amount;
+                        else if (transaction.payment.method === 'paypal') summary.paypalRevenue += transaction.payment.amount;
+                    } else if (transaction.payment.method === 'voucher') {
+                        summary.vouchersUsed += 1;
                     }
-                } else if (apt.payment.method === 'voucher') {
-                    summary.vouchersUsed += 1;
                 }
+            } else if (transaction.type === 'voucher_sale') {
+                summary.totalRevenue += transaction.amount;
+                if (transaction.paymentMethod === 'cash') summary.cashRevenue += transaction.amount;
+                else if (transaction.paymentMethod === 'bizum') summary.bizumRevenue += transaction.amount;
+                else if (transaction.paymentMethod === 'paypal') summary.paypalRevenue += transaction.amount;
             }
         }
         return summary;
-    }, [filteredAppointments]);
+    }, [filteredTransactions]);
 
     const chartData = [
         { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
         { name: 'Bizum', value: financialSummary.bizumRevenue, fill: 'hsl(var(--chart-2))' },
+        { name: 'PayPal', value: financialSummary.paypalRevenue, fill: 'hsl(var(--chart-3))' },
     ].filter(d => d.value > 0);
 
     const chartConfig = {
       efectivo: { label: "Efectivo", color: "hsl(var(--chart-1))" },
       bizum: { label: "Bizum", color: "hsl(var(--chart-2))" },
+      paypal: { label: "PayPal", color: "hsl(var(--chart-3))" },
     };
 
     const setPresetRange = (preset: 'lastWeek' | 'lastMonth' | 'yearToDate') => {
@@ -121,6 +153,10 @@ export default function ContabilidadPage() {
         window.print();
     };
 
+    const onVoucherSold = () => {
+        loadData(); // Re-fetch data to reflect the new sale
+    }
+
     if (!isClient) {
         return <SplashScreen />;
     }
@@ -131,12 +167,18 @@ export default function ContabilidadPage() {
             <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                 <div className="flex justify-between items-center mb-6 no-print">
                     <h1 className="text-3xl font-bold font-headline text-primary">Contabilidad</h1>
-                    {dateRange?.from && dateRange.to && (
-                         <Button variant="outline" onClick={handlePrint}>
-                            <Printer className="h-4 w-4 mr-2" />
-                            Imprimir Listado
+                     <div className="flex items-center gap-2">
+                         <Button variant="outline" onClick={() => setIsVoucherSaleDialogOpen(true)}>
+                            <Gift className="h-4 w-4 mr-2" />
+                            Vender Bono
                         </Button>
-                    )}
+                        {dateRange?.from && dateRange.to && (
+                            <Button variant="outline" onClick={handlePrint}>
+                                <Printer className="h-4 w-4 mr-2" />
+                                Imprimir Listado
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 <Card className="mb-6 shadow-md no-print">
@@ -224,7 +266,7 @@ export default function ContabilidadPage() {
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
                             <Card className="shadow-md lg:col-span-3 printable-content">
                                 <CardHeader>
-                                    <CardTitle>Detalle de Citas</CardTitle>
+                                    <CardTitle>Detalle de Movimientos</CardTitle>
                                     <CardDescription>
                                         Período del {format(dateRange.from, "P", { locale: es })} al {format(dateRange.to, "P", { locale: es })}
                                     </CardDescription>
@@ -235,29 +277,34 @@ export default function ContabilidadPage() {
                                             <TableRow>
                                                 <TableHead>Fecha</TableHead>
                                                 <TableHead>Cliente</TableHead>
+                                                <TableHead>Concepto</TableHead>
                                                 <TableHead>Método Pago</TableHead>
                                                 <TableHead className="text-right">Importe</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {filteredAppointments.length > 0 ? (
-                                                filteredAppointments.map(apt => (
-                                                    <TableRow key={apt.id}>
-                                                        <TableCell className="font-medium">{format(apt.dateTime, "P", { locale: es })}</TableCell>
-                                                        <TableCell>{apt.clientName}</TableCell>
-                                                        <TableCell className="capitalize">{apt.payment?.method === 'cash' ? 'Efectivo' : apt.payment?.method === 'bizum' ? 'Bizum' : 'Bono'}</TableCell>
-                                                        <TableCell className="text-right">{apt.payment?.amount ? `${apt.payment.amount.toFixed(2)}€` : 'N/A'}</TableCell>
+                                            {filteredTransactions.length > 0 ? (
+                                                filteredTransactions.map(item => (
+                                                    <TableRow key={item.id}>
+                                                        <TableCell className="font-medium">{format(item.type === 'appointment' ? item.dateTime : item.date, "P", { locale: es })}</TableCell>
+                                                        <TableCell>{item.clientName}</TableCell>
+                                                        <TableCell className='flex items-center gap-2'>
+                                                            {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
+                                                            {item.type === 'appointment' ? 'Cita' : `Bono ${item.sessions} sesiones`}
+                                                        </TableCell>
+                                                        <TableCell className="capitalize">{item.type === 'appointment' ? (item.payment?.method === 'cash' ? 'Efectivo' : item.payment?.method === 'bizum' ? 'Bizum' : item.payment?.method === 'paypal' ? 'PayPal' : 'Bono') : (item.paymentMethod === 'cash' ? 'Efectivo' : item.paymentMethod === 'bizum' ? 'Bizum' : 'PayPal')}</TableCell>
+                                                        <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={4} className="h-24 text-center">No se encontraron citas pagadas en este período.</TableCell>
+                                                    <TableCell colSpan={5} className="h-24 text-center">No se encontraron movimientos en este período.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
                                         <TableFooter>
                                             <TableRow>
-                                                <TableCell colSpan={3} className="font-bold text-lg">Total</TableCell>
+                                                <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
                                                 <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
                                             </TableRow>
                                         </TableFooter>
@@ -299,6 +346,11 @@ export default function ContabilidadPage() {
                     </div>
                 )}
             </main>
+            <VoucherSaleDialog
+                isOpen={isVoucherSaleDialogOpen}
+                onOpenChange={setIsVoucherSaleDialogOpen}
+                onVoucherSold={onVoucherSold}
+            />
         </div>
     );
 }
