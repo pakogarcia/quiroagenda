@@ -251,10 +251,10 @@ export default function Home() {
   const isCurrentDayBlocked = selectedDate ? isDayBlocked(selectedDate) : false;
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground font-body">
+    <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <AppHeader />
 
-      <main className="flex-1 grid md:grid-cols-[auto_1fr] gap-8 p-4 md:p-8 overflow-hidden">
+      <main className="flex-1 grid md:grid-cols-[auto_1fr] gap-8 p-4 md:p-8">
         <aside className="hidden md:flex flex-col gap-8 items-center w-full max-w-sm">
           <Card className="shadow-lg w-full">
             <CardContent className="p-0">

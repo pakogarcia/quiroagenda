@@ -96,7 +96,7 @@ export default function ClientsPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground font-body">
+        <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
             <AppHeader />
             <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
