@@ -271,15 +271,6 @@ export default function Home() {
             </CardContent>
           </Card>
           
-          <Button 
-            onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }}
-            disabled={isCurrentDayBlocked}
-            className="w-full"
-          >
-              <Plus className="h-4 w-4 mr-2" />
-              Añadir Nueva Cita
-          </Button>
-
           <Card className="shadow-lg w-full">
               <CardHeader>
                   <CardTitle className="text-xl">Próximas Citas</CardTitle>
@@ -337,6 +328,13 @@ export default function Home() {
                     </Dialog>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button 
+                        onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }}
+                        disabled={isCurrentDayBlocked}
+                    >
+                        <Plus className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">Nueva Cita</span>
+                    </Button>
                     <Button variant="outline" onClick={() => setIsReminderDialogOpen(true)}>
                         <Send className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Recordatorios</span>
