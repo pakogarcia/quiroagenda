@@ -358,7 +358,7 @@ export default function Home() {
                            </CardDescription>
                         </div>
                          <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                            {apt.status === 'scheduled' && isPast(apt.dateTime) && (
+                            {apt.status === 'scheduled' && (isPast(apt.dateTime) || isSameDay(apt.dateTime, new Date())) && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>

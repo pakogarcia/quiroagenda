@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -43,22 +44,20 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   
   React.useEffect(() => {
     if (appointment) {
+      setStep('selectAction');
+      setClient(null);
+      setGeneratedMessage('');
+      form.reset();
       try {
         const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
         if (storedClients) {
           const clients: Client[] = JSON.parse(storedClients);
-          const currentClient = clients.find(c => c.name.toLowerCase() === appointment.clientName.toLowerCase() || c.phone === appointment.clientPhone);
+          const currentClient = clients.find(c => c.name.toLowerCase().trim() === appointment.clientName.toLowerCase().trim() || c.phone === appointment.clientPhone);
           setClient(currentClient || null);
         }
       } catch (error) {
         console.error("Failed to load client data.", error);
       }
-    } else {
-      // Reset state on close
-      setStep('selectAction');
-      setClient(null);
-      setGeneratedMessage('');
-      form.reset();
     }
   }, [appointment, form]);
   
@@ -244,7 +243,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     <Dialog open={!!appointment} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Finalizar Cita: {appointment.clientName}</DialogTitle>
+          <DialogTitle>Finalizar Cita: {appointment?.clientName}</DialogTitle>
           {step === 'selectAction' && (
             <DialogDescription>Elige una acción para esta cita.</DialogDescription>
           )}
