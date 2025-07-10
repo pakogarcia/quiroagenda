@@ -108,7 +108,7 @@ export default function ClientsPage() {
                 </div>
                 
                 {clients.length > 0 ? (
-                    <motion.div layout className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <motion.div layout className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       <AnimatePresence>
                         {clients.map(client => (
                             <motion.div
@@ -117,7 +117,7 @@ export default function ClientsPage() {
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.95 }}
-                              className="origin-top"
+                              className="origin-top max-w-xl"
                             >
                               <Card className="shadow-md hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col">
                                   <CardHeader>
@@ -195,3 +195,5 @@ export default function ClientsPage() {
         </div>
     );
 }
+
+    

@@ -377,7 +377,7 @@ export default function Home() {
                 <p className="text-muted-foreground mt-1">No se pueden agendar citas. Puedes desbloquearlo para continuar.</p>
             </div>
           ) : dailyAppointments.length > 0 ? (
-            <motion.div layout className="space-y-4">
+            <motion.div layout className="space-y-4 max-w-xl">
               <AnimatePresence>
                 {dailyAppointments.map((apt, index) => (
                   <motion.div
@@ -522,3 +522,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
