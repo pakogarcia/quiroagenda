@@ -84,8 +84,7 @@ export default function Home() {
   const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
 
-  const isDayBlocked = React.useCallback((date: Date | undefined): boolean => {
-    if (!date) return false;
+  const isDayBlocked = React.useCallback((date: Date): boolean => {
     return blockedDays.includes(format(date, 'yyyy-MM-dd'));
   }, [blockedDays]);
 
@@ -129,8 +128,10 @@ export default function Home() {
 
   const modifiers = React.useMemo(() => {
     const today = startOfToday();
+    const blockedDates = blockedDays.map(d => new Date(d));
+
     return {
-      blocked: (date: Date) => isDayBlocked(date),
+      blocked: (date: Date) => blockedDays.includes(format(date, 'yyyy-MM-dd')),
       oneAppointment: (date: Date) => {
         if (isBefore(date, today) || isDayBlocked(date)) return false;
         const day = format(date, 'yyyy-MM-dd');
@@ -147,7 +148,7 @@ export default function Home() {
         return appointmentsByDay[day] >= 3;
       },
     };
-  }, [appointmentsByDay, isDayBlocked]);
+  }, [appointmentsByDay, isDayBlocked, blockedDays]);
 
   const modifierClassNames = {
     blocked: 'blocked-day',
@@ -248,7 +249,7 @@ export default function Home() {
     return <SplashScreen />;
   }
 
-  const isCurrentDayBlocked = isDayBlocked(selectedDate);
+  const isCurrentDayBlocked = isDayBlocked(selectedDate!);
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground font-body">
@@ -267,7 +268,6 @@ export default function Home() {
                 locale={es}
                 modifiers={modifiers}
                 modifiersClassNames={modifierClassNames}
-                disabled={isDayBlocked}
               />
             </CardContent>
           </Card>
@@ -327,7 +327,6 @@ export default function Home() {
                                 locale={es}
                                 modifiers={modifiers}
                                 modifiersClassNames={modifierClassNames}
-                                disabled={isDayBlocked}
                             />
                         </DialogContent>
                     </Dialog>
@@ -481,6 +480,7 @@ export default function Home() {
               onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment}
               appointment={editingAppointment}
               selectedDate={selectedDate!}
+              blockedDays={blockedDays}
             />
         </DialogContent>
       </Dialog>
@@ -525,5 +525,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

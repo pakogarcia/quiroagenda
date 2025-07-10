@@ -1,9 +1,10 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { format, set } from 'date-fns';
+import { format, set, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -34,9 +35,10 @@ type AppointmentFormProps = {
   onSubmit: (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => void;
   appointment?: Appointment;
   selectedDate?: Date;
+  blockedDays: string[];
 };
 
-export function AppointmentForm({ onSubmit, appointment, selectedDate }: AppointmentFormProps) {
+export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDays }: AppointmentFormProps) {
   const [clients, setClients] = React.useState<Client[]>([]);
   
   const form = useForm<AppointmentFormValues>({
@@ -85,6 +87,10 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
       notes: values.notes || '',
     });
   };
+
+  const blockedDates = React.useMemo(() => 
+    blockedDays.map(dayStr => parse(dayStr, 'yyyy-MM-dd', new Date())),
+  [blockedDays]);
 
   return (
     <Form {...form}>
@@ -167,6 +173,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                         onSelect={field.onChange}
                         initialFocus
                         locale={es}
+                        disabled={blockedDates}
                     />
                     </PopoverContent>
                 </Popover>
