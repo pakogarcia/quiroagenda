@@ -22,7 +22,6 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { OfferDialog } from '@/components/offer-dialog';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 const BLOCKED_DAYS_STORAGE_KEY = 'quiroagenda_blocked_days';
@@ -80,7 +79,6 @@ export default function Home() {
   const [deletingAppointmentId, setDeletingAppointmentId] = React.useState<string | null>(null);
 
   const [isReminderDialogOpen, setIsReminderDialogOpen] = React.useState(false);
-  const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
   const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
 
@@ -336,10 +334,6 @@ export default function Home() {
                         <Send className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Enviar Recordatorios</span>
                     </Button>
-                     <Button variant="outline" onClick={() => setIsOfferDialogOpen(true)}>
-                        <Gift className="h-4 w-4 md:mr-2" />
-                        <span className="hidden md:inline">Crear Oferta</span>
-                    </Button>
                     <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay}>
                         {isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}
                         <span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear Día' : 'Bloquear Día'}</span>
@@ -461,6 +455,16 @@ export default function Home() {
                 <p className="text-muted-foreground mt-1">Selecciona otra fecha o añade una nueva cita.</p>
             </div>
           )}
+           <div className="pt-4 mt-auto">
+             <Button 
+                onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }}
+                disabled={isCurrentDayBlocked}
+                className="w-full"
+              >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Añadir Nueva Cita
+              </Button>
+           </div>
         </section>
       </main>
       
@@ -498,11 +502,6 @@ export default function Home() {
         onOpenChange={setIsReminderDialogOpen}
         appointments={futureAppointments}
         onRemindersSent={handleSetRemindersSent}
-      />
-
-      <OfferDialog
-        isOpen={isOfferDialogOpen}
-        onOpenChange={setIsOfferDialogOpen}
       />
 
       <FinishAppointmentDialog 
