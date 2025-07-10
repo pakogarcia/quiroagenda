@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday, startOfDay, isPast } from 'date-fns';
+import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro } from 'lucide-react';
