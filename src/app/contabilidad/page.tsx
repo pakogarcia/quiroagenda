@@ -239,120 +239,122 @@ export default function ContabilidadPage() {
                     </Card>
 
                     {dateRange?.from && dateRange?.to ? (
-                        <div className="space-y-6 printable-area">
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 no-print">
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
-                                        <Euro className="h-4 w-4 text-muted-foreground" />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-2xl font-bold">{financialSummary.totalRevenue.toFixed(2)}€</div>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-sm font-medium">Citas Completadas</CardTitle>
-                                        <FileText className="h-4 w-4 text-muted-foreground" />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-2xl font-bold">{financialSummary.completedAppointments}</div>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-sm font-medium">Bonos Usados</CardTitle>
-                                        <Gift className="h-4 w-4 text-muted-foreground" />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-2xl font-bold">{financialSummary.vouchersUsed}</div>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-sm font-medium">Ingresos en Efectivo</CardTitle>
-                                        <Euro className="h-4 w-4 text-muted-foreground" />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-2xl font-bold">{financialSummary.cashRevenue.toFixed(2)}€</div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                        <>
+                            <div className="space-y-6 printable-area">
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 no-print">
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+                                            <Euro className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{financialSummary.totalRevenue.toFixed(2)}€</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Citas Completadas</CardTitle>
+                                            <FileText className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{financialSummary.completedAppointments}</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Bonos Usados</CardTitle>
+                                            <Gift className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{financialSummary.vouchersUsed}</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Ingresos en Efectivo</CardTitle>
+                                            <Euro className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{financialSummary.cashRevenue.toFixed(2)}€</div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
 
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-                                <Card className="shadow-md lg:col-span-3 printable-content">
-                                    <CardHeader>
-                                        <CardTitle>Detalle de Movimientos</CardTitle>
-                                        <CardDescription>
-                                            Período del {format(dateRange.from, "P", { locale: es })} al {format(dateRange.to, "P", { locale: es })}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Fecha</TableHead>
-                                                    <TableHead>Cliente</TableHead>
-                                                    <TableHead>Concepto</TableHead>
-                                                    <TableHead>Método Pago</TableHead>
-                                                    <TableHead className="text-right">Importe</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {filteredTransactions.length > 0 ? (
-                                                    filteredTransactions.map(item => (
-                                                        <TableRow key={item.id}>
-                                                            <TableCell className="font-medium">{format(item.type === 'appointment' ? item.dateTime : item.date, "P", { locale: es })}</TableCell>
-                                                            <TableCell>{item.clientName}</TableCell>
-                                                            <TableCell className='flex items-center gap-2'>
-                                                                {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
-                                                                {item.type === 'appointment' ? 'Cita' : `Bono ${item.sessions} sesiones`}
-                                                            </TableCell>
-                                                            <TableCell className="capitalize">{item.type === 'appointment' ? (item.payment?.method === 'cash' ? 'Efectivo' : item.payment?.method === 'bizum' ? 'Bizum' : item.payment?.method === 'paypal' ? 'PayPal' : 'Bono') : (item.paymentMethod === 'cash' ? 'Efectivo' : item.paymentMethod === 'bizum' ? 'Bizum' : 'PayPal')}</TableCell>
-                                                            <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                ) : (
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+                                    <Card className="shadow-md lg:col-span-3 printable-content">
+                                        <CardHeader>
+                                            <CardTitle>Detalle de Movimientos</CardTitle>
+                                            <CardDescription>
+                                                Período del {format(dateRange.from, "P", { locale: es })} al {format(dateRange.to, "P", { locale: es })}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <Table>
+                                                <TableHeader>
                                                     <TableRow>
-                                                        <TableCell colSpan={5} className="h-24 text-center">No se encontraron movimientos en este período.</TableCell>
+                                                        <TableHead>Fecha</TableHead>
+                                                        <TableHead>Cliente</TableHead>
+                                                        <TableHead>Concepto</TableHead>
+                                                        <TableHead>Método Pago</TableHead>
+                                                        <TableHead className="text-right">Importe</TableHead>
                                                     </TableRow>
-                                                )}
-                                            </TableBody>
-                                            <TableFooter>
-                                                <TableRow>
-                                                    <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
-                                                    <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
-                                                </TableRow>
-                                            </TableFooter>
-                                        </Table>
-                                    </CardContent>
-                                </Card>
-                                <Card className="shadow-md lg:col-span-2 no-print">
-                                    <CardHeader>
-                                        <CardTitle>Ingresos por Método</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {chartData.length > 0 ? (
-                                        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                                                    <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={60}>
-                                                        {chartData.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                                                        ))}
-                                                    </Pie>
-                                            </ResponsiveContainer>
-                                        </ChartContainer>
-                                        ) : (
-                                            <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-                                                No hay datos para mostrar.
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {filteredTransactions.length > 0 ? (
+                                                        filteredTransactions.map(item => (
+                                                            <TableRow key={item.id}>
+                                                                <TableCell className="font-medium">{format(item.type === 'appointment' ? item.dateTime : item.date, "P", { locale: es })}</TableCell>
+                                                                <TableCell>{item.clientName}</TableCell>
+                                                                <TableCell className='flex items-center gap-2'>
+                                                                    {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
+                                                                    {item.type === 'appointment' ? 'Cita' : `Bono ${item.sessions} sesiones`}
+                                                                </TableCell>
+                                                                <TableCell className="capitalize">{item.type === 'appointment' ? (item.payment?.method === 'cash' ? 'Efectivo' : item.payment?.method === 'bizum' ? 'Bizum' : item.payment?.method === 'paypal' ? 'PayPal' : 'Bono') : (item.paymentMethod === 'cash' ? 'Efectivo' : item.paymentMethod === 'bizum' ? 'Bizum' : 'PayPal')}</TableCell>
+                                                                <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
+                                                            </TableRow>
+                                                        ))
+                                                    ) : (
+                                                        <TableRow>
+                                                            <TableCell colSpan={5} className="h-24 text-center">No se encontraron movimientos en este período.</TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                                <TableFooter>
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
+                                                        <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
+                                                    </TableRow>
+                                                </TableFooter>
+                                            </Table>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="shadow-md lg:col-span-2 no-print">
+                                        <CardHeader>
+                                            <CardTitle>Ingresos por Método</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {chartData.length > 0 ? (
+                                            <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                                                        <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                                            {chartData.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                            ))}
+                                                        </Pie>
+                                                </ResponsiveContainer>
+                                            </ChartContainer>
+                                            ) : (
+                                                <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                                                    No hay datos para mostrar.
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </div>
-                        </div>
+                        </>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-64 text-center p-8 border-2 border-dashed rounded-lg no-print">
                             <Calculator className="w-16 h-16 text-muted-foreground/50 mb-4" />
@@ -373,5 +375,4 @@ export default function ContabilidadPage() {
             />
         </>
     );
-
-    
+}
