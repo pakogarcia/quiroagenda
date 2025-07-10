@@ -2,10 +2,10 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, isPast } from 'date-fns';
+import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock } from 'lucide-react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -22,13 +22,17 @@ import { Badge } from '@/components/ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
+const BLOCKED_DAYS_STORAGE_KEY = 'quiroagenda_blocked_days';
 
 export default function Home() {
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
+  const [blockedDays, setBlockedDays] = React.useState<string[]>([]);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     try {
@@ -44,8 +48,13 @@ export default function Home() {
             .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()))
         : getInitialAppointments(new Date());
       setAppointments(initialAppointments);
+
+      const storedBlockedDays = localStorage.getItem(BLOCKED_DAYS_STORAGE_KEY);
+      if (storedBlockedDays) {
+        setBlockedDays(JSON.parse(storedBlockedDays));
+      }
     } catch (error) {
-      console.error("Failed to load appointments, using initial data.", error);
+      console.error("Failed to load data, using initial data.", error);
       setAppointments(getInitialAppointments(new Date()));
     }
     setSelectedDate(new Date());
@@ -58,6 +67,12 @@ export default function Home() {
     }
   }, [appointments, isClient]);
 
+  React.useEffect(() => {
+    if (isClient) {
+        localStorage.setItem(BLOCKED_DAYS_STORAGE_KEY, JSON.stringify(blockedDays));
+    }
+  }, [blockedDays, isClient]);
+
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAppointment, setEditingAppointment] = React.useState<Appointment | undefined>(undefined);
   
@@ -69,6 +84,10 @@ export default function Home() {
   const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
 
+  const isDayBlocked = React.useCallback((date: Date | undefined): boolean => {
+    if (!date) return false;
+    return blockedDays.includes(format(date, 'yyyy-MM-dd'));
+  }, [blockedDays]);
 
   const dailyAppointments = React.useMemo(() => {
     if (!selectedDate) return [];
@@ -91,11 +110,11 @@ export default function Home() {
     return appointments
       .filter(apt => {
         const aptDay = startOfDay(apt.dateTime);
-        return apt.status === 'scheduled' && (isSameDay(aptDay, today) || (isBefore(aptDay, nextWeek) && !isBefore(aptDay, today)));
+        return apt.status === 'scheduled' && !isDayBlocked(aptDay) && (isSameDay(aptDay, today) || (isBefore(aptDay, nextWeek) && !isBefore(aptDay, today)));
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
       .slice(0, 7); // To ensure we only show a limited number
-  }, [appointments, isClient]);
+  }, [appointments, isClient, isDayBlocked]);
 
   const appointmentsByDay = React.useMemo(() => {
     const counts: Record<string, number> = {};
@@ -111,25 +130,27 @@ export default function Home() {
   const modifiers = React.useMemo(() => {
     const today = startOfToday();
     return {
+      blocked: (date: Date) => isDayBlocked(date),
       oneAppointment: (date: Date) => {
-        if (isBefore(date, today)) return false;
+        if (isBefore(date, today) || isDayBlocked(date)) return false;
         const day = format(date, 'yyyy-MM-dd');
         return appointmentsByDay[day] === 1;
       },
       twoAppointments: (date: Date) => {
-        if (isBefore(date, today)) return false;
+        if (isBefore(date, today) || isDayBlocked(date)) return false;
         const day = format(date, 'yyyy-MM-dd');
         return appointmentsByDay[day] === 2;
       },
       threeOrMoreAppointments: (date: Date) => {
-        if (isBefore(date, today)) return false;
+        if (isBefore(date, today) || isDayBlocked(date)) return false;
         const day = format(date, 'yyyy-MM-dd');
         return appointmentsByDay[day] >= 3;
       },
     };
-  }, [appointmentsByDay]);
+  }, [appointmentsByDay, isDayBlocked]);
 
   const modifierClassNames = {
+    blocked: 'blocked-day',
     oneAppointment: 'one-appointment',
     twoAppointments: 'two-appointments',
     threeOrMoreAppointments: 'three-or-more-appointments',
@@ -196,6 +217,23 @@ export default function Home() {
     setFinishingAppointment(null);
   };
 
+  const handleToggleBlockDay = () => {
+    if (!selectedDate) return;
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    if (blockedDays.includes(dateStr)) {
+        setBlockedDays(prev => prev.filter(d => d !== dateStr));
+        toast({ title: 'Día Desbloqueado', description: 'Ahora se pueden agendar citas para este día.' });
+    } else {
+        if (dailyAppointments.length > 0) {
+            toast({ variant: 'destructive', title: 'Error', description: 'No se puede bloquear un día que ya tiene citas.' });
+            return;
+        }
+        setBlockedDays(prev => [...prev, dateStr]);
+        toast({ title: 'Día Bloqueado', description: 'No se podrán agendar citas para este día.' });
+    }
+  };
+
+
   const getStatusBadge = (status: Appointment['status']) => {
     switch (status) {
       case 'completed': return <Badge variant="secondary">Completada</Badge>;
@@ -209,6 +247,8 @@ export default function Home() {
   if (!isClient) {
     return <SplashScreen />;
   }
+
+  const isCurrentDayBlocked = isDayBlocked(selectedDate);
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground font-body">
@@ -227,6 +267,7 @@ export default function Home() {
                 locale={es}
                 modifiers={modifiers}
                 modifiersClassNames={modifierClassNames}
+                disabled={isDayBlocked}
               />
             </CardContent>
           </Card>
@@ -286,6 +327,7 @@ export default function Home() {
                                 locale={es}
                                 modifiers={modifiers}
                                 modifiersClassNames={modifierClassNames}
+                                disabled={isDayBlocked}
                             />
                         </DialogContent>
                     </Dialog>
@@ -299,10 +341,14 @@ export default function Home() {
                         <Send className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Enviar Recordatorios</span>
                     </Button>
+                    <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay}>
+                        {isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}
+                        <span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear Día' : 'Bloquear Día'}</span>
+                    </Button>
                     <Button onClick={() => {
                         setEditingAppointment(undefined);
                         setIsFormOpen(true);
-                    }}>
+                    }} disabled={isCurrentDayBlocked}>
                         <Plus className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Añadir Cita</span>
                     </Button>
@@ -333,7 +379,13 @@ export default function Home() {
               </CardContent>
             </Card>
           
-          {dailyAppointments.length > 0 ? (
+          {isCurrentDayBlocked ? (
+             <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg bg-muted/50">
+                <Lock className="w-16 h-16 text-muted-foreground/50 mb-4" />
+                <h3 className="text-xl font-semibold text-muted-foreground">Este día está bloqueado.</h3>
+                <p className="text-muted-foreground mt-1">No se pueden agendar citas. Puedes desbloquearlo para continuar.</p>
+            </div>
+          ) : dailyAppointments.length > 0 ? (
             <motion.div layout className="space-y-4">
               <AnimatePresence>
                 {dailyAppointments.map((apt, index) => (
@@ -358,7 +410,7 @@ export default function Home() {
                            </CardDescription>
                         </div>
                          <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                            {apt.status === 'scheduled' && (isPast(apt.dateTime) || isSameDay(apt.dateTime, new Date())) && (
+                            {apt.status === 'scheduled' && (isBefore(apt.dateTime, new Date()) || isSameDay(apt.dateTime, new Date())) && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
