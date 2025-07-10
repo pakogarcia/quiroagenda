@@ -342,6 +342,7 @@ export default function ContabilidadPage() {
                                                             <Cell key={`cell-${index}`} fill={entry.fill} />
                                                         ))}
                                                     </Pie>
+                                                </PieChart>
                                             </ResponsiveContainer>
                                         </ChartContainer>
                                         ) : (
@@ -373,4 +374,5 @@ export default function ContabilidadPage() {
             />
         </>
     );
-}
+
+    
