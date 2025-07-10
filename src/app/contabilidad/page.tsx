@@ -301,7 +301,7 @@ export default function ContabilidadPage() {
                                     </Card>
                                 </div>
 
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+                                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                                     <Card className="shadow-md lg:col-span-3 printable-content">
                                         <CardHeader>
                                             <CardTitle>Detalle de Movimientos</CardTitle>
@@ -310,43 +310,45 @@ export default function ContabilidadPage() {
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>Fecha</TableHead>
-                                                        <TableHead>Cliente</TableHead>
-                                                        <TableHead>Concepto</TableHead>
-                                                        <TableHead>Método Pago</TableHead>
-                                                        <TableHead className="text-right">Importe</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {filteredTransactions.length > 0 ? (
-                                                        filteredTransactions.map(item => (
-                                                            <TableRow key={item.id}>
-                                                                <TableCell className="font-medium">{format(item.type === 'appointment' ? item.dateTime : item.date, "P", { locale: es })}</TableCell>
-                                                                <TableCell>{item.clientName}</TableCell>
-                                                                <TableCell className='flex items-center gap-2'>
-                                                                    {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
-                                                                    {item.type === 'appointment' ? 'Cita' : `Bono ${item.sessions} sesiones`}
-                                                                </TableCell>
-                                                                <TableCell className="capitalize">{item.type === 'appointment' ? (item.payment?.method === 'cash' ? 'Efectivo' : item.payment?.method === 'bizum' ? 'Bizum' : item.payment?.method === 'paypal' ? 'PayPal' : 'Bono') : (item.paymentMethod === 'cash' ? 'Efectivo' : item.paymentMethod === 'bizum' ? 'Bizum' : 'PayPal')}</TableCell>
-                                                                <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
-                                                            </TableRow>
-                                                        ))
-                                                    ) : (
+                                            <div className="overflow-x-auto">
+                                                <Table className="min-w-[600px]">
+                                                    <TableHeader>
                                                         <TableRow>
-                                                            <TableCell colSpan={5} className="h-24 text-center">No se encontraron movimientos en este período.</TableCell>
+                                                            <TableHead>Fecha</TableHead>
+                                                            <TableHead>Cliente</TableHead>
+                                                            <TableHead>Concepto</TableHead>
+                                                            <TableHead>Método Pago</TableHead>
+                                                            <TableHead className="text-right">Importe</TableHead>
                                                         </TableRow>
-                                                    )}
-                                                </TableBody>
-                                                <TableFooter>
-                                                    <TableRow>
-                                                        <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
-                                                        <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
-                                                    </TableRow>
-                                                </TableFooter>
-                                            </Table>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {filteredTransactions.length > 0 ? (
+                                                            filteredTransactions.map(item => (
+                                                                <TableRow key={item.id}>
+                                                                    <TableCell className="font-medium">{format(item.type === 'appointment' ? item.dateTime : item.date, "P", { locale: es })}</TableCell>
+                                                                    <TableCell>{item.clientName}</TableCell>
+                                                                    <TableCell className='flex items-center gap-2'>
+                                                                        {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
+                                                                        {item.type === 'appointment' ? 'Cita' : `Bono ${item.sessions} sesiones`}
+                                                                    </TableCell>
+                                                                    <TableCell className="capitalize">{item.type === 'appointment' ? (item.payment?.method === 'cash' ? 'Efectivo' : item.payment?.method === 'bizum' ? 'Bizum' : item.payment?.method === 'paypal' ? 'PayPal' : 'Bono') : (item.paymentMethod === 'cash' ? 'Efectivo' : item.paymentMethod === 'bizum' ? 'Bizum' : 'PayPal')}</TableCell>
+                                                                    <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
+                                                                </TableRow>
+                                                            ))
+                                                        ) : (
+                                                            <TableRow>
+                                                                <TableCell colSpan={5} className="h-24 text-center">No se encontraron movimientos en este período.</TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                    <TableFooter>
+                                                        <TableRow>
+                                                            <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
+                                                            <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
+                                                        </TableRow>
+                                                    </TableFooter>
+                                                </Table>
+                                            </div>
                                         </CardContent>
                                     </Card>
                                     <Card className="shadow-md lg:col-span-2 no-print">
