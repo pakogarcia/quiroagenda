@@ -16,7 +16,6 @@ import { AppointmentForm } from '@/components/appointment-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AppHeader } from '@/components/layout/header';
 import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
-import { OfferDialog } from '@/components/offer-dialog';
 import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog';
 import { Badge } from '@/components/ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -80,7 +79,6 @@ export default function Home() {
   const [deletingAppointmentId, setDeletingAppointmentId] = React.useState<string | null>(null);
 
   const [isReminderDialogOpen, setIsReminderDialogOpen] = React.useState(false);
-  const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
   const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
 
@@ -332,10 +330,6 @@ export default function Home() {
                     </Dialog>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => setIsOfferDialogOpen(true)}>
-                        <Gift className="h-4 w-4 md:mr-2" />
-                        <span className="hidden md:inline">Crear Oferta</span>
-                    </Button>
                     <Button variant="outline" onClick={() => setIsReminderDialogOpen(true)}>
                         <Send className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Enviar Recordatorios</span>
@@ -343,13 +337,6 @@ export default function Home() {
                     <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay}>
                         {isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}
                         <span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear Día' : 'Bloquear Día'}</span>
-                    </Button>
-                    <Button onClick={() => {
-                        setEditingAppointment(undefined);
-                        setIsFormOpen(true);
-                    }} disabled={isCurrentDayBlocked}>
-                        <Plus className="h-4 w-4 md:mr-2" />
-                        <span className="hidden md:inline">Añadir Cita</span>
                     </Button>
                 </div>
             </div>
@@ -507,11 +494,6 @@ export default function Home() {
         onRemindersSent={handleSetRemindersSent}
       />
 
-      <OfferDialog
-        isOpen={isOfferDialogOpen}
-        onOpenChange={setIsOfferDialogOpen}
-      />
-
       <FinishAppointmentDialog 
         appointment={finishingAppointment}
         onOpenChange={() => setFinishingAppointment(null)}
@@ -525,3 +507,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

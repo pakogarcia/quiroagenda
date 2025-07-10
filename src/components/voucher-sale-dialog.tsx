@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { VoucherSaleForm } from './voucher-sale-form';
+import { ShoppingCart } from 'lucide-react';
 
 type VoucherSaleDialogProps = {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export function VoucherSaleDialog({ isOpen, onOpenChange, onVoucherSold }: Vouch
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Vender Nuevo Bono</DialogTitle>
+          <DialogTitle className='flex items-center gap-2'><ShoppingCart className='w-5 h-5'/>Vender Nuevo Bono</DialogTitle>
           <DialogDescription>
             Selecciona el cliente y define los detalles del bono que se va a comprar.
           </DialogDescription>
@@ -33,3 +34,5 @@ export function VoucherSaleDialog({ isOpen, onOpenChange, onVoucherSold }: Vouch
     </Dialog>
   );
 }
+
+    

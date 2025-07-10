@@ -18,6 +18,7 @@ import { SplashScreen } from '@/components/layout/splash-screen';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
+import { OfferDialog } from '@/components/offer-dialog';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 const VOUCHER_SALES_STORAGE_KEY = 'quiroagenda_voucher_sales';
@@ -30,6 +31,7 @@ export default function ContabilidadPage() {
     const [allVoucherSales, setAllVoucherSales] = React.useState<VoucherSale[]>([]);
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
     const [isVoucherSaleDialogOpen, setIsVoucherSaleDialogOpen] = React.useState(false);
+    const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
 
     const loadData = React.useCallback(() => {
         try {
@@ -169,8 +171,12 @@ export default function ContabilidadPage() {
                     <h1 className="text-3xl font-bold font-headline text-primary">Contabilidad</h1>
                      <div className="flex items-center gap-2">
                          <Button variant="outline" onClick={() => setIsVoucherSaleDialogOpen(true)}>
-                            <Gift className="h-4 w-4 mr-2" />
+                            <ShoppingCart className="h-4 w-4 mr-2" />
                             Vender Bono
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsOfferDialogOpen(true)}>
+                            <Gift className="h-4 w-4 mr-2" />
+                            Crear Oferta
                         </Button>
                         {dateRange?.from && dateRange.to && (
                             <Button variant="outline" onClick={handlePrint}>
@@ -325,8 +331,7 @@ export default function ContabilidadPage() {
                                                     {chartData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.fill} />
                                                     ))}
-                                                </Pie>
-                                            </PieChart>
+                                                </PieChart>
                                         </ResponsiveContainer>
                                     </ChartContainer>
                                     ) : (
@@ -351,6 +356,12 @@ export default function ContabilidadPage() {
                 onOpenChange={setIsVoucherSaleDialogOpen}
                 onVoucherSold={onVoucherSold}
             />
+            <OfferDialog
+                isOpen={isOfferDialogOpen}
+                onOpenChange={setIsOfferDialogOpen}
+            />
         </div>
     );
 }
+
+    
