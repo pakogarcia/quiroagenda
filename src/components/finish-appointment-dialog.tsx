@@ -21,7 +21,15 @@ const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 
 const paymentSchema = z.object({
   paymentMethod: z.enum(['cash', 'bizum', 'voucher']),
-  amount: z.coerce.number().positive({ message: 'El importe debe ser mayor que 0.' }),
+  amount: z.coerce.number().optional(),
+}).refine(data => {
+    if (data.paymentMethod === 'cash' || data.paymentMethod === 'bizum') {
+        return data.amount !== undefined && data.amount > 0;
+    }
+    return true;
+}, {
+    message: 'El importe debe ser mayor que 0.',
+    path: ['amount'],
 });
 
 type PaymentFormValues = z.infer<typeof paymentSchema>;
@@ -41,7 +49,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-        amount: '' as any,
+        amount: undefined,
         paymentMethod: 'cash',
     }
   });
@@ -51,7 +59,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       setStep('selectAction');
       setClient(null);
       setGeneratedMessage('');
-      form.reset({ amount: '' as any, paymentMethod: 'cash' });
+      form.reset({ amount: undefined, paymentMethod: 'cash' });
       try {
         const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
         if (storedClients) {
@@ -80,11 +88,9 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
     const payment: Payment = {
       method: data.paymentMethod,
-      amount: data.paymentMethod === 'voucher' ? 0 : data.amount,
+      amount: data.paymentMethod === 'voucher' ? 0 : data.amount || 0,
     };
     
-    const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-
     if (data.paymentMethod === 'voucher' && client?.voucher) {
         const updatedVoucher: Voucher = { ...client.voucher, sessions: client.voucher.sessions - 1 };
         const updatedClient: Client = { ...client, voucher: updatedVoucher };
@@ -109,10 +115,11 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         }
     } else {
         // For cash or bizum, finish appointment and close dialog immediately.
+        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         onAppointmentFinished(updatedAppointment);
         toast({
           title: 'Pago registrado',
-          description: `Se ha registrado un pago de ${data.amount.toFixed(2)}€ con ${data.paymentMethod === 'cash' ? 'Efectivo' : 'Bizum'}.`,
+          description: `Se ha registrado un pago de ${(data.amount || 0).toFixed(2)}€ con ${data.paymentMethod === 'cash' ? 'Efectivo' : 'Bizum'}.`,
         });
     }
   };
