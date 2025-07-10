@@ -40,6 +40,10 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
+    defaultValues: {
+        amount: '' as any, // Initialize with an empty string to avoid uncontrolled input error
+        paymentMethod: 'cash',
+    }
   });
   
   React.useEffect(() => {
@@ -47,7 +51,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       setStep('selectAction');
       setClient(null);
       setGeneratedMessage('');
-      form.reset();
+      form.reset({ amount: '' as any, paymentMethod: 'cash' });
       try {
         const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
         if (storedClients) {
