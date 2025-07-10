@@ -4,7 +4,7 @@
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserX, UserCog, Bot, BookOpen, Euro, Lock, Smartphone } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserX, UserCog, Bot, BookOpen, Euro, Lock, Smartphone, ShoppingCart } from 'lucide-react';
 
 export default function ManualPage() {
   return (
