@@ -271,6 +271,15 @@ export default function Home() {
             </CardContent>
           </Card>
           
+          <Button 
+            onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }}
+            disabled={isCurrentDayBlocked}
+            className="w-full"
+          >
+              <Plus className="h-4 w-4 mr-2" />
+              Añadir Nueva Cita
+          </Button>
+
           <Card className="shadow-lg w-full">
               <CardHeader>
                   <CardTitle className="text-xl">Próximas Citas</CardTitle>
@@ -453,7 +462,7 @@ export default function Home() {
                 <p className="text-muted-foreground mt-1">Selecciona otra fecha o añade una nueva cita.</p>
             </div>
           )}
-           <div className="pt-4 mt-auto">
+           <div className="pt-4 mt-auto md:hidden">
              <Button 
                 onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }}
                 disabled={isCurrentDayBlocked}
