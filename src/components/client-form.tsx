@@ -50,8 +50,8 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
       name: client?.name || '',
       lastName: client?.lastName || '',
       phone: client?.phone || '+34 ',
-      voucherSessions: client?.voucher?.totalSessions,
-      voucherPrice: client?.voucher?.price,
+      voucherSessions: client?.voucher?.totalSessions || '',
+      voucherPrice: client?.voucher?.price || '',
     },
   });
 
