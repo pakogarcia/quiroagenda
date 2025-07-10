@@ -96,10 +96,10 @@ export default function Home() {
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   }, [appointments, selectedDate]);
   
-  const tomorrowAppointments = React.useMemo(() => {
+  const futureAppointments = React.useMemo(() => {
     if (!isClient) return [];
-    const tomorrow = addDays(new Date(), 1);
-    return appointments.filter(apt => isSameDay(apt.dateTime, tomorrow));
+    const today = startOfToday();
+    return appointments.filter(apt => (isSameDay(apt.dateTime, today) || isBefore(today, apt.dateTime)) && apt.status === 'scheduled');
   }, [appointments, isClient]);
 
   const upcomingAppointments = React.useMemo(() => {
@@ -503,7 +503,7 @@ export default function Home() {
       <WhatsappReminderDialog
         isOpen={isReminderDialogOpen}
         onOpenChange={setIsReminderDialogOpen}
-        appointments={tomorrowAppointments}
+        appointments={futureAppointments}
         onRemindersSent={handleSetRemindersSent}
       />
 
@@ -525,3 +525,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
