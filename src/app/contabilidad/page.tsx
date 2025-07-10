@@ -44,7 +44,7 @@ export default function ContabilidadPage() {
                         status: apt.status || 'scheduled',
                         payment: apt.payment || undefined,
                     }))
-                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()));
+                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()) && apt.status === 'completed');
                 setAllAppointments(parsedAppointments);
             }
             const storedVoucherSales = localStorage.getItem(VOUCHER_SALES_STORAGE_KEY);
@@ -75,7 +75,7 @@ export default function ContabilidadPage() {
         const end = endOfDay(dateRange.to);
 
         const completedAppointments: Transaction[] = allAppointments
-            .filter(apt => isWithinInterval(apt.dateTime, { start, end }) && apt.status === 'completed')
+            .filter(apt => isWithinInterval(apt.dateTime, { start, end }))
             .map(apt => ({ ...apt, type: 'appointment' }));
         
         const voucherSalesInRange: Transaction[] = allVoucherSales
@@ -331,7 +331,7 @@ export default function ContabilidadPage() {
                                                     {chartData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.fill} />
                                                     ))}
-                                                </PieChart>
+                                                </Pie>
                                         </ResponsiveContainer>
                                     </ChartContainer>
                                     ) : (
@@ -363,5 +363,3 @@ export default function ContabilidadPage() {
         </div>
     );
 }
-
-    
