@@ -8,13 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { type DateRange } from 'react-day-picker';
 import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Appointment } from '@/lib/types';
+import type { Appointment, Payment } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Calculator, Printer } from 'lucide-react';
+import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { SplashScreen } from '@/components/layout/splash-screen';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
@@ -32,6 +34,7 @@ export default function ContabilidadPage() {
                         ...apt,
                         dateTime: new Date(apt.dateTime),
                         status: apt.status || 'scheduled',
+                        payment: apt.payment || undefined,
                     }))
                     .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()));
                 setAllAppointments(parsedAppointments);
@@ -53,12 +56,48 @@ export default function ContabilidadPage() {
         return allAppointments
             .filter(apt => {
                 const aptDate = new Date(apt.dateTime);
-                // Only include appointments that have already passed and were not "no-shows"
-                return isWithinInterval(aptDate, { start, end }) && aptDate <= new Date() && apt.status !== 'no-show';
+                // Only include completed appointments
+                return isWithinInterval(aptDate, { start, end }) && apt.status === 'completed';
             })
             .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
     }, [allAppointments, dateRange]);
-    
+
+    const financialSummary = React.useMemo(() => {
+        const summary = {
+            totalRevenue: 0,
+            cashRevenue: 0,
+            bizumRevenue: 0,
+            vouchersUsed: 0,
+            completedAppointments: filteredAppointments.length,
+        };
+
+        for (const apt of filteredAppointments) {
+            if (apt.payment) {
+                if (apt.payment.method === 'cash' || apt.payment.method === 'bizum') {
+                    summary.totalRevenue += apt.payment.amount;
+                    if (apt.payment.method === 'cash') {
+                        summary.cashRevenue += apt.payment.amount;
+                    } else {
+                        summary.bizumRevenue += apt.payment.amount;
+                    }
+                } else if (apt.payment.method === 'voucher') {
+                    summary.vouchersUsed += 1;
+                }
+            }
+        }
+        return summary;
+    }, [filteredAppointments]);
+
+    const chartData = [
+        { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
+        { name: 'Bizum', value: financialSummary.bizumRevenue, fill: 'hsl(var(--chart-2))' },
+    ].filter(d => d.value > 0);
+
+    const chartConfig = {
+      efectivo: { label: "Efectivo", color: "hsl(var(--chart-1))" },
+      bizum: { label: "Bizum", color: "hsl(var(--chart-2))" },
+    };
+
     const setPresetRange = (preset: 'lastWeek' | 'lastMonth' | 'yearToDate') => {
         const today = new Date();
         let fromDate: Date;
@@ -87,7 +126,7 @@ export default function ContabilidadPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground font-body contabilidad-page-container">
+        <div className="flex flex-col min-h-screen bg-background text-foreground font-body contabilidad-page-container">
             <AppHeader className="no-print" />
             <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                 <div className="flex justify-between items-center mb-6 no-print">
@@ -139,7 +178,6 @@ export default function ContabilidadPage() {
                                     onSelect={setDateRange}
                                     numberOfMonths={2}
                                     locale={es}
-                                    disabled={{ after: new Date() }}
                                 />
                             </PopoverContent>
                         </Popover>
@@ -152,53 +190,106 @@ export default function ContabilidadPage() {
                 </Card>
 
                 {dateRange?.from && dateRange?.to ? (
-                    <div className="space-y-6">
-                        <Card className="shadow-md no-print">
-                             <CardHeader>
-                                <CardTitle>Resumen del Período</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">
-                                    {filteredAppointments.length}
-                                    <span className="text-lg font-normal text-muted-foreground ml-2">citas completadas</span>
-                                </div>
-                            </CardContent>
-                        </Card>
+                    <div className="space-y-6 printable-area">
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 no-print">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+                                    <Euro className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{financialSummary.totalRevenue.toFixed(2)}€</div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Citas Completadas</CardTitle>
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{financialSummary.completedAppointments}</div>
+                                </CardContent>
+                            </Card>
+                             <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Bonos Usados</CardTitle>
+                                    <Gift className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{financialSummary.vouchersUsed}</div>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                        <Card className="shadow-md printable-content">
-                            <CardHeader>
-                                <CardTitle>Detalle de Citas</CardTitle>
-                                <CardDescription>
-                                     Período del {format(dateRange.from, "P", { locale: es })} al {format(dateRange.to, "P", { locale: es })}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Fecha y Hora</TableHead>
-                                            <TableHead>Cliente</TableHead>
-                                            <TableHead>Notas</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredAppointments.length > 0 ? (
-                                            filteredAppointments.map(apt => (
-                                                <TableRow key={apt.id}>
-                                                    <TableCell className="font-medium">{format(apt.dateTime, "PPP p", { locale: es })}</TableCell>
-                                                    <TableCell>{apt.clientName}</TableCell>
-                                                    <TableCell className="text-muted-foreground">{apt.notes}</TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+                            <Card className="shadow-md lg:col-span-3 printable-content">
+                                <CardHeader>
+                                    <CardTitle>Detalle de Citas</CardTitle>
+                                    <CardDescription>
+                                        Período del {format(dateRange.from, "P", { locale: es })} al {format(dateRange.to, "P", { locale: es })}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell colSpan={3} className="h-24 text-center">No se encontraron citas en este período.</TableCell>
+                                                <TableHead>Fecha</TableHead>
+                                                <TableHead>Cliente</TableHead>
+                                                <TableHead>Método Pago</TableHead>
+                                                <TableHead className="text-right">Importe</TableHead>
                                             </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredAppointments.length > 0 ? (
+                                                filteredAppointments.map(apt => (
+                                                    <TableRow key={apt.id}>
+                                                        <TableCell className="font-medium">{format(apt.dateTime, "P", { locale: es })}</TableCell>
+                                                        <TableCell>{apt.clientName}</TableCell>
+                                                        <TableCell className="capitalize">{apt.payment?.method === 'cash' ? 'Efectivo' : apt.payment?.method === 'bizum' ? 'Bizum' : 'Bono'}</TableCell>
+                                                        <TableCell className="text-right">{apt.payment?.amount ? `${apt.payment.amount.toFixed(2)}€` : 'N/A'}</TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="h-24 text-center">No se encontraron citas pagadas en este período.</TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                        <TableFooter>
+                                            <TableRow>
+                                                <TableCell colSpan={3} className="font-bold text-lg">Total</TableCell>
+                                                <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
+                                            </TableRow>
+                                        </TableFooter>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                             <Card className="shadow-md lg:col-span-2 no-print">
+                                <CardHeader>
+                                    <CardTitle>Ingresos por Método</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {chartData.length > 0 ? (
+                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                                                <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                                    {chartData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                    ))}
+                                                </Pie>
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </ChartContainer>
+                                    ) : (
+                                        <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                                            No hay datos para mostrar.
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-64 text-center p-8 border-2 border-dashed rounded-lg no-print">

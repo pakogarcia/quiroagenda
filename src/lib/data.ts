@@ -37,7 +37,8 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       dateTime: set(subDays(baseDate, 1), { hours: 11, minutes: 0, seconds: 0, milliseconds: 0 }),
       notes: 'Cliente regular, sesión estándar.',
       reminderSent: true,
-      status: 'scheduled',
+      status: 'completed',
+      payment: { method: 'cash', amount: 45 },
     },
       {
       id: '5',
@@ -56,6 +57,16 @@ export const getInitialAppointments = (baseDate: Date): Appointment[] => {
       notes: 'Seguimiento por dolor de cuello.',
       reminderSent: false,
       status: 'scheduled',
+    },
+    {
+      id: '7',
+      clientName: 'Elena Rodríguez',
+      clientPhone: '+34600112233',
+      dateTime: set(subDays(baseDate, 3), { hours: 10, minutes: 0, seconds: 0, milliseconds: 0 }),
+      notes: 'Sesión anterior.',
+      reminderSent: true,
+      status: 'completed',
+      payment: { method: 'bizum', amount: 45 },
     },
   ];
 };

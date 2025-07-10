@@ -2,10 +2,10 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday, startOfDay } from 'date-fns';
+import { addDays, format, isSameDay, differenceInCalendarDays, isBefore, startOfToday, startOfDay, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, UserX } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro } from 'lucide-react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { AppHeader } from '@/components/layout/header';
 import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
 import { OfferDialog } from '@/components/offer-dialog';
-import { NoShowDialog } from '@/components/no-show-dialog';
+import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog';
 import { Badge } from '@/components/ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { SplashScreen } from '@/components/layout/splash-screen';
@@ -39,6 +39,7 @@ export default function Home() {
               ...apt,
               dateTime: new Date(apt.dateTime),
               status: apt.status || 'scheduled',
+              payment: apt.payment || undefined,
             }))
             .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()))
         : getInitialAppointments(new Date());
@@ -65,7 +66,7 @@ export default function Home() {
 
   const [isReminderDialogOpen, setIsReminderDialogOpen] = React.useState(false);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
-  const [noShowAppointment, setNoShowAppointment] = React.useState<Appointment | null>(null);
+  const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
 
 
@@ -90,7 +91,7 @@ export default function Home() {
     return appointments
       .filter(apt => {
         const aptDay = startOfDay(apt.dateTime);
-        return isSameDay(aptDay, today) || (isBefore(aptDay, nextWeek) && !isBefore(aptDay, today));
+        return apt.status === 'scheduled' && (isSameDay(aptDay, today) || (isBefore(aptDay, nextWeek) && !isBefore(aptDay, today)));
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
       .slice(0, 7); // To ensure we only show a limited number
@@ -99,8 +100,10 @@ export default function Home() {
   const appointmentsByDay = React.useMemo(() => {
     const counts: Record<string, number> = {};
     appointments.forEach(apt => {
+      if (apt.status === 'scheduled') {
         const day = format(apt.dateTime, 'yyyy-MM-dd');
         counts[day] = (counts[day] || 0) + 1;
+      }
     });
     return counts;
   }, [appointments]);
@@ -132,7 +135,7 @@ export default function Home() {
     threeOrMoreAppointments: 'three-or-more-appointments',
   };
 
-  const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
+  const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent' | 'status' | 'payment'>) => {
     const newAppointment: Appointment = {
       ...data,
       id: crypto.randomUUID(),
@@ -144,7 +147,7 @@ export default function Home() {
     setConfirmationAppointment(newAppointment);
   };
 
-  const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
+  const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status' | 'payment'>) => {
     let confirmedAppointment: Appointment | undefined;
     setAppointments(
       appointments.map((apt) => {
@@ -188,12 +191,20 @@ export default function Home() {
     ));
   };
   
-  const handleMarkAsNoShow = (appointmentId: string) => {
-    setAppointments(prev => prev.map(apt => 
-      apt.id === appointmentId ? { ...apt, status: 'no-show' } : apt
-    ));
-    setNoShowAppointment(null);
+  const handleFinishAppointment = (updatedAppointment: Appointment) => {
+    setAppointments(prev => prev.map(apt => apt.id === updatedAppointment.id ? updatedAppointment : apt));
+    setFinishingAppointment(null);
   };
+
+  const getStatusBadge = (status: Appointment['status']) => {
+    switch (status) {
+      case 'completed': return <Badge variant="secondary">Completada</Badge>;
+      case 'no-show': return <Badge variant="destructive">No Presentado</Badge>;
+      case 'scheduled':
+      default:
+        return null;
+    }
+  }
   
   if (!isClient) {
     return <SplashScreen />;
@@ -334,14 +345,12 @@ export default function Home() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="origin-top"
                   >
-                    <Card className={`shadow-md hover:shadow-xl transition-shadow duration-300 group ${apt.status === 'no-show' ? 'bg-muted/50' : ''}`}>
+                    <Card className={`shadow-md hover:shadow-xl transition-shadow duration-300 group ${apt.status !== 'scheduled' ? 'bg-muted/50' : ''}`}>
                       <CardHeader className="flex flex-row items-center justify-between">
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                                 <CardTitle className="text-xl text-accent">{apt.clientName}</CardTitle>
-                                {apt.status === 'no-show' && (
-                                    <Badge variant="destructive">No Presentado</Badge>
-                                )}
+                                {getStatusBadge(apt.status)}
                             </div>
                            <CardDescription className="flex items-center gap-2 pt-1">
                                <Clock className="w-4 h-4"/>
@@ -349,16 +358,16 @@ export default function Home() {
                            </CardDescription>
                         </div>
                          <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                            {apt.status === 'scheduled' && differenceInCalendarDays(new Date(), apt.dateTime) >= 0 && (
+                            {apt.status === 'scheduled' && isPast(apt.dateTime) && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" onClick={() => setNoShowAppointment(apt)}>
-                                                <UserX className="w-5 h-5" />
+                                            <Button variant="ghost" size="icon" onClick={() => setFinishingAppointment(apt)}>
+                                                <Euro className="w-5 h-5 text-green-600" />
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>Marcar como no presentado</p>
+                                            <p>Finalizar Cita (Pagar / No presentado)</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -366,7 +375,7 @@ export default function Home() {
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => openEditForm(apt)} disabled={apt.status === 'no-show'}>
+                                        <Button variant="ghost" size="icon" onClick={() => openEditForm(apt)} disabled={apt.status !== 'scheduled'}>
                                             <Edit className="w-5 h-5" />
                                         </Button>
                                     </TooltipTrigger>
@@ -451,10 +460,10 @@ export default function Home() {
         onOpenChange={setIsOfferDialogOpen}
       />
 
-      <NoShowDialog 
-        appointment={noShowAppointment}
-        onOpenChange={() => setNoShowAppointment(null)}
-        onConfirm={handleMarkAsNoShow}
+      <FinishAppointmentDialog 
+        appointment={finishingAppointment}
+        onOpenChange={() => setFinishingAppointment(null)}
+        onAppointmentFinished={handleFinishAppointment}
       />
 
       <NewAppointmentConfirmationDialog
