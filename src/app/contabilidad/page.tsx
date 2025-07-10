@@ -172,17 +172,17 @@ export default function ContabilidadPage() {
                         <h1 className="text-3xl font-bold font-headline text-primary">Contabilidad</h1>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" onClick={() => setIsVoucherSaleDialogOpen(true)}>
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                Vender Bono
+                                <ShoppingCart className="h-4 w-4 md:mr-2" />
+                                <span className="hidden md:inline">Vender Bono</span>
                             </Button>
                             <Button variant="outline" onClick={() => setIsOfferDialogOpen(true)}>
-                                <Gift className="h-4 w-4 mr-2" />
-                                Crear Oferta
+                                <Gift className="h-4 w-4 md:mr-2" />
+                                <span className="hidden md:inline">Crear Oferta</span>
                             </Button>
                             {dateRange?.from && dateRange.to && (
                                 <Button variant="outline" onClick={handlePrint}>
-                                    <Printer className="h-4 w-4 mr-2" />
-                                    Imprimir Listado
+                                    <Printer className="h-4 w-4 md:mr-2" />
+                                    <span className="hidden md:inline">Imprimir</span>
                                 </Button>
                             )}
                         </div>

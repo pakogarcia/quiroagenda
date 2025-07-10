@@ -32,6 +32,7 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = React.useState(false);
   const { toast } = useToast();
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   React.useEffect(() => {
     try {
@@ -247,7 +248,7 @@ export default function Home() {
     return <SplashScreen />;
   }
 
-  const isCurrentDayBlocked = isDayBlocked(selectedDate!);
+  const isCurrentDayBlocked = selectedDate ? isDayBlocked(selectedDate) : false;
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground font-body">
@@ -302,11 +303,11 @@ export default function Home() {
                      <h2 className="text-2xl md:text-3xl font-bold font-headline text-primary">
                         {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
                     </h2>
-                     <Dialog>
+                     <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="w-auto">
+                        <DialogContent className="w-auto p-0">
                            <Calendar
                                 mode="single"
                                 selected={selectedDate}
@@ -316,10 +317,7 @@ export default function Home() {
                                     const oldDate = selectedDate ? new Date(selectedDate) : new Date();
                                     newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds(), oldDate.getMilliseconds());
                                     setSelectedDate(newDate);
-                                    const dialogTrigger = document.querySelector('[aria-controls="radix-1"]');
-                                    if (dialogTrigger instanceof HTMLElement) {
-                                        dialogTrigger.click();
-                                    }
+                                    setIsCalendarOpen(false);
                                 }}
                                 initialFocus
                                 locale={es}
@@ -332,11 +330,11 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                     <Button variant="outline" onClick={() => setIsReminderDialogOpen(true)}>
                         <Send className="h-4 w-4 md:mr-2" />
-                        <span className="hidden md:inline">Enviar Recordatorios</span>
+                        <span className="hidden md:inline">Recordatorios</span>
                     </Button>
                     <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay}>
                         {isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}
-                        <span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear Día' : 'Bloquear Día'}</span>
+                        <span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear' : 'Bloquear'}</span>
                     </Button>
                 </div>
             </div>
@@ -395,7 +393,7 @@ export default function Home() {
                                {format(apt.dateTime, 'p', { locale: es })}
                            </CardDescription>
                         </div>
-                         <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                         <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             {apt.status === 'scheduled' && (isBefore(apt.dateTime, new Date()) || isSameDay(apt.dateTime, new Date())) && (
                                 <TooltipProvider>
                                     <Tooltip>

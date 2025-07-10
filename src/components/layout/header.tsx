@@ -13,37 +13,37 @@ export function AppHeader({ className }: { className?: string }) {
     )}>
       <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors">
         <Leaf className="h-8 w-8" />
-        <h1 className="text-2xl font-bold font-headline">QuiroAgenda</h1>
+        <h1 className="text-xl md:text-2xl font-bold font-headline">QuiroAgenda</h1>
       </Link>
-      <nav className="flex items-center gap-2 flex-wrap justify-start md:justify-end">
+      <nav className="flex items-center gap-1 md:gap-2 flex-wrap justify-start md:justify-end">
         <Link href="/quien-eres">
           <Button variant="outline" size="sm">
-            <Info className="h-4 w-4" />
-            <span>Quién eres</span>
+            <Info className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Quién eres</span>
           </Button>
         </Link>
          <Link href="/">
            <Button variant="outline" size="sm">
-            <CalendarDays className="h-4 w-4" />
-            <span>Agenda</span>
+            <CalendarDays className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Agenda</span>
           </Button>
          </Link>
         <Link href="/clients">
           <Button variant="outline" size="sm">
-            <Users className="h-4 w-4" />
-            <span>Clientes</span>
+            <Users className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Clientes</span>
           </Button>
         </Link>
         <Link href="/contabilidad">
           <Button variant="outline" size="sm">
-            <Calculator className="h-4 w-4" />
-            <span>Contabilidad</span>
+            <Calculator className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Contabilidad</span>
           </Button>
         </Link>
         <Link href="/manual">
           <Button variant="outline" size="sm">
-            <BookOpen className="h-4 w-4" />
-            <span>Ayuda</span>
+            <BookOpen className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Ayuda</span>
           </Button>
         </Link>
       </nav>

@@ -129,7 +129,7 @@ export default function ClientsPage() {
                                                   {client.phone}
                                               </CardDescription>
                                           </div>
-                                          <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                                          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                               <Button variant="ghost" size="icon" onClick={() => openEditForm(client)}>
                                                   <Edit className="w-5 h-5" />
                                               </Button>
