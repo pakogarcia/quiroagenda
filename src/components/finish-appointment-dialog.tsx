@@ -41,7 +41,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-        amount: '' as any, // Initialize with an empty string to avoid uncontrolled input error
+        amount: '' as any,
         paymentMethod: 'cash',
     }
   });
@@ -80,11 +80,10 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
     const payment: Payment = {
       method: data.paymentMethod,
-      amount: data.amount,
+      amount: data.paymentMethod === 'voucher' ? 0 : data.amount,
     };
     
-    let updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-    onAppointmentFinished(updatedAppointment);
+    const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
 
     if (data.paymentMethod === 'voucher' && client?.voucher) {
         const updatedVoucher: Voucher = { ...client.voucher, sessions: client.voucher.sessions - 1 };
@@ -95,19 +94,42 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             const clients: Client[] = storedClients ? JSON.parse(storedClients) : [];
             const newClients = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
             localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(newClients));
-
+            
+            // Generate message and update UI, but don't close dialog yet.
             generateAndShowVoucherMessage(updatedClient.name.split(' ')[0], updatedVoucher.sessions);
+            // The onAppointmentFinished will be called when the user closes the voucher message dialog.
             
         } catch (error) {
             console.error("Failed to update client voucher.", error);
+            toast({
+                title: 'Error',
+                description: 'No se pudo actualizar el bono del cliente.',
+                variant: 'destructive',
+            });
         }
     } else {
+        // For cash or bizum, finish appointment and close dialog immediately.
+        onAppointmentFinished(updatedAppointment);
         toast({
           title: 'Pago registrado',
           description: `Se ha registrado un pago de ${data.amount.toFixed(2)}€ con ${data.paymentMethod === 'cash' ? 'Efectivo' : 'Bizum'}.`,
         });
     }
   };
+
+  const handleVoucherMessageSentAndClose = () => {
+    if (!appointment) return;
+    const payment: Payment = {
+        method: 'voucher',
+        amount: 0,
+    };
+    const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
+    onAppointmentFinished(updatedAppointment);
+    toast({
+        title: 'Bono actualizado',
+        description: 'Se ha descontado una sesión del bono del cliente.',
+    });
+  }
 
   const generateAndShowVoucherMessage = async (clientName: string, remainingSessions: number) => {
     if (!client) return;
@@ -128,7 +150,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             title: "Error",
             description: "No se pudo generar el mensaje de actualización del bono."
         });
-        handleClose();
+        handleVoucherMessageSentAndClose(); // Close even if message fails
     }
   };
   
@@ -142,55 +164,59 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         return (
           <Form {...form}>
             <form id="payment-form" onSubmit={form.handleSubmit(handlePaymentSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Importe Abonado (€)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="p. ej., 40" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+              <Controller
                 control={form.control}
                 name="paymentMethod"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Método de Pago</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="cash" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Efectivo</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="bizum" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Bizum</FormLabel>
-                        </FormItem>
-                        {client?.voucher && client.voucher.sessions > 0 && (
-                             <FormItem className="flex items-center space-x-3 space-y-0">
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <FormItem className="space-y-3">
+                      <FormLabel>Método de Pago</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={onChange}
+                          defaultValue={value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="cash" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Efectivo</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="bizum" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Bizum</FormLabel>
+                          </FormItem>
+                          {client?.voucher && client.voucher.sessions > 0 && (
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                      <RadioGroupItem value="voucher" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">Bono ({client.voucher.sessions} restantes)</FormLabel>
+                              </FormItem>
+                          )}
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                     {value !== 'voucher' && (
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Importe Abonado (€)</FormLabel>
                                 <FormControl>
-                                    <RadioGroupItem value="voucher" />
+                                <Input type="number" step="0.01" placeholder="p. ej., 40" {...field} />
                                 </FormControl>
-                                <FormLabel className="font-normal">Bono ({client.voucher.sessions} restantes)</FormLabel>
+                                <FormMessage />
                             </FormItem>
-                        )}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                            )}
+                        />
+                    )}
+                  </>
                 )}
               />
             </form>
@@ -206,7 +232,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 <div className="my-4 p-4 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap">
                     {generatedMessage || "Generando mensaje..."}
                 </div>
-                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
+                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleVoucherMessageSentAndClose}>
                     <Button disabled={!generatedMessage} className="w-full">
                         <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp y Cerrar
                     </Button>
@@ -230,11 +256,11 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         return (
           <>
             <Button variant="ghost" onClick={() => setStep('selectAction')}>Volver</Button>
-            <Button type="submit" form="payment-form">Confirmar Pago</Button>
+            <Button type="submit" form="payment-form">Confirmar</Button>
           </>
         );
       case 'voucherUpdateMessage':
-        return <Button variant="secondary" onClick={handleClose}>Cerrar</Button>;
+        return <Button variant="secondary" onClick={handleVoucherMessageSentAndClose}>Cerrar sin enviar</Button>;
       case 'selectAction':
       default:
         return <Button variant="secondary" onClick={handleClose}>Cancelar</Button>;
