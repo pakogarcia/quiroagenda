@@ -37,7 +37,9 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
   const form = useForm<VoucherSaleFormValues>({
     resolver: zodResolver(voucherSaleSchema),
     defaultValues: {
+      clientId: '',
       sessions: 5,
+      amount: undefined, // Let's keep it undefined and handle the value in the input
       paymentMethod: 'cash',
     },
   });
@@ -133,7 +135,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
                 <FormItem>
                 <FormLabel>Nº de Sesiones</FormLabel>
                 <FormControl>
-                    <Input type="number" placeholder="p. ej., 5" {...field} />
+                    <Input type="number" placeholder="p. ej., 5" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -146,7 +148,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
                 <FormItem>
                 <FormLabel>Precio Total (€)</FormLabel>
                 <FormControl>
-                    <Input type="number" step="0.01" placeholder="p. ej., 150" {...field} />
+                    <Input type="number" step="0.01" placeholder="p. ej., 150" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
