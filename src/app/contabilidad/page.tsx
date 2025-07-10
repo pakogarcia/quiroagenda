@@ -241,7 +241,7 @@ export default function ContabilidadPage() {
                     {dateRange?.from && dateRange?.to ? (
                         <>
                             <div className="space-y-6 printable-area">
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 no-print">
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 no-print">
                                     <Card>
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
@@ -269,6 +269,9 @@ export default function ContabilidadPage() {
                                             <div className="text-2xl font-bold">{financialSummary.vouchersUsed}</div>
                                         </CardContent>
                                     </Card>
+                                </div>
+                                
+                                <div className="grid gap-6 md:grid-cols-3 no-print">
                                     <Card>
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Ingresos en Efectivo</CardTitle>
@@ -276,6 +279,24 @@ export default function ContabilidadPage() {
                                         </CardHeader>
                                         <CardContent>
                                             <div className="text-2xl font-bold">{financialSummary.cashRevenue.toFixed(2)}€</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Ingresos con Bizum</CardTitle>
+                                            <Euro className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{financialSummary.bizumRevenue.toFixed(2)}€</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Ingresos con PayPal</CardTitle>
+                                            <Euro className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{financialSummary.paypalRevenue.toFixed(2)}€</div>
                                         </CardContent>
                                     </Card>
                                 </div>
