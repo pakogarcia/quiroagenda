@@ -42,7 +42,7 @@ const generateVoucherUpdateWhatsappPrompt = ai.definePrompt({
   "¡Hola {{clientName}}! 👋 Hemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
   {{else}}
   Plantilla para 0 sesiones restantes:
-  "¡Hola {{clientName}}! 🎉 ¡Enhorabuena! Has completado todas las sesiones de tu bono. Si quieres seguir cuidándote, puedes renovarlo en tu próxima visita. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
+  "¡Hola {{clientName}}! 🎉 ¡Felicidades por completar tu bono! Ha sido tu última sesión, pero nos encantaría seguir cuidándote. Puedes adquirir un nuevo bono cuando quieras para no perder el ritmo. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
   {{/if}}
   `,
 });
