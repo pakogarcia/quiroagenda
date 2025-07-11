@@ -98,7 +98,7 @@ export default function Home() {
     if (!isClient) return [];
     const today = startOfToday();
     return appointments
-      .filter(apt => (isSameDay(apt.dateTime, today) || isBefore(today, apt.dateTime)) && apt.status === 'scheduled')
+      .filter(apt => (isSameDay(apt.dateTime, today) || !isBefore(apt.dateTime, today)) && apt.status === 'scheduled')
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   }, [appointments, isClient]);
 
