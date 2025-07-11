@@ -97,7 +97,9 @@ export default function Home() {
   const futureAppointments = React.useMemo(() => {
     if (!isClient) return [];
     const today = startOfToday();
-    return appointments.filter(apt => (isSameDay(apt.dateTime, today) || isBefore(today, apt.dateTime)) && apt.status === 'scheduled');
+    return appointments
+      .filter(apt => (isSameDay(apt.dateTime, today) || isBefore(today, apt.dateTime)) && apt.status === 'scheduled')
+      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   }, [appointments, isClient]);
 
   const upcomingAppointments = React.useMemo(() => {
@@ -328,10 +330,7 @@ export default function Home() {
                     </Dialog>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button 
-                        onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }}
-                        disabled={isCurrentDayBlocked}
-                    >
+                    <Button onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }} disabled={isCurrentDayBlocked}>
                         <Plus className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Nueva Cita</span>
                     </Button>
