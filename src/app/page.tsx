@@ -307,7 +307,7 @@ export default function Home() {
                         <DialogTrigger asChild>
                             <Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="w-auto p-0">
+                        <DialogContent className="w-auto p-0 pt-12">
                            <Calendar
                                 mode="single"
                                 selected={selectedDate}
@@ -522,5 +522,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
