@@ -35,10 +35,15 @@ const generateVoucherUpdateWhatsappPrompt = ai.definePrompt({
   output: {schema: GenerateVoucherUpdateWhatsappOutputSchema},
   prompt: `Eres un asistente virtual para un gabinete de masajes y estética. Tu tono es amigable y profesional.
 
-  Crea un mensaje de WhatsApp para informar a un cliente sobre las sesiones restantes en su bono, usando la siguiente plantilla y rellenando los datos proporcionados. No añadas ningún saludo o texto adicional.
+  Crea un mensaje de WhatsApp para informar a un cliente sobre las sesiones restantes en su bono. Utiliza una de las siguientes plantillas según corresponda y rellena los datos proporcionados. No añadas ningún saludo o texto adicional.
 
-  Plantilla:
+  {{#if remainingSessions}}
+  Plantilla para sesiones restantes:
   "¡Hola {{clientName}}! 👋 Hemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
+  {{else}}
+  Plantilla para 0 sesiones restantes:
+  "¡Hola {{clientName}}! 🎉 ¡Enhorabuena! Has completado todas las sesiones de tu bono. Si quieres seguir cuidándote, puedes renovarlo en tu próxima visita. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
+  {{/if}}
   `,
 });
 
