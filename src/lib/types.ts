@@ -3,6 +3,7 @@ export type PaymentMethod = 'cash' | 'bizum' | 'voucher' | 'paypal';
 export type Payment = {
   method: PaymentMethod;
   amount: number;
+  payerClientId?: string; // ID of the client whose voucher was used, if applicable
 };
 
 export type Appointment = {
