@@ -151,7 +151,7 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
                         <FormControl>
-                            <>
+                            <div>
                                 <Input
                                     type="file"
                                     accept=".jpg, .jpeg"
@@ -167,7 +167,7 @@ export default function ProfilePage() {
                                 >
                                   {logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}
                                 </Button>
-                            </>
+                            </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -285,3 +285,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
