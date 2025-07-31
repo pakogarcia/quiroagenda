@@ -368,7 +368,7 @@ export default function ContabilidadPage() {
                                                                     <TableCell>{item.clientName}</TableCell>
                                                                     <TableCell className='flex items-center gap-2'>
                                                                         {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
-                                                                        {item.type === 'appointment' ? 'Cita' : `Bono ${item.sessions} sesiones`}
+                                                                        {item.type === 'appointment' ? (item.serviceName || 'Cita') : `Bono ${item.sessions} sesiones`}
                                                                     </TableCell>
                                                                     <TableCell className="capitalize">{getPaymentMethodName(item.type === 'appointment' ? item.payment?.method : item.paymentMethod)}</TableCell>
                                                                     <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
