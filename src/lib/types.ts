@@ -39,6 +39,7 @@ export type BusinessProfile = {
   name: string;
   address: string;
   phone: string;
+  logo?: string;
   instagram?: string;
   facebook?: string;
   tiktok?: string;
