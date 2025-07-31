@@ -139,6 +139,13 @@ export default function ClientsPage() {
         setIsFormOpen(false);
         setEditingClient(undefined);
     };
+
+    const handleWhatsAppClick = (e: React.MouseEvent, phone: string) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const whatsappLink = `https://wa.me/${phone.replace(/\D/g, '')}`;
+        window.open(whatsappLink, '_blank', 'noopener,noreferrer');
+    }
     
     if (!isClient || !today) {
         return <SplashScreen />;
@@ -163,7 +170,6 @@ export default function ClientsPage() {
                             const lastAppointmentDate = lastAppointmentByClient.get(client.id);
                             const daysSinceLastAppointment = lastAppointmentDate ? differenceInDays(today, lastAppointmentDate) : null;
                             const hasPendingPayment = clientsWithPendingPayments.has(client.id);
-                            const whatsappLink = `https://wa.me/${client.phone.replace(/\D/g, '')}`;
 
                             return (
                                 <motion.div
@@ -198,10 +204,13 @@ export default function ClientsPage() {
                                                       )}
                                                   </CardTitle>
                                                   <CardDescription className="flex items-center gap-2 pt-2">
-                                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors" onClick={(e) => e.stopPropagation()}>
+                                                        <button
+                                                          onClick={(e) => handleWhatsAppClick(e, client.phone)}
+                                                          className="flex items-center gap-2 hover:text-primary transition-colors text-muted-foreground z-10"
+                                                        >
                                                           <MessageSquare className="w-4 h-4"/>
                                                           <span>{client.phone}</span>
-                                                        </a>
+                                                        </button>
                                                   </CardDescription>
                                               </div>
                                           </div>
@@ -264,7 +273,5 @@ export default function ClientsPage() {
             )}
 
         </div>
-    );
-}
-
+    
     
