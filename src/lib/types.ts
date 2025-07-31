@@ -16,6 +16,8 @@ export type Appointment = {
   reminderSent: boolean;
   status: 'scheduled' | 'completed' | 'no-show';
   payment?: Payment;
+  serviceId?: string;
+  serviceName?: string;
 };
 
 export type Voucher = {

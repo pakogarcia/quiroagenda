@@ -10,9 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Appointment, Client } from '@/lib/types';
+import type { Appointment, Client, Service } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Tag } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import React from 'react';
@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
+const SERVICES_STORAGE_KEY = 'quiroagenda_services';
 
 const appointmentSchema = z.object({
   clientName: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
@@ -27,6 +28,7 @@ const appointmentSchema = z.object({
   date: z.date({ required_error: 'La fecha es obligatoria.' }),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Formato de hora inválido (HH:mm).' }),
   notes: z.string().optional(),
+  serviceId: z.string().optional(),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
@@ -40,6 +42,7 @@ type AppointmentFormProps = {
 
 export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDays }: AppointmentFormProps) {
   const [clients, setClients] = React.useState<Client[]>([]);
+  const [services, setServices] = React.useState<Service[]>([]);
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -49,6 +52,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDa
       date: appointment?.dateTime || selectedDate || new Date(),
       time: appointment ? format(appointment.dateTime, 'HH:mm') : '10:00',
       notes: appointment?.notes || '',
+      serviceId: appointment?.serviceId || undefined,
     },
   });
 
@@ -63,8 +67,14 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDa
             }));
             setClients(migratedClients);
         }
+        
+        const storedServices = localStorage.getItem(SERVICES_STORAGE_KEY);
+        if (storedServices) {
+            setServices(JSON.parse(storedServices));
+        }
+
     } catch (error) {
-        console.error("Failed to load clients.", error);
+        console.error("Failed to load data.", error);
     }
   }, []);
 
@@ -75,16 +85,26 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDa
           form.setValue('clientPhone', selectedClient.phone, { shouldValidate: true });
       }
   };
+  
+  const handleServiceChange = (serviceId: string) => {
+    const selectedService = services.find(s => s.id === serviceId);
+    if (selectedService) {
+        form.setValue('serviceId', selectedService.id, { shouldValidate: true });
+    }
+  };
 
   const handleSubmit = (values: AppointmentFormValues) => {
     const [hours, minutes] = values.time.split(':').map(Number);
     const combinedDateTime = set(values.date, { hours, minutes });
+    const selectedService = services.find(s => s.id === values.serviceId);
     
     onSubmit({
       clientName: values.clientName,
       clientPhone: values.clientPhone,
       dateTime: combinedDateTime,
       notes: values.notes || '',
+      serviceId: values.serviceId,
+      serviceName: selectedService?.name,
     });
   };
 
@@ -140,6 +160,34 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDa
             </FormItem>
           )}
         />
+        
+        {services.length > 0 && (
+             <FormField
+                control={form.control}
+                name="serviceId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-2"><Tag className="w-4 h-4"/>Servicio</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un servicio" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {services.map(service => (
+                                    <SelectItem key={service.id} value={service.id}>
+                                        {service.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
+
         <div className="grid grid-cols-2 gap-4">
             <FormField
             control={form.control}

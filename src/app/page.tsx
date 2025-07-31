@@ -5,7 +5,7 @@ import * as React from 'react';
 import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock, AlertCircle, Tag } from 'lucide-react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -159,7 +159,7 @@ export default function Home() {
     threeOrMoreAppointments: 'three-or-more-appointments',
   };
 
-  const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent' | 'status' | 'payment'>) => {
+  const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
     const newAppointment: Appointment = {
       ...data,
       id: crypto.randomUUID(),
@@ -171,7 +171,7 @@ export default function Home() {
     setConfirmationAppointment(newAppointment);
   };
 
-  const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status' | 'payment'>) => {
+  const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
     let confirmedAppointment: Appointment | undefined;
     setAppointments(
       appointments.map((apt) => {
@@ -406,6 +406,12 @@ export default function Home() {
                                <Clock className="w-4 h-4"/>
                                {format(apt.dateTime, 'p', { locale: es })}
                            </CardDescription>
+                           {apt.serviceName && (
+                                <CardDescription className="flex items-center gap-2 pt-1">
+                                  <Tag className="w-4 h-4"/>
+                                  {apt.serviceName}
+                                </CardDescription>
+                            )}
                         </div>
                          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             {((apt.status === 'scheduled' && (isBefore(apt.dateTime, new Date()) || isSameDay(apt.dateTime, new Date()))) || (apt.status === 'completed' && !apt.payment)) && (
