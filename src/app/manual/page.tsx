@@ -6,16 +6,9 @@ import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 
 export default function ManualPage() {
-  const [today, setToday] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    setToday(format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es }));
-  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -239,7 +232,7 @@ export default function ManualPage() {
           </div>
           
           <footer className="text-center text-sm text-muted-foreground pt-8">
-              {today ? <p>Última actualización por Pako García el {today}.</p> : <div className="h-5" />}
+              <p>Manual de ayuda de QuiroAgenda.</p>
           </footer>
         </div>
       </main>
