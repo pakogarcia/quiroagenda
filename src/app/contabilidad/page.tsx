@@ -136,9 +136,6 @@ export default function ContabilidadPage() {
                 if (sale.paymentMethod === 'cash') summary.cashRevenue += sale.amount;
                 else if (sale.paymentMethod === 'bizum') summary.bizumRevenue += sale.amount;
                 else if (sale.paymentMethod === 'paypal') summary.paypalRevenue += sale.amount;
-
-                const serviceName = 'Venta de Bonos';
-                summary.revenueByService[serviceName] = (summary.revenueByService[serviceName] || 0) + sale.amount;
              }
         }
 
