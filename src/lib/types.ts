@@ -42,6 +42,7 @@ export type BusinessProfile = {
   instagram?: string;
   facebook?: string;
   tiktok?: string;
+  youtube?: string;
 };
 
 export type VoucherSale = {

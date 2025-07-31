@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Separator } from '@/components/ui/separator';
 
@@ -25,6 +25,7 @@ const profileSchema = z.object({
   instagram: z.string().url().or(z.literal('')).optional(),
   facebook: z.string().url().or(z.literal('')).optional(),
   tiktok: z.string().url().or(z.literal('')).optional(),
+  youtube: z.string().url().or(z.literal('')).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -42,6 +43,7 @@ export default function ProfilePage() {
       instagram: '',
       facebook: '',
       tiktok: '',
+      youtube: '',
     },
   });
 
@@ -67,6 +69,7 @@ export default function ProfilePage() {
           instagram: data.instagram || undefined,
           facebook: data.facebook || undefined,
           tiktok: data.tiktok || undefined,
+          youtube: data.youtube || undefined,
       };
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileToSave));
       toast({
@@ -181,6 +184,19 @@ export default function ProfilePage() {
                             <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
                             <FormControl>
                               <Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="youtube"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
