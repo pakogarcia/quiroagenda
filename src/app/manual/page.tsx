@@ -136,17 +136,33 @@ export default function ManualPage() {
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><Calculator /> Contabilidad Avanzada</CardTitle>
               <CardDescription>Transforma tus números en decisiones inteligentes.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p>La sección de Contabilidad es tu centro de mando financiero. Elige un rango de fechas y obtén un informe completo y fácil de entender que te ayudará a tomar el pulso de tu negocio.</p>
-              <ul className="list-disc pl-5 space-y-2">
-                  <li><strong className="flex items-center gap-2"><BarChart className="w-4 h-4" />Gráfico Interactivo de Ingresos:</strong> Visualiza al instante de dónde provienen tus ganancias. Un gráfico de tarta desglosa tus ingresos por método de pago (Efectivo, Bizum, PayPal), dándote una perspectiva clara de tus canales más importantes.</li>
-                  <li><strong className="flex items-center gap-2"><FileText className="w-4 h-4" />Resúmenes Clave:</strong> Tarjetas destacadas te muestran la información más relevante de un vistazo: los <strong>Ingresos Totales</strong> (resaltada para máxima visibilidad), el número de <strong>Citas Completadas</strong>, los <strong>Bonos Usados</strong> y, muy importante, los <strong>Pagos Pendientes</strong>.</li>
-                  <li><strong className="flex items-center gap-2"><History className="w-4 h-4" />Informes Detallados e Imprimibles:</strong> La tabla de movimientos te ofrece un desglose de cada transacción (citas y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.</li>
-              </ul>
-              <div className="pt-2">
-                <h4 className="font-semibold flex items-center gap-2 mb-2"><ShoppingCart className="w-4 h-4"/> Venta Directa de Bonos</h4>
-                <p>No esperes a que un cliente esté en una cita. Desde la página de Contabilidad, puedes registrar la venta de un nuevo bono directamente, agilizando el proceso y manteniendo tus registros financieros y de clientes siempre sincronizados.</p>
-              </div>
+            <CardContent>
+                 <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger><BarChart className="w-4 h-4 mr-2" />Gráfico Interactivo de Ingresos</AccordionTrigger>
+                        <AccordionContent>
+                        Visualiza al instante de dónde provienen tus ganancias. Un gráfico de tarta desglosa tus ingresos por método de pago (Efectivo, Bizum, PayPal), dándote una perspectiva clara de tus canales más importantes.
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                        <AccordionTrigger><FileText className="w-4 h-4 mr-2" />Resúmenes Clave</AccordionTrigger>
+                        <AccordionContent>
+                        Tarjetas destacadas te muestran la información más relevante de un vistazo: los <strong>Ingresos Totales</strong> (resaltada para máxima visibilidad), el número de <strong>Citas Completadas</strong>, los <strong>Bonos Usados</strong> y, muy importante, los <strong>Pagos Pendientes</strong>.
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="item-3">
+                        <AccordionTrigger><History className="w-4 h-4 mr-2" />Informes Detallados e Imprimibles</AccordionTrigger>
+                        <AccordionContent>
+                        La tabla de movimientos te ofrece un desglose de cada transacción (citas y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="item-4">
+                        <AccordionTrigger><ShoppingCart className="w-4 h-4 mr-2" />Venta Directa de Bonos</AccordionTrigger>
+                        <AccordionContent>
+                        No esperes a que un cliente esté en una cita. Desde la página de Contabilidad, puedes registrar la venta de un nuevo bono directamente, agilizando el proceso y manteniendo tus registros financieros y de clientes siempre sincronizados.
+                        </AccordionContent>
+                    </AccordionItem>
+                 </Accordion>
             </CardContent>
           </Card>
           
