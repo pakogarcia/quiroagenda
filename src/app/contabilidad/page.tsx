@@ -169,17 +169,15 @@ export default function ContabilidadPage() {
         return acc;
     }, {} as any);
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+    const renderCustomizedLabelWithName = ({ cx, cy, midAngle, innerRadius, outerRadius, payload }: any) => {
         const RADIAN = Math.PI / 180;
         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-        if (percent < 0.05) return null;
-
         return (
             <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
-                {`${(percent * 100).toFixed(0)}%`}
+                {payload.name}
             </text>
         );
     };
@@ -412,36 +410,12 @@ export default function ContabilidadPage() {
                                                                 data={paymentChartData} 
                                                                 dataKey="value" 
                                                                 nameKey="name" 
-                                                                innerRadius={60} 
-                                                                strokeWidth={5}
-                                                                label={renderCustomizedLabel}
+                                                                label={renderCustomizedLabelWithName}
                                                                 labelLine={false}
                                                             >
                                                                 {paymentChartData.map((entry, index) => (
-                                                                    <Cell key={`cell-${index}`} fill={entry.fill} stroke={entry.fill} />
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
                                                                 ))}
-                                                                <Label
-                                                                    content={({ viewBox }) => {
-                                                                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                                                            return (
-                                                                                <text
-                                                                                    x={viewBox.cx}
-                                                                                    y={viewBox.cy}
-                                                                                    textAnchor="middle"
-                                                                                    dominantBaseline="middle"
-                                                                                >
-                                                                                    <tspan
-                                                                                        x={viewBox.cx}
-                                                                                        y={viewBox.cy}
-                                                                                        className="text-3xl font-bold fill-foreground"
-                                                                                    >
-                                                                                        {totalPaymentRevenue.toFixed(2)}€
-                                                                                    </tspan>
-                                                                                </text>
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                />
                                                             </Pie>
                                                         </PieChart>
                                                     </ResponsiveContainer>
@@ -470,36 +444,12 @@ export default function ContabilidadPage() {
                                                                 data={serviceChartData} 
                                                                 dataKey="value" 
                                                                 nameKey="name" 
-                                                                innerRadius={60} 
-                                                                strokeWidth={5}
-                                                                label={renderCustomizedLabel}
+                                                                label={renderCustomizedLabelWithName}
                                                                 labelLine={false}
                                                             >
                                                                 {serviceChartData.map((entry, index) => (
-                                                                    <Cell key={`cell-${index}`} fill={entry.fill} stroke={entry.fill} />
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
                                                                 ))}
-                                                                 <Label
-                                                                    content={({ viewBox }) => {
-                                                                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                                                            return (
-                                                                                <text
-                                                                                    x={viewBox.cx}
-                                                                                    y={viewBox.cy}
-                                                                                    textAnchor="middle"
-                                                                                    dominantBaseline="middle"
-                                                                                >
-                                                                                    <tspan
-                                                                                        x={viewBox.cx}
-                                                                                        y={viewBox.cy}
-                                                                                        className="text-3xl font-bold fill-foreground"
-                                                                                    >
-                                                                                        {totalServiceRevenue.toFixed(2)}€
-                                                                                    </tspan>
-                                                                                </text>
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                />
                                                             </Pie>
                                                         </PieChart>
                                                     </ResponsiveContainer>
