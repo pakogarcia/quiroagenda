@@ -16,8 +16,6 @@ import type { BusinessProfile } from '@/lib/types';
 import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { isSameDay } from 'date-fns';
 
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 
@@ -286,5 +284,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
