@@ -10,7 +10,7 @@ import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, st
 import { es } from 'date-fns/locale';
 import type { Appointment, Payment, VoucherSale } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart } from 'lucide-react';
+import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -66,6 +66,16 @@ export default function ContabilidadPage() {
         loadData();
     }, [loadData]);
     
+    const filteredAppointments = React.useMemo(() => {
+        if (!dateRange?.from || !dateRange?.to) {
+            return [];
+        }
+        const start = startOfDay(dateRange.from);
+        const end = endOfDay(dateRange.to);
+
+        return allAppointments.filter(apt => isWithinInterval(apt.dateTime, { start, end }));
+    }, [allAppointments, dateRange]);
+
     const filteredTransactions = React.useMemo(() => {
         if (!dateRange?.from || !dateRange?.to) {
             return [];
@@ -73,9 +83,8 @@ export default function ContabilidadPage() {
         
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to);
-
-        const completedAppointments: Transaction[] = allAppointments
-            .filter(apt => isWithinInterval(apt.dateTime, { start, end }))
+        
+        const completedAppointments: Transaction[] = filteredAppointments
             .map(apt => ({ ...apt, type: 'appointment' }));
         
         const voucherSalesInRange: Transaction[] = allVoucherSales
@@ -85,7 +94,7 @@ export default function ContabilidadPage() {
         return [...completedAppointments, ...voucherSalesInRange]
             .sort((a, b) => (b.type === 'appointment' ? b.dateTime.getTime() : b.date.getTime()) - (a.type === 'appointment' ? a.dateTime.getTime() : a.date.getTime()));
             
-    }, [allAppointments, allVoucherSales, dateRange]);
+    }, [filteredAppointments, allVoucherSales, dateRange]);
 
     const financialSummary = React.useMemo(() => {
         const summary = {
@@ -95,30 +104,36 @@ export default function ContabilidadPage() {
             paypalRevenue: 0,
             vouchersUsed: 0,
             completedAppointments: 0,
+            pendingPayments: 0,
         };
 
-        for (const transaction of filteredTransactions) {
-            if (transaction.type === 'appointment') {
-                summary.completedAppointments += 1;
-                if (transaction.payment) {
-                     if (transaction.payment.method === 'cash' || transaction.payment.method === 'bizum' || transaction.payment.method === 'paypal') {
-                        summary.totalRevenue += transaction.payment.amount;
-                        if (transaction.payment.method === 'cash') summary.cashRevenue += transaction.payment.amount;
-                        else if (transaction.payment.method === 'bizum') summary.bizumRevenue += transaction.payment.amount;
-                        else if (transaction.payment.method === 'paypal') summary.paypalRevenue += transaction.payment.amount;
-                    } else if (transaction.payment.method === 'voucher') {
-                        summary.vouchersUsed += 1;
-                    }
+        for (const transaction of filteredAppointments) {
+            summary.completedAppointments += 1;
+            if (transaction.payment) {
+                if (transaction.payment.method === 'cash' || transaction.payment.method === 'bizum' || transaction.payment.method === 'paypal') {
+                    summary.totalRevenue += transaction.payment.amount;
+                    if (transaction.payment.method === 'cash') summary.cashRevenue += transaction.payment.amount;
+                    else if (transaction.payment.method === 'bizum') summary.bizumRevenue += transaction.payment.amount;
+                    else if (transaction.payment.method === 'paypal') summary.paypalRevenue += transaction.payment.amount;
+                } else if (transaction.payment.method === 'voucher') {
+                    summary.vouchersUsed += 1;
                 }
-            } else if (transaction.type === 'voucher_sale') {
-                summary.totalRevenue += transaction.amount;
-                if (transaction.paymentMethod === 'cash') summary.cashRevenue += transaction.amount;
-                else if (transaction.paymentMethod === 'bizum') summary.bizumRevenue += transaction.amount;
-                else if (transaction.paymentMethod === 'paypal') summary.paypalRevenue += transaction.amount;
+            } else {
+                summary.pendingPayments += 1;
             }
         }
+        
+        for (const sale of allVoucherSales) {
+             if (dateRange?.from && dateRange?.to && isWithinInterval(sale.date, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) {
+                summary.totalRevenue += sale.amount;
+                if (sale.paymentMethod === 'cash') summary.cashRevenue += sale.amount;
+                else if (sale.paymentMethod === 'bizum') summary.bizumRevenue += sale.amount;
+                else if (sale.paymentMethod === 'paypal') summary.paypalRevenue += sale.amount;
+             }
+        }
+
         return summary;
-    }, [filteredTransactions]);
+    }, [filteredAppointments, allVoucherSales, dateRange]);
 
     const chartData = [
         { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
@@ -253,7 +268,7 @@ export default function ContabilidadPage() {
                     {dateRange?.from && dateRange?.to ? (
                         <>
                             <div className="space-y-6 printable-area">
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 no-print">
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 no-print">
                                     <Card>
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
@@ -279,6 +294,15 @@ export default function ContabilidadPage() {
                                         </CardHeader>
                                         <CardContent>
                                             <div className="text-2xl font-bold">{financialSummary.vouchersUsed}</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
+                                            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{financialSummary.pendingPayments}</div>
                                         </CardContent>
                                     </Card>
                                 </div>
@@ -412,5 +436,3 @@ export default function ContabilidadPage() {
         </>
     );
 }
-
-    
