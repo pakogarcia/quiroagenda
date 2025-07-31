@@ -158,6 +158,18 @@ export default function ContabilidadPage() {
     const onVoucherSold = () => {
         loadData(); // Re-fetch data to reflect the new sale
     }
+    
+    const getPaymentMethodName = (method?: 'cash' | 'bizum' | 'paypal' | 'voucher') => {
+        if (!method) return '';
+        switch (method) {
+            case 'cash': return 'Efectivo';
+            case 'voucher': return 'Bono';
+            case 'bizum': return 'Bizum';
+            case 'paypal': return 'PayPal';
+            default: return method;
+        }
+    };
+
 
     if (!isClient) {
         return <SplashScreen />;
@@ -331,7 +343,7 @@ export default function ContabilidadPage() {
                                                                         {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
                                                                         {item.type === 'appointment' ? 'Cita' : `Bono ${item.sessions} sesiones`}
                                                                     </TableCell>
-                                                                    <TableCell className="capitalize">{item.type === 'appointment' ? (item.payment?.method === 'cash' ? 'Efectivo' : item.payment?.method === 'bizum' ? 'Bizum' : item.payment?.method === 'paypal' ? 'PayPal' : 'Bono') : (item.paymentMethod === 'cash' ? 'Efectivo' : item.paymentMethod === 'bizum' ? 'Bizum' : 'PayPal')}</TableCell>
+                                                                    <TableCell className="capitalize">{getPaymentMethodName(item.type === 'appointment' ? item.payment?.method : item.paymentMethod)}</TableCell>
                                                                     <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
                                                                 </TableRow>
                                                             ))
@@ -400,3 +412,5 @@ export default function ContabilidadPage() {
         </>
     );
 }
+
+    

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle } from 'lucide-react';
-import type { Client, Appointment } from '@/lib/types';
+import type { Client, Appointment, PaymentMethod } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -113,6 +113,17 @@ export default function ClientDetailPage() {
           default: return null;
         }
     }
+    
+    const getPaymentMethodName = (method?: PaymentMethod) => {
+        if (!method) return '';
+        switch (method) {
+            case 'cash': return 'Efectivo';
+            case 'voucher': return 'Bono';
+            case 'bizum': return 'Bizum';
+            case 'paypal': return 'PayPal';
+            default: return method;
+        }
+    };
 
     if (!isClientLoaded || !client) {
         return <SplashScreen />;
@@ -211,7 +222,7 @@ export default function ClientDetailPage() {
                                     <TableRow key={apt.id}>
                                         <TableCell>{format(apt.dateTime, "P p", { locale: es })}</TableCell>
                                         <TableCell>{getStatusBadge(apt.status)}</TableCell>
-                                        <TableCell className="capitalize">{apt.payment?.method}</TableCell>
+                                        <TableCell>{getPaymentMethodName(apt.payment?.method)}</TableCell>
                                         <TableCell className="text-right">
                                             {apt.payment && apt.payment.method !== 'voucher' ? `${apt.payment.amount.toFixed(2)}€` : ''}
                                         </TableCell>
@@ -259,3 +270,5 @@ export default function ClientDetailPage() {
         </div>
     );
 }
+
+    
