@@ -137,7 +137,7 @@ export default function ManualPage() {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger>Define tu catálogo de servicios</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Tag className="w-4 h-4" />Define tu catálogo de servicios</div></AccordionTrigger>
                   <AccordionContent>
                     <p>En la nueva sección "Servicios", puedes crear, editar o eliminar cada uno de los tratamientos que ofreces. Asigna a cada uno:</p>
                       <ul className="list-disc pl-5 space-y-1 mt-2">
