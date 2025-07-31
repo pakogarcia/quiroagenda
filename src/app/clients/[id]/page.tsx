@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag } from 'lucide-react';
 import type { Client, Appointment, Payment, PaymentMethod } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -106,6 +106,18 @@ export default function ClientDetailPage() {
             }
         });
         return stats;
+    }, [clientAppointments]);
+
+    const serviceStats = React.useMemo(() => {
+        const stats: { [key: string]: number } = {};
+        clientAppointments.forEach(apt => {
+            if (apt.status === 'completed' && apt.serviceName) {
+                stats[apt.serviceName] = (stats[apt.serviceName] || 0) + 1;
+            }
+        });
+        return Object.entries(stats)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
     }, [clientAppointments]);
 
      const handleAppointmentFinished = (updatedAppointment: Appointment) => {
@@ -210,7 +222,7 @@ export default function ClientDetailPage() {
                     </Card>
                 </div>
                 
-                 <div className="grid gap-6 md:grid-cols-3 mb-6">
+                 <div className="grid gap-6 md:grid-cols-4 mb-6">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Facturado</CardTitle>
@@ -238,6 +250,26 @@ export default function ClientDetailPage() {
                             <div className="text-2xl font-bold">{clientStats.noShows}</div>
                         </CardContent>
                     </Card>
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Servicios Frecuentes</CardTitle>
+                            <BarChart className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            {serviceStats.length > 0 ? (
+                                <ul className="space-y-1 text-sm">
+                                    {serviceStats.slice(0, 2).map(service => (
+                                        <li key={service.name} className="flex justify-between">
+                                            <span>{service.name}</span>
+                                            <span className="font-bold">{service.count}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Sin datos</p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
 
 
@@ -250,6 +282,7 @@ export default function ClientDetailPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Fecha</TableHead>
+                                    <TableHead>Servicio</TableHead>
                                     <TableHead>Estado</TableHead>
                                     <TableHead>Pago</TableHead>
                                     <TableHead className="text-right">Importe</TableHead>
@@ -259,6 +292,7 @@ export default function ClientDetailPage() {
                                 {clientAppointments.length > 0 ? clientAppointments.map(apt => (
                                     <TableRow key={apt.id}>
                                         <TableCell>{format(apt.dateTime, "P p", { locale: es })}</TableCell>
+                                        <TableCell>{apt.serviceName || 'N/A'}</TableCell>
                                         <TableCell>{getStatusBadge(apt)}</TableCell>
                                         <TableCell>{getPaymentMethodName(apt.payment?.method)}</TableCell>
                                         <TableCell className="text-right">
@@ -267,7 +301,7 @@ export default function ClientDetailPage() {
                                     </TableRow>
                                 )) : (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-24">
+                                        <TableCell colSpan={5} className="text-center h-24">
                                             Este cliente no tiene citas registradas.
                                         </TableCell>
                                     </TableRow>
@@ -314,5 +348,3 @@ export default function ClientDetailPage() {
         </div>
     );
 }
-
-    

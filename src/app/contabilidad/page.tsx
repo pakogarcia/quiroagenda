@@ -10,7 +10,7 @@ import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, st
 import { es } from 'date-fns/locale';
 import type { Appointment, Payment, VoucherSale } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart, AlertCircle, BarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -106,6 +106,7 @@ export default function ContabilidadPage() {
             vouchersUsed: 0,
             completedAppointments: 0,
             pendingPayments: 0,
+            revenueByService: {} as { [key: string]: number },
         };
         
         const completedAppointmentsInRange = filteredAppointments.filter(apt => apt.status === 'completed');
@@ -118,6 +119,9 @@ export default function ContabilidadPage() {
                     if (transaction.payment.method === 'cash') summary.cashRevenue += transaction.payment.amount;
                     else if (transaction.payment.method === 'bizum') summary.bizumRevenue += transaction.payment.amount;
                     else if (transaction.payment.method === 'paypal') summary.paypalRevenue += transaction.payment.amount;
+
+                    const serviceName = transaction.serviceName || 'Otros';
+                    summary.revenueByService[serviceName] = (summary.revenueByService[serviceName] || 0) + transaction.payment.amount;
                 } else if (transaction.payment.method === 'voucher') {
                     summary.vouchersUsed += 1;
                 }
@@ -132,23 +136,38 @@ export default function ContabilidadPage() {
                 if (sale.paymentMethod === 'cash') summary.cashRevenue += sale.amount;
                 else if (sale.paymentMethod === 'bizum') summary.bizumRevenue += sale.amount;
                 else if (sale.paymentMethod === 'paypal') summary.paypalRevenue += sale.amount;
+
+                const serviceName = 'Venta de Bonos';
+                summary.revenueByService[serviceName] = (summary.revenueByService[serviceName] || 0) + sale.amount;
              }
         }
 
         return summary;
     }, [filteredAppointments, allVoucherSales, dateRange]);
 
-    const chartData = [
+    const paymentChartData = [
         { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
         { name: 'Bizum', value: financialSummary.bizumRevenue, fill: 'hsl(var(--chart-2))' },
         { name: 'PayPal', value: financialSummary.paypalRevenue, fill: 'hsl(var(--chart-3))' },
     ].filter(d => d.value > 0);
+    
+    const serviceChartData = Object.entries(financialSummary.revenueByService).map(([name, value], index) => ({
+        name,
+        value,
+        fill: `hsl(var(--chart-${(index % 5) + 1}))`
+    })).filter(d => d.value > 0);
 
     const chartConfig = {
-      efectivo: { label: "Efectivo", color: "hsl(var(--chart-1))" },
-      bizum: { label: "Bizum", color: "hsl(var(--chart-2))" },
-      paypal: { label: "PayPal", color: "hsl(var(--chart-3))" },
+      efectivo: { label: "Efectivo" },
+      bizum: { label: "Bizum" },
+      paypal: { label: "PayPal" },
     };
+    
+    const serviceChartConfig = serviceChartData.reduce((acc, entry) => {
+        acc[entry.name] = { label: entry.name };
+        return acc;
+    }, {} as any);
+
 
     const setPresetRange = (preset: 'lastWeek' | 'lastMonth' | 'yearToDate') => {
         const today = new Date();
@@ -310,36 +329,6 @@ export default function ContabilidadPage() {
                                     </Card>
                                 </div>
                                 
-                                <div className="grid gap-6 md:grid-cols-3 no-print">
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Ingresos en Efectivo</CardTitle>
-                                            <Euro className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{financialSummary.cashRevenue.toFixed(2)}€</div>
-                                        </CardContent>
-                                    </Card>
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Ingresos con Bizum</CardTitle>
-                                            <Euro className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{financialSummary.bizumRevenue.toFixed(2)}€</div>
-                                        </CardContent>
-                                    </Card>
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Ingresos con PayPal</CardTitle>
-                                            <Euro className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{financialSummary.paypalRevenue.toFixed(2)}€</div>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-
                                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                                     <Card className="shadow-md lg:col-span-3 printable-content">
                                         <CardHeader>
@@ -390,31 +379,58 @@ export default function ContabilidadPage() {
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <Card className="shadow-md lg:col-span-2 no-print">
-                                        <CardHeader>
-                                            <CardTitle>Ingresos por Método</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {chartData.length > 0 ? (
-                                            <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
-                                                        <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                                                        <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={60}>
-                                                            {chartData.map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                                                            ))}
-                                                        </Pie>
-                                                    </PieChart>
-                                                </ResponsiveContainer>
-                                            </ChartContainer>
-                                            ) : (
-                                                <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-                                                    No hay datos para mostrar.
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
+                                    <div className="lg:col-span-2 space-y-6 no-print">
+                                        <Card className="shadow-md">
+                                            <CardHeader>
+                                                <CardTitle className="flex items-center gap-2"><BarChart className="w-5 h-5"/>Ingresos por Método</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                {paymentChartData.length > 0 ? (
+                                                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                                                            <Pie data={paymentChartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                                                {paymentChartData.map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                                ))}
+                                                            </Pie>
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                </ChartContainer>
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                                                        No hay datos para mostrar.
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="shadow-md">
+                                            <CardHeader>
+                                                <CardTitle className="flex items-center gap-2"><BarChart className="w-5 h-5"/>Ingresos por Servicio</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                {serviceChartData.length > 0 ? (
+                                                <ChartContainer config={serviceChartConfig} className="mx-auto aspect-square h-[250px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                                                            <Pie data={serviceChartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                                                {serviceChartData.map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                                ))}
+                                                            </Pie>
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                </ChartContainer>
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                                                        No hay datos para mostrar.
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
                                 </div>
                             </div>
                         </>
