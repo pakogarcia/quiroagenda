@@ -13,8 +13,10 @@ import { Input } from '@/components/ui/input';
 import { type Appointment, type Client, type BusinessProfile, Payment, Voucher } from '@/lib/types';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { useToast } from '@/hooks/use-toast';
-import { Send } from 'lucide-react';
+import { Send, Instagram, Facebook, Youtube, Link as LinkIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Checkbox } from './ui/checkbox';
+import { Separator } from './ui/separator';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
@@ -50,6 +52,8 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const [allClients, setAllClients] = React.useState<Client[]>([]);
   const [voucherPayingClient, setVoucherPayingClient] = React.useState<Client | null>(null);
   const [generatedMessage, setGeneratedMessage] = React.useState('');
+  const [socials, setSocials] = React.useState({ instagram: false, facebook: false, tiktok: false, youtube: false });
+  const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
   const { toast } = useToast();
 
   const form = useForm<PaymentFormValues>({
@@ -86,6 +90,12 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
               voucherPayerId: currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined,
           });
         }
+
+        const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+        if(storedProfile) {
+            setBusinessProfile(JSON.parse(storedProfile));
+        }
+
       } catch (error) {
         console.error("Failed to load client data.", error);
       }
@@ -152,7 +162,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         onAppointmentFinished(updatedAppointment);
         toast({
           title: 'Pago registrado',
-          description: `Se ha registrado un pago de ${(data.amount || 0).toFixed(2)}€ con ${data.paymentMethod}.`,
+          description: `Se ha registrado un pago de ${(data.amount || 0).toFixed(2)}€.`,
         });
     }
   };
@@ -176,13 +186,14 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     setStep('voucherUpdateMessage');
     if (!payerClient.voucher) return;
     try {
-        const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
-        const profile: BusinessProfile | null = storedProfile ? JSON.parse(storedProfile) : null;
         const result = await generateVoucherUpdateWhatsapp({
             clientName: payerClient.name.split(' ')[0],
             remainingSessions: payerClient.voucher.sessions,
-            businessName: profile?.name,
-            instagram: profile?.instagram,
+            businessName: businessProfile?.name,
+            instagram: socials.instagram ? businessProfile?.instagram : undefined,
+            facebook: socials.facebook ? businessProfile?.facebook : undefined,
+            tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
+            youtube: socials.youtube ? businessProfile?.youtube : undefined,
         });
         setGeneratedMessage(result.whatsappMessage);
     } catch(e) {
@@ -339,6 +350,9 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
   if (!appointment) return null;
 
+  const showSocials = step === 'paymentForm' && form.getValues('paymentMethod') === 'voucher' && businessProfile && (businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+
+
   return (
     <Dialog open={!!appointment} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -351,7 +365,43 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         <div className="py-4">
           {renderContent()}
         </div>
-        <DialogFooter className="gap-2 sm:justify-end">
+        
+        {showSocials && (
+            <>
+                <Separator />
+                <div className="pt-4 space-y-4">
+                     <h4 className="font-medium text-sm">Incluir Redes Sociales en el mensaje de WhatsApp</h4>
+                     <div className="flex flex-wrap items-center gap-4">
+                        {businessProfile?.instagram && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="ig" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />
+                                <label htmlFor="ig" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Instagram /> Instagram</label>
+                             </div>
+                        )}
+                         {businessProfile?.facebook && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="fb" checked={socials.facebook} onCheckedChange={(checked) => setSocials(s => ({...s, facebook: !!checked}))} />
+                                <label htmlFor="fb" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Facebook /> Facebook</label>
+                             </div>
+                        )}
+                         {businessProfile?.tiktok && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="tt" checked={socials.tiktok} onCheckedChange={(checked) => setSocials(s => ({...s, tiktok: !!checked}))} />
+                                <label htmlFor="tt" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> TikTok</label>
+                             </div>
+                        )}
+                         {businessProfile?.youtube && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="yt" checked={socials.youtube} onCheckedChange={(checked) => setSocials(s => ({...s, youtube: !!checked}))} />
+                                <label htmlFor="yt" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Youtube /> YouTube</label>
+                             </div>
+                        )}
+                     </div>
+                </div>
+            </>
+        )}
+
+        <DialogFooter className="gap-2 sm:justify-end pt-4">
             {renderFooter()}
         </DialogFooter>
       </DialogContent>

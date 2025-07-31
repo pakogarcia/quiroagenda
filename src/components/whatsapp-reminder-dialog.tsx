@@ -13,7 +13,7 @@ import { generateWhatsappReminder } from '@/ai/flows/generate-whatsapp-reminder'
 import type { Appointment, BusinessProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MessageSquare, Send, CheckCircle, Smartphone } from 'lucide-react';
+import { MessageSquare, Send, CheckCircle, Smartphone, Instagram, Facebook, Youtube, Link as LinkIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
@@ -39,6 +39,8 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'generate' | 'finished'>('select');
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [socials, setSocials] = React.useState({ instagram: false, facebook: false, tiktok: false, youtube: false });
+
 
   const appointmentsToRemind = appointments.filter(apt => !apt.reminderSent);
   
@@ -58,7 +60,6 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
             setStep('select');
             setReminders([]);
             setSelectedAppointmentIds([]);
-            setBusinessProfile(null);
         }, 300);
     }
   }, [isOpen]);
@@ -78,7 +79,10 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
           appointmentDateTime: format(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
           clientPhoneNumber: apt.clientPhone,
           businessName: businessProfile?.name,
-          instagram: businessProfile?.instagram,
+          instagram: socials.instagram ? businessProfile?.instagram : undefined,
+          facebook: socials.facebook ? businessProfile?.facebook : undefined,
+          tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
+          youtube: socials.youtube ? businessProfile?.youtube : undefined,
         });
         generatedReminders.push({
           appointmentId: apt.id,
@@ -94,7 +98,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
     setReminders(generatedReminders);
     setIsLoading(false);
     setStep('finished');
-  }, [appointmentsToRemind, selectedAppointmentIds, businessProfile]);
+  }, [appointmentsToRemind, selectedAppointmentIds, businessProfile, socials]);
 
   const handleMarkAsSent = () => {
     onRemindersSent(reminders.map(r => r.appointmentId));
@@ -108,6 +112,8 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
         setSelectedAppointmentIds([]);
     }
   };
+
+  const showSocials = step === 'select' && businessProfile && (businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   const renderContent = () => {
     if (step === 'generate') {
@@ -239,7 +245,41 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">{renderContent()}</div>
-        <DialogFooter className="sm:justify-end gap-2">
+        {showSocials && (
+             <>
+                <Separator />
+                <div className="py-4 space-y-4">
+                     <h4 className="font-medium text-sm">Incluir Redes Sociales</h4>
+                     <div className="flex flex-wrap items-center gap-4">
+                        {businessProfile?.instagram && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="ig-reminder" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />
+                                <label htmlFor="ig-reminder" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Instagram /> Instagram</label>
+                             </div>
+                        )}
+                         {businessProfile?.facebook && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="fb-reminder" checked={socials.facebook} onCheckedChange={(checked) => setSocials(s => ({...s, facebook: !!checked}))} />
+                                <label htmlFor="fb-reminder" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Facebook /> Facebook</label>
+                             </div>
+                        )}
+                         {businessProfile?.tiktok && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="tt-reminder" checked={socials.tiktok} onCheckedChange={(checked) => setSocials(s => ({...s, tiktok: !!checked}))} />
+                                <label htmlFor="tt-reminder" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> TikTok</label>
+                             </div>
+                        )}
+                         {businessProfile?.youtube && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="yt-reminder" checked={socials.youtube} onCheckedChange={(checked) => setSocials(s => ({...s, youtube: !!checked}))} />
+                                <label htmlFor="yt-reminder" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Youtube /> YouTube</label>
+                             </div>
+                        )}
+                     </div>
+                </div>
+            </>
+        )}
+        <DialogFooter className="sm:justify-end gap-2 pt-4">
             {renderFooter()}
         </DialogFooter>
       </DialogContent>

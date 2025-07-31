@@ -13,13 +13,14 @@ import { generateOfferWhatsapp } from '@/ai/flows/generate-offer-whatsapp';
 import type { Client, BusinessProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare } from 'lucide-react';
+import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { type DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
+import { Checkbox } from './ui/checkbox';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
@@ -44,6 +45,8 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
   const [isGenerated, setIsGenerated] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [socials, setSocials] = React.useState({ instagram: false, facebook: false, tiktok: false, youtube: false });
+
 
   React.useEffect(() => {
     if (isOpen) {
@@ -64,7 +67,6 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
       setGeneratedOffers([]);
       setOfferMessage('');
       setDateRange(undefined);
-      setBusinessProfile(null);
     }
   }, [isOpen]);
 
@@ -87,7 +89,10 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
           offerMessage: offerMessage,
           dateRange: formattedDateRange,
           businessName: businessProfile?.name,
-          instagram: businessProfile?.instagram,
+          instagram: socials.instagram ? businessProfile?.instagram : undefined,
+          facebook: socials.facebook ? businessProfile?.facebook : undefined,
+          tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
+          youtube: socials.youtube ? businessProfile?.youtube : undefined,
         });
         newOffers.push({
           clientId: client.id,
@@ -103,7 +108,9 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
     
     setIsLoading(false);
     setIsGenerated(true);
-  }, [dateRange, offerMessage, clients, businessProfile]);
+  }, [dateRange, offerMessage, clients, businessProfile, socials]);
+
+  const showSocials = !isGenerated && businessProfile && (businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   const renderContent = () => {
     if (isLoading) {
@@ -216,7 +223,44 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
             Diseña tu oferta y genera mensajes de WhatsApp para todos tus clientes.
           </DialogDescription>
         </DialogHeader>
+
         <div className="py-4">{renderContent()}</div>
+
+        {showSocials && (
+             <>
+                <Separator />
+                <div className="py-4 space-y-4">
+                     <h4 className="font-medium text-sm">Incluir Redes Sociales</h4>
+                     <div className="flex flex-wrap items-center gap-4">
+                        {businessProfile?.instagram && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="ig-offer" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />
+                                <label htmlFor="ig-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Instagram /> Instagram</label>
+                             </div>
+                        )}
+                         {businessProfile?.facebook && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="fb-offer" checked={socials.facebook} onCheckedChange={(checked) => setSocials(s => ({...s, facebook: !!checked}))} />
+                                <label htmlFor="fb-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Facebook /> Facebook</label>
+                             </div>
+                        )}
+                         {businessProfile?.tiktok && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="tt-offer" checked={socials.tiktok} onCheckedChange={(checked) => setSocials(s => ({...s, tiktok: !!checked}))} />
+                                <label htmlFor="tt-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> TikTok</label>
+                             </div>
+                        )}
+                         {businessProfile?.youtube && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="yt-offer" checked={socials.youtube} onCheckedChange={(checked) => setSocials(s => ({...s, youtube: !!checked}))} />
+                                <label htmlFor="yt-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Youtube /> YouTube</label>
+                             </div>
+                        )}
+                     </div>
+                </div>
+            </>
+        )}
+
         <DialogFooter>
           {!isGenerated ? (
             <Button onClick={handleGenerateOffers} disabled={isLoading || !dateRange?.from || !offerMessage || clients.length === 0}>
