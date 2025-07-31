@@ -4,7 +4,7 @@
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -99,7 +99,7 @@ export default function ManualPage() {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-4">
-                  <AccordionTrigger>Gestión de Bonos por Cliente</AccordionTrigger>
+                  <AccordionTrigger><Gift className="w-4 h-4 mr-2"/> Gestión de Bonos por Cliente</AccordionTrigger>
                   <AccordionContent>
                     Desde la ficha de un cliente, puedes asignarle o modificar un bono. Cuando un cliente pague con bono, se descontará una sesión automáticamente. Tras usarlo, la aplicación generará un mensaje de WhatsApp para informarle de las sesiones restantes.
                   </AccordionContent>
@@ -134,13 +134,18 @@ export default function ManualPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><Calculator /> Contabilidad Avanzada</CardTitle>
-              <CardDescription>Toma el control de tus finanzas con informes claros.</CardDescription>
+              <CardDescription>Transforma tus números en decisiones inteligentes.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p>Selecciona un rango de fechas y obtén un resumen financiero completo. Visualiza ingresos totales (en una tarjeta destacada), un gráfico de desglose por método de pago y tarjetas con el total de citas, bonos usados y pagos pendientes.</p>
-              <div>
-                <h4 className="font-semibold flex items-center gap-2 mb-2"><ShoppingCart className="w-4 h-4"/> Venta de Bonos</h4>
-                <p>Desde la página de Contabilidad, puedes registrar la venta de un nuevo bono a un cliente. Esta transacción se reflejará en los informes financieros y actualizará automáticamente la ficha del cliente.</p>
+              <p>La sección de Contabilidad es tu centro de mando financiero. Elige un rango de fechas y obtén un informe completo y fácil de entender que te ayudará a tomar el pulso de tu negocio.</p>
+              <ul className="list-disc pl-5 space-y-2">
+                  <li><strong className="flex items-center gap-2"><BarChart className="w-4 h-4" />Gráfico Interactivo de Ingresos:</strong> Visualiza al instante de dónde provienen tus ganancias. Un gráfico de tarta desglosa tus ingresos por método de pago (Efectivo, Bizum, PayPal), dándote una perspectiva clara de tus canales más importantes.</li>
+                  <li><strong>Resúmenes Clave:</strong> Tarjetas destacadas te muestran la información más relevante de un vistazo: los <strong>Ingresos Totales</strong> (resaltada para máxima visibilidad), el número de <strong>Citas Completadas</strong>, los <strong>Bonos Usados</strong> y, muy importante, los <strong>Pagos Pendientes</strong>.</li>
+                  <li><strong>Informes Detallados e Imprimibles:</strong> La tabla de movimientos te ofrece un desglose de cada transacción (citas y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.</li>
+              </ul>
+              <div className="pt-2">
+                <h4 className="font-semibold flex items-center gap-2 mb-2"><ShoppingCart className="w-4 h-4"/> Venta Directa de Bonos</h4>
+                <p>No esperes a que un cliente esté en una cita. Desde la página de Contabilidad, puedes registrar la venta de un nuevo bono directamente, agilizando el proceso y manteniendo tus registros financieros y de clientes siempre sincronizados.</p>
               </div>
             </CardContent>
           </Card>
