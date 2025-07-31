@@ -16,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Label, Tooltip } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
 import { OfferDialog } from '@/components/offer-dialog';
 
@@ -132,22 +132,26 @@ export default function ContabilidadPage() {
         
         for (const sale of allVoucherSales) {
              if (dateRange?.from && dateRange?.to && isWithinInterval(sale.date, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) {
-                summary.totalRevenue += sale.amount;
-                if (sale.paymentMethod === 'cash') summary.cashRevenue += sale.amount;
-                else if (sale.paymentMethod === 'bizum') summary.bizumRevenue += sale.amount;
-                else if (sale.paymentMethod === 'paypal') summary.paypalRevenue += sale.amount;
+                if (sale.paymentMethod === 'cash' || sale.paymentMethod === 'bizum' || sale.paymentMethod === 'paypal') {
+                    summary.totalRevenue += sale.amount;
+                    if (sale.paymentMethod === 'cash') summary.cashRevenue += sale.amount;
+                    else if (sale.paymentMethod === 'bizum') summary.bizumRevenue += sale.amount;
+                    else if (sale.paymentMethod === 'paypal') summary.paypalRevenue += sale.amount;
+                }
              }
         }
 
         return summary;
     }, [filteredAppointments, allVoucherSales, dateRange]);
-
+    
+    const totalPaymentRevenue = financialSummary.cashRevenue + financialSummary.bizumRevenue + financialSummary.paypalRevenue;
     const paymentChartData = [
         { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
         { name: 'Bizum', value: financialSummary.bizumRevenue, fill: 'hsl(var(--chart-2))' },
         { name: 'PayPal', value: financialSummary.paypalRevenue, fill: 'hsl(var(--chart-3))' },
     ].filter(d => d.value > 0);
     
+    const totalServiceRevenue = Object.values(financialSummary.revenueByService).reduce((acc, v) => acc + v, 0);
     const serviceChartData = Object.entries(financialSummary.revenueByService).map(([name, value], index) => ({
         name,
         value,
@@ -165,6 +169,20 @@ export default function ContabilidadPage() {
         return acc;
     }, {} as any);
 
+    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+        const RADIAN = Math.PI / 180;
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+        if (percent < 0.05) return null;
+
+        return (
+            <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
+                {`${(percent * 100).toFixed(0)}%`}
+            </text>
+        );
+    };
 
     const setPresetRange = (preset: 'lastWeek' | 'lastMonth' | 'yearToDate') => {
         const today = new Date();
@@ -386,11 +404,44 @@ export default function ContabilidadPage() {
                                                 <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <PieChart>
-                                                            <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                                                            <Pie data={paymentChartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                                            <Tooltip
+                                                                cursor={false}
+                                                                content={<ChartTooltipContent hideLabel />}
+                                                            />
+                                                            <Pie 
+                                                                data={paymentChartData} 
+                                                                dataKey="value" 
+                                                                nameKey="name" 
+                                                                innerRadius={60} 
+                                                                strokeWidth={5}
+                                                                label={renderCustomizedLabel}
+                                                                labelLine={false}
+                                                            >
                                                                 {paymentChartData.map((entry, index) => (
-                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} stroke={entry.fill} />
                                                                 ))}
+                                                                <Label
+                                                                    content={({ viewBox }) => {
+                                                                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                                            return (
+                                                                                <text
+                                                                                    x={viewBox.cx}
+                                                                                    y={viewBox.cy}
+                                                                                    textAnchor="middle"
+                                                                                    dominantBaseline="middle"
+                                                                                >
+                                                                                    <tspan
+                                                                                        x={viewBox.cx}
+                                                                                        y={viewBox.cy}
+                                                                                        className="text-3xl font-bold fill-foreground"
+                                                                                    >
+                                                                                        {totalPaymentRevenue.toFixed(2)}€
+                                                                                    </tspan>
+                                                                                </text>
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                />
                                                             </Pie>
                                                         </PieChart>
                                                     </ResponsiveContainer>
@@ -411,11 +462,44 @@ export default function ContabilidadPage() {
                                                 <ChartContainer config={serviceChartConfig} className="mx-auto aspect-square h-[250px]">
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <PieChart>
-                                                            <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                                                            <Pie data={serviceChartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                                             <Tooltip
+                                                                cursor={false}
+                                                                content={<ChartTooltipContent hideLabel />}
+                                                            />
+                                                            <Pie 
+                                                                data={serviceChartData} 
+                                                                dataKey="value" 
+                                                                nameKey="name" 
+                                                                innerRadius={60} 
+                                                                strokeWidth={5}
+                                                                label={renderCustomizedLabel}
+                                                                labelLine={false}
+                                                            >
                                                                 {serviceChartData.map((entry, index) => (
-                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} stroke={entry.fill} />
                                                                 ))}
+                                                                 <Label
+                                                                    content={({ viewBox }) => {
+                                                                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                                            return (
+                                                                                <text
+                                                                                    x={viewBox.cx}
+                                                                                    y={viewBox.cy}
+                                                                                    textAnchor="middle"
+                                                                                    dominantBaseline="middle"
+                                                                                >
+                                                                                    <tspan
+                                                                                        x={viewBox.cx}
+                                                                                        y={viewBox.cy}
+                                                                                        className="text-3xl font-bold fill-foreground"
+                                                                                    >
+                                                                                        {totalServiceRevenue.toFixed(2)}€
+                                                                                    </tspan>
+                                                                                </text>
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                />
                                                             </Pie>
                                                         </PieChart>
                                                     </ResponsiveContainer>
