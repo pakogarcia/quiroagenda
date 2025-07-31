@@ -5,7 +5,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -35,10 +35,24 @@ export default function ManualPage() {
             <Card className="shadow-lg">
                 <CardHeader>
                     <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog /> Perfil de Negocio ("Quién Eres")</CardTitle>
-                    <CardDescription>Personaliza la aplicación para que hable por ti.</CardDescription>
+                    <CardDescription>Personaliza la aplicación para que hable por ti y refleje tu marca.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Introduce el nombre, la situación y el teléfono de tu negocio. Esta información se utilizará para personalizar automáticamente todos los mensajes de WhatsApp, añadiendo el nombre de tu negocio al final para reforzar tu marca en cada comunicación.</p>
+                   <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="item-1">
+                            <AccordionTrigger><div className='flex items-center gap-2'><FileText className="w-4 h-4" />Datos Básicos</div></AccordionTrigger>
+                            <AccordionContent>
+                                <p>Introduce el nombre, la situación y el teléfono de tu negocio. Esta información se utilizará para personalizar automáticamente todos los mensajes de WhatsApp, añadiendo el nombre de tu negocio al final para reforzar tu marca en cada comunicación.</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                         <AccordionItem value="item-2">
+                            <AccordionTrigger><div className='flex items-center gap-2'><ImageIcon className="w-4 h-4" />Logotipo y Redes Sociales</div></AccordionTrigger>
+                            <AccordionContent className="space-y-2">
+                                <p><strong>Sube tu logotipo:</strong> Añade tu logotipo en formato JPG. Se mostrará en la cabecera de la aplicación, reemplazando el icono por defecto para una personalización completa.</p>
+                                <p><strong>Conecta tus redes:</strong> Introduce los enlaces a tus perfiles de Instagram, Facebook, TikTok y YouTube. Aunque por ahora solo se almacenan, en el futuro nos permitirán crear campañas de marketing más potentes y automatizadas.</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </CardContent>
             </Card>
         
@@ -232,3 +246,4 @@ export default function ManualPage() {
     </div>
   );
 }
+
