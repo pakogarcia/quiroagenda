@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -112,3 +113,5 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
     </Dialog>
   );
 }
+
+    

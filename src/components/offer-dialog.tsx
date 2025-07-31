@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useCallback } from 'react';
@@ -247,3 +248,5 @@ function OfferCard({ offer }: { offer: Offer }) {
         </div>
     );
 }
+
+    
