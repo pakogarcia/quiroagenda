@@ -13,7 +13,7 @@ import { ClientForm } from '@/components/client-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Badge } from '@/components/ui/badge';
-import { format, differenceInDays, startOfToday } from 'date-fns';
+import { format, differenceInDays, startOfToday, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
@@ -64,7 +64,6 @@ export default function ClientsPage() {
         const map = new Map<string, Date>();
         const today = startOfToday();
         
-        // Create a map from phone number to client ID for matching
         const phoneToClientId = new Map<string, string>();
         clients.forEach(client => {
             phoneToClientId.set(client.phone, client.id);
@@ -84,7 +83,7 @@ export default function ClientsPage() {
 
         for (const clientId in clientAppointments) {
             const latestDate = clientAppointments[clientId]
-                .filter(date => !isSameDayOrAfter(date, today))
+                .filter(date => isBefore(date, today))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
 
             if (latestDate) {
@@ -94,13 +93,6 @@ export default function ClientsPage() {
         
         return map;
     }, [clients, appointments]);
-
-    function isSameDayOrAfter(date1: Date, date2: Date) {
-        return date1.getFullYear() === date2.getFullYear() &&
-               date1.getMonth() === date2.getMonth() &&
-               date1.getDate() >= date2.getDate();
-    }
-
 
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [editingClient, setEditingClient] = React.useState<Client | undefined>(undefined);
