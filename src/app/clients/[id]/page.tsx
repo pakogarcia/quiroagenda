@@ -6,10 +6,10 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag, MessageSquare } from 'lucide-react';
 import type { Client, Appointment, Payment, PaymentMethod } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ClientForm } from '@/components/client-form';
 import { SplashScreen } from '@/components/layout/splash-screen';
@@ -172,6 +172,8 @@ export default function ClientDetailPage() {
     if (!isClientLoaded || !client) {
         return <SplashScreen />;
     }
+    
+    const whatsappLink = `https://wa.me/${client.phone.replace(/\D/g, '')}`;
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -201,8 +203,10 @@ export default function ClientDetailPage() {
                         <CardHeader>
                             <CardTitle className="text-2xl text-accent flex items-center gap-3"><User className="w-6 h-6"/>{`${client.name} ${client.lastName}`}</CardTitle>
                             <CardDescription className="flex items-center gap-2 pt-2">
-                                <Phone className="w-4 h-4"/>
-                                {client.phone}
+                                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                                    <MessageSquare className="w-4 h-4"/>
+                                    <span>{client.phone}</span>
+                                </a>
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
@@ -316,6 +320,9 @@ export default function ClientDetailPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Cliente</DialogTitle>
+                         <DialogDescription>
+                          Modifica los datos del cliente.
+                        </DialogDescription>
                     </DialogHeader>
                     <ClientForm 
                         onSubmit={(data) => handleUpdateClient(client.id, data)}
@@ -348,3 +355,5 @@ export default function ClientDetailPage() {
         </div>
     );
 }
+
+    
