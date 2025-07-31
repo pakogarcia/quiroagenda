@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ClientForm } from '@/components/client-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { format, differenceInDays, startOfToday, isBefore } from 'date-fns';
+import { format, differenceInDays, startOfToday, isBefore, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -254,4 +254,5 @@ export default function ClientsPage() {
 
         </div>
     );
-}
+
+    
