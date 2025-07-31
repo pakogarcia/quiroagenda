@@ -239,7 +239,7 @@ export default function ManualPage() {
           </div>
           
           <footer className="text-center text-sm text-muted-foreground pt-8">
-              {today && <p>Última actualización por Pako García el {today}.</p>}
+              {today ? <p>Última actualización por Pako García el {today}.</p> : <div className="h-5" />}
           </footer>
         </div>
       </main>
