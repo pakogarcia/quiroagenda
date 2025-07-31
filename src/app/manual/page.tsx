@@ -129,19 +129,26 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-           <Card className="shadow-lg">
+          <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><Tag /> Gestión de Servicios y Precios</CardTitle>
               <CardDescription>Define tu catálogo de tratamientos para agilizar la creación de citas y obtener mejores estadísticas.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p>En la nueva sección "Servicios", puedes crear, editar o eliminar cada uno de los tratamientos que ofreces. Asigna a cada uno:</p>
-              <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li><strong>Nombre del Servicio:</strong> El nombre claro y descriptivo de tu tratamiento (ej. "Masaje Relajante").</li>
-                <li><strong>Duración:</strong> El tiempo en minutos que dura el servicio.</li>
-                <li><strong>Precio:</strong> El coste del servicio para el cliente.</li>
-              </ul>
-              <p className='mt-2'>Esta información se usará en la agenda para agilizar la creación de citas y en la contabilidad para darte estadísticas detalladas.</p>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>Define tu catálogo de servicios</AccordionTrigger>
+                  <AccordionContent>
+                    <p>En la nueva sección "Servicios", puedes crear, editar o eliminar cada uno de los tratamientos que ofreces. Asigna a cada uno:</p>
+                      <ul className="list-disc pl-5 space-y-1 mt-2">
+                        <li><strong>Nombre del Servicio:</strong> El nombre claro y descriptivo de tu tratamiento (ej. "Masaje Relajante").</li>
+                        <li><strong>Duración:</strong> El tiempo en minutos que dura el servicio.</li>
+                        <li><strong>Precio:</strong> El coste del servicio para el cliente.</li>
+                      </ul>
+                      <p className='mt-2'>Esta información se usará en la agenda para agilizar la creación de citas y en la contabilidad para darte estadísticas detalladas.</p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
           
