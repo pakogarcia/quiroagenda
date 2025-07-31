@@ -27,6 +27,16 @@ export default function ManualPage() {
         </header>
 
         <div className="max-w-4xl mx-auto space-y-8">
+            <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog /> Perfil de Negocio ("Quién Eres")</CardTitle>
+                    <CardDescription>Personaliza la aplicación para que hable por ti.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>Introduce el nombre, la situación y el teléfono de tu negocio. Esta información se utilizará para personalizar automáticamente todos los mensajes de WhatsApp, añadiendo el nombre de tu negocio al final para reforzar tu marca en cada comunicación.</p>
+                </CardContent>
+            </Card>
+        
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><CalendarDays /> Gestión de Agenda Inteligente</CardTitle>
@@ -166,15 +176,6 @@ export default function ManualPage() {
             </CardContent>
           </Card>
           
-          <Card className="shadow-lg">
-            <CardHeader>
-                <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog /> Perfil de Negocio ("Quién Eres")</CardTitle>
-                <CardDescription>Personaliza la aplicación para que hable por ti.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p>Introduce el nombre, la situación y el teléfono de tu negocio. Esta información se utilizará para personalizar automáticamente todos los mensajes de WhatsApp, añadiendo el nombre de tu negocio al final para reforzar tu marca en cada comunicación.</p>
-            </CardContent>
-          </Card>
 
           <div className="text-center pt-8">
             <Bot className="h-10 w-10 text-primary mx-auto mb-2" />
