@@ -169,7 +169,15 @@ export default function ContabilidadPage() {
         return acc;
     }, {} as any);
 
-    const renderCustomizedLabelWithName = ({ cx, cy, midAngle, innerRadius, outerRadius, payload }: any) => {
+    const renderCustomizedLabelWithName = ({ cx, cy, midAngle, innerRadius, outerRadius, payload, name, percent, index }: any, data: any[]) => {
+        if (data.length === 1) {
+            return (
+                <text x={cx} y={cy} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
+                    {name}
+                </text>
+            );
+        }
+        
         const RADIAN = Math.PI / 180;
         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -410,7 +418,7 @@ export default function ContabilidadPage() {
                                                                 data={paymentChartData} 
                                                                 dataKey="value" 
                                                                 nameKey="name" 
-                                                                label={renderCustomizedLabelWithName}
+                                                                label={(props) => renderCustomizedLabelWithName(props, paymentChartData)}
                                                                 labelLine={false}
                                                             >
                                                                 {paymentChartData.map((entry, index) => (
@@ -444,7 +452,7 @@ export default function ContabilidadPage() {
                                                                 data={serviceChartData} 
                                                                 dataKey="value" 
                                                                 nameKey="name" 
-                                                                label={renderCustomizedLabelWithName}
+                                                                label={(props) => renderCustomizedLabelWithName(props, serviceChartData)}
                                                                 labelLine={false}
                                                             >
                                                                 {serviceChartData.map((entry, index) => (
@@ -485,4 +493,5 @@ export default function ContabilidadPage() {
             />
         </>
     );
-}
+
+    
