@@ -310,7 +310,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       case 'selectAction':
       default:
         return (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col gap-4">
             <Button size="lg" onClick={() => setStep('paymentForm')}>Registrar Pago</Button>
             <Button size="lg" variant="outline" onClick={handlePendingPayment}>Completada (Pendiente de Pago)</Button>
             <Button size="lg" variant="destructive" onClick={handleNoShow}>Marcar No Presentado</Button>
