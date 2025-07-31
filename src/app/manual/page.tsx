@@ -102,7 +102,7 @@ export default function ManualPage() {
                   <AccordionTrigger>Gestión de Bonos por Cliente</AccordionTrigger>
                   <AccordionContent>
                     Desde la ficha de un cliente, puedes asignarle o modificar un bono. Cuando un cliente pague con bono, se descontará una sesión automáticamente. Tras usarlo, la aplicación generará un mensaje de WhatsApp para informarle de las sesiones restantes.
-                  </官Content>
+                  </AccordionContent>
                 </AccordionItem>
               </Accordion>
             </CardContent>
