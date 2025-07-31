@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -10,7 +11,11 @@ import { es } from 'date-fns/locale';
 
 
 export default function ManualPage() {
-  const today = format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es });
+  const [today, setToday] = React.useState('');
+
+  React.useEffect(() => {
+    setToday(format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es }));
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -227,5 +232,3 @@ export default function ManualPage() {
     </div>
   );
 }
-
-    
