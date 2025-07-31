@@ -2,9 +2,10 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, User, Phone, Users, Gift, CalendarClock } from 'lucide-react';
+import { Plus, User, Phone, Gift, CalendarClock } from 'lucide-react';
 import type { Client, Voucher, Appointment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,7 +13,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ClientForm } from '@/components/client-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { Badge } from '@/components/ui/badge';
 import { format, differenceInDays, startOfToday, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -83,7 +83,7 @@ export default function ClientsPage() {
 
         for (const clientId in clientAppointments) {
             const latestDate = clientAppointments[clientId]
-                .filter(date => isBefore(date, today))
+                .filter(date => !isBefore(today, date))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
 
             if (latestDate) {
@@ -97,9 +97,6 @@ export default function ClientsPage() {
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [editingClient, setEditingClient] = React.useState<Client | undefined>(undefined);
     
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
-    const [deletingClientId, setDeletingClientId] = React.useState<string | null>(null);
-
     const handleAddClient = (data: Omit<Client, 'id'>) => {
         const newClient: Client = { ...data, id: crypto.randomUUID() };
         setClients(prev => [...prev, newClient].sort((a, b) => {
@@ -120,27 +117,6 @@ export default function ClientsPage() {
         setEditingClient(undefined);
     };
     
-    const handleUpdateVoucher = (clientId: string, voucher?: Voucher) => {
-        setClients(prev => prev.map(c => c.id === clientId ? {...c, voucher} : c));
-    };
-
-    const handleDeleteClient = () => {
-        if (!deletingClientId) return;
-        setClients(clients.filter((client) => client.id !== deletingClientId));
-        setIsDeleteConfirmOpen(false);
-        setDeletingClientId(null);
-    };
-
-    const openEditForm = (client: Client) => {
-        setEditingClient(client);
-        setIsFormOpen(true);
-    };
-
-    const openDeleteConfirm = (id: string) => {
-        setDeletingClientId(id);
-        setIsDeleteConfirmOpen(true);
-    };
-
     if (!isClient) {
         return <SplashScreen />;
     }
@@ -171,8 +147,9 @@ export default function ClientsPage() {
                                   initial={{ opacity: 0, y: 20 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, scale: 0.95 }}
-                                  className="origin-top max-w-xl"
+                                  className="origin-top"
                                 >
+                                <Link href={`/clients/${client.id}`} className="h-full block">
                                   <Card className="shadow-md hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col">
                                       <CardHeader>
                                           <div className="flex justify-between items-start">
@@ -182,14 +159,6 @@ export default function ClientsPage() {
                                                       <Phone className="w-4 h-4"/>
                                                       {client.phone}
                                                   </CardDescription>
-                                              </div>
-                                              <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                                  <Button variant="ghost" size="icon" onClick={() => openEditForm(client)}>
-                                                      <Edit className="w-5 h-5" />
-                                                  </Button>
-                                                  <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(client.id)}>
-                                                      <Trash2 className="w-5 h-5 text-destructive" />
-                                                  </Button>
                                               </div>
                                           </div>
                                       </CardHeader>
@@ -217,6 +186,7 @@ export default function ClientsPage() {
                                         </div>
                                       </CardContent>
                                   </Card>
+                                </Link>
                                 </motion.div>
                             )
                         })}
@@ -244,20 +214,6 @@ export default function ClientsPage() {
                 </DialogContent>
             </Dialog>
 
-            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente al cliente de tu lista. Las citas existentes no se verán afectadas.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteClient} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
