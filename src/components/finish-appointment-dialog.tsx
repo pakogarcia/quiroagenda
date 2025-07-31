@@ -101,6 +101,16 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       description: 'Se ha marcado la cita como "No Presentado".',
     });
   };
+  
+  const handlePendingPayment = () => {
+    if (!appointment) return;
+    const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment: undefined };
+    onAppointmentFinished(updatedAppointment);
+    toast({
+      title: 'Cita Completada',
+      description: 'La cita se marcó como completada. El pago está pendiente.',
+    });
+  };
 
   const handlePaymentSubmit = (data: PaymentFormValues) => {
     if (!appointment) return;
@@ -302,6 +312,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         return (
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" onClick={() => setStep('paymentForm')}>Registrar Pago</Button>
+            <Button size="lg" variant="outline" onClick={handlePendingPayment}>Completada (Pendiente de Pago)</Button>
             <Button size="lg" variant="destructive" onClick={handleNoShow}>Marcar No Presentado</Button>
           </div>
         );

@@ -5,7 +5,7 @@ import * as React from 'react';
 import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock, AlertCircle } from 'lucide-react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 const BLOCKED_DAYS_STORAGE_KEY = 'quiroagenda_blocked_days';
@@ -236,10 +237,14 @@ export default function Home() {
   };
 
 
-  const getStatusBadge = (status: Appointment['status']) => {
+  const getStatusBadge = (status: Appointment['status'], payment?: Appointment['payment']) => {
     switch (status) {
-      case 'completed': return <Badge variant="secondary">Completada</Badge>;
-      case 'no-show': return <Badge variant="destructive">No Presentado</Badge>;
+      case 'completed': 
+        return payment 
+            ? <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" />Completada</Badge>
+            : <Badge variant="outline" className="flex items-center gap-1 border-yellow-500 text-yellow-600"><AlertCircle className="w-3 h-3" />Pendiente Pago</Badge>;
+      case 'no-show': 
+        return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" />No Presentado</Badge>;
       case 'scheduled':
       default:
         return null;
@@ -387,12 +392,15 @@ export default function Home() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="origin-top"
                   >
-                    <Card className={`shadow-md hover:shadow-xl transition-shadow duration-300 group ${apt.status !== 'scheduled' ? 'bg-muted/50' : ''}`}>
+                    <Card className={cn('shadow-md hover:shadow-xl transition-shadow duration-300 group', {
+                        'bg-muted/50': apt.status !== 'scheduled',
+                        'border-yellow-500/50': apt.status === 'completed' && !apt.payment,
+                    })}>
                       <CardHeader className="flex flex-row items-center justify-between">
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                                 <CardTitle className="text-xl text-accent">{apt.clientName}</CardTitle>
-                                {getStatusBadge(apt.status)}
+                                {getStatusBadge(apt.status, apt.payment)}
                             </div>
                            <CardDescription className="flex items-center gap-2 pt-1">
                                <Clock className="w-4 h-4"/>
@@ -400,7 +408,7 @@ export default function Home() {
                            </CardDescription>
                         </div>
                          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                            {apt.status === 'scheduled' && (isBefore(apt.dateTime, new Date()) || isSameDay(apt.dateTime, new Date())) && (
+                            {((apt.status === 'scheduled' && (isBefore(apt.dateTime, new Date()) || isSameDay(apt.dateTime, new Date()))) || (apt.status === 'completed' && !apt.payment)) && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
