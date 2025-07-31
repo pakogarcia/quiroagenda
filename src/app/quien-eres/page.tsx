@@ -12,8 +12,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
+import { Separator } from '@/components/ui/separator';
 
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 
@@ -21,6 +22,9 @@ const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
   address: z.string().optional(),
   phone: z.string().optional(),
+  instagram: z.string().url().or(z.literal('')).optional(),
+  facebook: z.string().url().or(z.literal('')).optional(),
+  tiktok: z.string().url().or(z.literal('')).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -35,6 +39,9 @@ export default function ProfilePage() {
       name: '',
       address: '',
       phone: '',
+      instagram: '',
+      facebook: '',
+      tiktok: '',
     },
   });
 
@@ -56,7 +63,10 @@ export default function ProfilePage() {
       const profileToSave: BusinessProfile = {
           name: data.name,
           address: data.address || '',
-          phone: data.phone || ''
+          phone: data.phone || '',
+          instagram: data.instagram || undefined,
+          facebook: data.facebook || undefined,
+          tiktok: data.tiktok || undefined,
       };
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileToSave));
       toast({
@@ -85,51 +95,100 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
             <CardDescription>
-              Completa la información de tu negocio. Se usará para personalizar los mensajes automáticos.
+              Completa la información de tu negocio. Se usará para personalizar los mensajes automáticos y futuras integraciones.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
-                      <FormControl>
-                        <Input placeholder="p. ej., Centro de Masajes Zen" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
-                      <FormControl>
-                        <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+34 987 654 321" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
+                        <FormControl>
+                          <Input placeholder="p. ej., Centro de Masajes Zen" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
+                        <FormControl>
+                          <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+34 987 654 321" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                     <h3 className="text-lg font-medium text-primary">Redes Sociales</h3>
+                     <FormField
+                        control={form.control}
+                        name="instagram"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="facebook"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="tiktok"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                </div>
+
+
                 <Button type="submit" className="w-full">
                   Guardar Información
                 </Button>

@@ -39,6 +39,9 @@ export type BusinessProfile = {
   name: string;
   address: string;
   phone: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
 };
 
 export type VoucherSale = {
