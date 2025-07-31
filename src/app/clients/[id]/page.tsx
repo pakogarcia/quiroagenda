@@ -17,6 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog';
+import { cn } from '@/lib/utils';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
@@ -29,6 +31,7 @@ export default function ClientDetailPage() {
     const router = useRouter();
     const params = useParams();
     const clientId = params.id as string;
+    const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
 
     React.useEffect(() => {
         if (clientId) {
@@ -105,12 +108,35 @@ export default function ClientDetailPage() {
         return stats;
     }, [clientAppointments]);
 
-    const getStatusBadge = (status: Appointment['status'], payment?: Payment) => {
-        switch (status) {
+     const handleAppointmentFinished = (updatedAppointment: Appointment) => {
+        const updatedAppointments = clientAppointments.map(apt => 
+            apt.id === updatedAppointment.id ? updatedAppointment : apt
+        );
+        setClientAppointments(updatedAppointments);
+
+        const allAppointments = JSON.parse(localStorage.getItem(APPOINTMENTS_STORAGE_KEY) || '[]')
+            .map((apt: any) => ({ ...apt, dateTime: new Date(apt.dateTime) }));
+        
+        const allUpdatedAppointments = allAppointments.map((apt: Appointment) => 
+            apt.id === updatedAppointment.id ? updatedAppointment : apt
+        );
+        localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(allUpdatedAppointments));
+
+        setFinishingAppointment(null);
+    };
+
+    const getStatusBadge = (appointment: Appointment) => {
+        switch (appointment.status) {
             case 'completed':
-                return payment
-                    ? <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Completada</Badge>
-                    : <Badge variant="outline" className="flex items-center gap-1 border-yellow-500 text-yellow-600"><AlertCircle className="w-3 h-3" /> Pendiente de Pago</Badge>;
+                if (appointment.payment) {
+                    return <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Completada</Badge>;
+                } else {
+                    return (
+                         <Button variant="outline" size="sm" className="h-auto py-0.5 px-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700" onClick={() => setFinishingAppointment(appointment)}>
+                            <AlertCircle className="w-3 h-3 mr-1" /> Pendiente de Pago
+                        </Button>
+                    );
+                }
             case 'no-show':
                 return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" /> No Presentado</Badge>;
             case 'scheduled':
@@ -233,7 +259,7 @@ export default function ClientDetailPage() {
                                 {clientAppointments.length > 0 ? clientAppointments.map(apt => (
                                     <TableRow key={apt.id}>
                                         <TableCell>{format(apt.dateTime, "P p", { locale: es })}</TableCell>
-                                        <TableCell>{getStatusBadge(apt.status, apt.payment)}</TableCell>
+                                        <TableCell>{getStatusBadge(apt)}</TableCell>
                                         <TableCell>{getPaymentMethodName(apt.payment?.method)}</TableCell>
                                         <TableCell className="text-right">
                                             {apt.payment && apt.payment.method !== 'voucher' ? `${apt.payment.amount.toFixed(2)}€` : (apt.status === 'completed' && !apt.payment ? 'Pendiente' : '')}
@@ -279,6 +305,12 @@ export default function ClientDetailPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            <FinishAppointmentDialog
+                appointment={finishingAppointment}
+                onOpenChange={() => setFinishingAppointment(null)}
+                onAppointmentFinished={handleAppointmentFinished}
+            />
         </div>
     );
 }
