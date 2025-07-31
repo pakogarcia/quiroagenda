@@ -45,14 +45,14 @@ export default function ManualPage() {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger><Eye className="w-4 h-4 mr-2" />Visualización y Navegación</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Eye className="w-4 h-4" />Visualización y Navegación</div></AccordionTrigger>
                   <AccordionContent className="space-y-2">
                     <p>Navega por un calendario visual e intuitivo. Los días con citas se marcan con colores para que veas de un vistazo tu ocupación futura: verde (1 cita), naranja (2 citas) y rojo (3 o más).</p>
                     <p>Los días que hayas bloqueado aparecerán en gris y no permitirán nuevas citas.</p>
                   </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="item-2">
-                  <AccordionTrigger><Euro className="w-4 h-4 mr-2" />Finalizar una Cita (Cobro, Ausencias y Pagos Pendientes)</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Euro className="w-4 h-4" />Finalizar una Cita (Cobro, Ausencias y Pagos Pendientes)</div></AccordionTrigger>
                   <AccordionContent className="space-y-2">
                     <p>En las citas pasadas (o el mismo día), verás un icono de Euro (€). Al pulsarlo, se abre un diálogo para finalizar la cita con varias opciones:</p>
                     <ul className="list-disc pl-5 space-y-1">
@@ -63,13 +63,18 @@ export default function ManualPage() {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-3">
-                  <AccordionTrigger><Lock className="w-4 h-4 mr-2"/>Bloqueo de Días</AccordionTrigger>
+                    <AccordionTrigger>
+                        <div className="flex items-center gap-2">
+                            <Lock className="w-4 h-4" />
+                            <span>Bloqueo de Días</span>
+                        </div>
+                    </AccordionTrigger>
                   <AccordionContent>
                     ¿Necesitas un día libre? Selecciona un día en el calendario y pulsa el botón con el icono de candado (<Lock className="inline h-4 w-4"/>). El día se marcará como no disponible y no podrás agendar citas en él. Vuelve a pulsarlo para desbloquearlo.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-4">
-                  <AccordionTrigger><MessageSquare className="w-4 h-4 mr-2" />Confirmación por WhatsApp</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><MessageSquare className="w-4 h-4" />Confirmación por WhatsApp</div></AccordionTrigger>
                   <AccordionContent>
                     Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Incluye todos los detalles: nombre del cliente, fecha, hora y la dirección de tu negocio.
                   </AccordionContent>
@@ -86,7 +91,7 @@ export default function ManualPage() {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger><History className="w-4 h-4 mr-2" /> Historial Detallado por Cliente</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><History className="w-4 h-4" /> Historial Detallado por Cliente</div></AccordionTrigger>
                   <AccordionContent>
                     <p>Haz clic en la tarjeta de cualquier cliente para acceder a su ficha completa. Aquí encontrarás:</p>
                      <ul className="list-disc pl-5 space-y-1 mt-2">
@@ -97,19 +102,19 @@ export default function ManualPage() {
                   </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="item-2">
-                    <AccordionTrigger><AlertCircle className="w-4 h-4 mr-2 text-yellow-600" /> Gestión de Pagos Pendientes</AccordionTrigger>
+                    <AccordionTrigger><div className='flex items-center gap-2'><AlertCircle className="w-4 h-4 text-yellow-600" /> Gestión de Pagos Pendientes</div></AccordionTrigger>
                     <AccordionContent>
                         <p>Las tarjetas de los clientes con citas pendientes de pago aparecen con un borde amarillo para una rápida identificación. En su historial, puedes hacer clic directamente en el estado "Pendiente de Pago" para registrar el cobro sin tener que volver a la agenda principal.</p>
                     </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-3">
-                  <AccordionTrigger><FileText className="w-4 h-4 mr-2" /> Campo de Detalles del Cliente</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><FileText className="w-4 h-4" /> Campo de Detalles del Cliente</div></AccordionTrigger>
                   <AccordionContent>
                     Al crear o editar un cliente, ahora dispones de un campo de "Detalles" para anotar información crucial como alergias, condiciones médicas, preferencias o cualquier otra nota relevante para ofrecer un servicio seguro y personalizado.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-4">
-                  <AccordionTrigger><Gift className="w-4 h-4 mr-2"/> Gestión de Bonos por Cliente</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4"/> Gestión de Bonos por Cliente</div></AccordionTrigger>
                   <AccordionContent>
                     Desde la ficha de un cliente, puedes asignarle o modificar un bono. Cuando un cliente pague con bono, se descontará una sesión automáticamente. Tras usarlo, la aplicación generará un mensaje de WhatsApp para informarle de las sesiones restantes.
                   </AccordionContent>
@@ -126,13 +131,13 @@ export default function ManualPage() {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger><Send className="w-4 h-4 mr-2" /> Recordatorios de Citas Flexibles</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Send className="w-4 h-4" /> Recordatorios de Citas Flexibles</div></AccordionTrigger>
                   <AccordionContent>
                     Reduce las ausencias enviando recordatorios por WhatsApp. Puedes seleccionar cualquier cita futura pendiente de la lista y generar sus recordatorios.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-2">
-                  <AccordionTrigger><Gift className="w-4 h-4 mr-2" /> Campañas de Ofertas</AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4" /> Campañas de Ofertas</div></AccordionTrigger>
                   <AccordionContent>
                     Crea ofertas especiales para un período determinado. La IA redactará un mensaje persuasivo y personalizado para cada cliente, listo para enviar por WhatsApp.
                   </AccordionContent>
@@ -149,25 +154,25 @@ export default function ManualPage() {
             <CardContent>
                  <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
-                        <AccordionTrigger><BarChart className="w-4 h-4 mr-2" />Gráfico Interactivo de Ingresos</AccordionTrigger>
+                        <AccordionTrigger><div className='flex items-center gap-2'><BarChart className="w-4 h-4" />Gráfico Interactivo de Ingresos</div></AccordionTrigger>
                         <AccordionContent>
                         Visualiza al instante de dónde provienen tus ganancias. Un gráfico de tarta desglosa tus ingresos por método de pago (Efectivo, Bizum, PayPal), dándote una perspectiva clara de tus canales más importantes.
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-2">
-                        <AccordionTrigger><FileText className="w-4 h-4 mr-2" />Resúmenes Clave</AccordionTrigger>
+                        <AccordionTrigger><div className='flex items-center gap-2'><FileText className="w-4 h-4" />Resúmenes Clave</div></AccordionTrigger>
                         <AccordionContent>
                         Tarjetas destacadas te muestran la información más relevante de un vistazo: los <strong>Ingresos Totales</strong> (resaltada para máxima visibilidad), el número de <strong>Citas Completadas</strong>, los <strong>Bonos Usados</strong> y, muy importante, los <strong>Pagos Pendientes</strong>.
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-3">
-                        <AccordionTrigger><History className="w-4 h-4 mr-2" />Informes Detallados e Imprimibles</AccordionTrigger>
+                        <AccordionTrigger><div className='flex items-center gap-2'><History className="w-4 h-4" />Informes Detallados e Imprimibles</div></AccordionTrigger>
                         <AccordionContent>
                         La tabla de movimientos te ofrece un desglose de cada transacción (citas y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-4">
-                        <AccordionTrigger><ShoppingCart className="w-4 h-4 mr-2" />Venta Directa de Bonos</AccordionTrigger>
+                        <AccordionTrigger><div className='flex items-center gap-2'><ShoppingCart className="w-4 h-4" />Venta Directa de Bonos</div></AccordionTrigger>
                         <AccordionContent>
                         No esperes a que un cliente esté en una cita. Desde la página de Contabilidad, puedes registrar la venta de un nuevo bono directamente, agilizando el proceso y manteniendo tus registros financieros y de clientes siempre sincronizados.
                         </AccordionContent>
