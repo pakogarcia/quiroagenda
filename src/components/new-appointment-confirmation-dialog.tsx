@@ -45,6 +45,7 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
             appointmentDateTime: format(appointment.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
             businessAddress: profile.address,
             businessName: profile.name,
+            instagram: profile.instagram,
           });
 
           setGeneratedMessage(result.whatsappMessage);
@@ -113,5 +114,3 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
     </Dialog>
   );
 }
-
-    

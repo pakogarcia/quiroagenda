@@ -78,6 +78,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
           appointmentDateTime: format(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
           clientPhoneNumber: apt.clientPhone,
           businessName: businessProfile?.name,
+          instagram: businessProfile?.instagram,
         });
         generatedReminders.push({
           appointmentId: apt.id,
@@ -263,5 +264,3 @@ function Card({ reminder }: { reminder: Reminder }) {
         </div>
     )
 }
-
-    

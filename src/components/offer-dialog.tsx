@@ -87,6 +87,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
           offerMessage: offerMessage,
           dateRange: formattedDateRange,
           businessName: businessProfile?.name,
+          instagram: businessProfile?.instagram,
         });
         newOffers.push({
           clientId: client.id,
@@ -248,5 +249,3 @@ function OfferCard({ offer }: { offer: Offer }) {
         </div>
     );
 }
-
-    

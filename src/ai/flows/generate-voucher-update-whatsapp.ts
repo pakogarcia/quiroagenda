@@ -15,6 +15,7 @@ const GenerateVoucherUpdateWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the client.'),
   remainingSessions: z.number().describe('The number of remaining sessions in the voucher.'),
   businessName: z.string().optional().describe('The name of the business sending the message.'),
+  instagram: z.string().url().optional().describe('The Instagram profile URL of the business.'),
 });
 
 export type GenerateVoucherUpdateWhatsappInput = z.infer<typeof GenerateVoucherUpdateWhatsappInputSchema>;
@@ -39,10 +40,10 @@ const generateVoucherUpdateWhatsappPrompt = ai.definePrompt({
 
   {{#if remainingSessions}}
   Plantilla para sesiones restantes:
-  "¡Hola {{clientName}}! 👋 Hemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
+  "¡Hola {{clientName}}! 👋 Hemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if instagram}}\n¡Síguenos en Instagram! {{instagram}}{{/if}}"
   {{else}}
   Plantilla para 0 sesiones restantes:
-  "¡Hola {{clientName}}! 🎉 ¡Felicidades por completar tu bono! Ha sido tu última sesión, pero nos encantaría seguir cuidándote. Puedes adquirir un nuevo bono cuando quieras para no perder el ritmo. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}"
+  "¡Hola {{clientName}}! 🎉 ¡Felicidades por completar tu bono! Ha sido tu última sesión, pero nos encantaría seguir cuidándote. Puedes adquirir un nuevo bono cuando quieras para no perder el ritmo. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if instagram}}\n¡Síguenos en Instagram! {{instagram}}{{/if}}"
   {{/if}}
   `,
 });

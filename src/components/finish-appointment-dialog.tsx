@@ -182,6 +182,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             clientName: payerClient.name.split(' ')[0],
             remainingSessions: payerClient.voucher.sessions,
             businessName: profile?.name,
+            instagram: profile?.instagram,
         });
         setGeneratedMessage(result.whatsappMessage);
     } catch(e) {
