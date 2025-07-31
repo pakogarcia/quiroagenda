@@ -242,18 +242,20 @@ export default function ClientsPage() {
                 )}
             </main>
 
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{editingClient ? 'Editar Cliente' : 'Añadir Nuevo Cliente'}</DialogTitle>
-                    </DialogHeader>
-                    <ClientForm 
-                        onSubmit={editingClient ? (data) => handleUpdateClient(editingClient.id, data) : handleAddClient}
-                        client={editingClient}
-                        allClients={clients}
-                    />
-                </DialogContent>
-            </Dialog>
+            {isClient && (
+              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                  <DialogContent>
+                      <DialogHeader>
+                          <DialogTitle>{editingClient ? 'Editar Cliente' : 'Añadir Nuevo Cliente'}</DialogTitle>
+                      </DialogHeader>
+                      <ClientForm 
+                          onSubmit={editingClient ? (data) => handleUpdateClient(editingClient.id, data) : handleAddClient}
+                          client={editingClient}
+                          allClients={clients}
+                      />
+                  </DialogContent>
+              </Dialog>
+            )}
 
         </div>
     );
