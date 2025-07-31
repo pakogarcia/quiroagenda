@@ -44,7 +44,7 @@ export default function ContabilidadPage() {
                         status: apt.status || 'scheduled',
                         payment: apt.payment || undefined,
                     }))
-                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()) && apt.status === 'completed');
+                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime())); // Get all appointments first
                 setAllAppointments(parsedAppointments);
             }
             const storedVoucherSales = localStorage.getItem(VOUCHER_SALES_STORAGE_KEY);
@@ -84,14 +84,15 @@ export default function ContabilidadPage() {
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to);
         
-        const completedAppointments: Transaction[] = filteredAppointments
+        const completedAppointmentsInRange: Transaction[] = filteredAppointments
+            .filter(apt => apt.status === 'completed')
             .map(apt => ({ ...apt, type: 'appointment' }));
         
         const voucherSalesInRange: Transaction[] = allVoucherSales
             .filter(sale => isWithinInterval(sale.date, { start, end }))
             .map(sale => ({ ...sale, type: 'voucher_sale' }));
 
-        return [...completedAppointments, ...voucherSalesInRange]
+        return [...completedAppointmentsInRange, ...voucherSalesInRange]
             .sort((a, b) => (b.type === 'appointment' ? b.dateTime.getTime() : b.date.getTime()) - (a.type === 'appointment' ? a.dateTime.getTime() : a.date.getTime()));
             
     }, [filteredAppointments, allVoucherSales, dateRange]);
@@ -106,8 +107,10 @@ export default function ContabilidadPage() {
             completedAppointments: 0,
             pendingPayments: 0,
         };
+        
+        const completedAppointmentsInRange = filteredAppointments.filter(apt => apt.status === 'completed');
 
-        for (const transaction of filteredAppointments) {
+        for (const transaction of completedAppointmentsInRange) {
             summary.completedAppointments += 1;
             if (transaction.payment) {
                 if (transaction.payment.method === 'cash' || transaction.payment.method === 'bizum' || transaction.payment.method === 'paypal') {
@@ -119,7 +122,7 @@ export default function ContabilidadPage() {
                     summary.vouchersUsed += 1;
                 }
             } else {
-                summary.pendingPayments += 1;
+                 summary.pendingPayments += 1;
             }
         }
         
@@ -269,10 +272,10 @@ export default function ContabilidadPage() {
                         <>
                             <div className="space-y-6 printable-area">
                                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 no-print">
-                                    <Card>
+                                    <Card className="bg-primary text-primary-foreground">
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
-                                            <Euro className="h-4 w-4 text-muted-foreground" />
+                                            <Euro className="h-4 w-4 text-primary-foreground/70" />
                                         </CardHeader>
                                         <CardContent>
                                             <div className="text-2xl font-bold">{financialSummary.totalRevenue.toFixed(2)}€</div>
