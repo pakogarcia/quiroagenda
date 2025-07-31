@@ -6,8 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle } from 'lucide-react';
-import type { Client, Appointment, PaymentMethod } from '@/lib/types';
+import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import type { Client, Appointment, Payment, PaymentMethod } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -105,14 +105,20 @@ export default function ClientDetailPage() {
         return stats;
     }, [clientAppointments]);
 
-    const getStatusBadge = (status: Appointment['status']) => {
+    const getStatusBadge = (status: Appointment['status'], payment?: Payment) => {
         switch (status) {
-          case 'completed': return <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Completada</Badge>;
-          case 'no-show': return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3"/> No Presentado</Badge>;
-          case 'scheduled': return <Badge variant="outline">Programada</Badge>;
-          default: return null;
+            case 'completed':
+                return payment
+                    ? <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Completada</Badge>
+                    : <Badge variant="outline" className="flex items-center gap-1 border-yellow-500 text-yellow-600"><AlertCircle className="w-3 h-3" /> Pendiente de Pago</Badge>;
+            case 'no-show':
+                return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" /> No Presentado</Badge>;
+            case 'scheduled':
+                return <Badge variant="outline">Programada</Badge>;
+            default:
+                return null;
         }
-    }
+    };
     
     const getPaymentMethodName = (method?: PaymentMethod) => {
         if (!method) return '';
@@ -221,7 +227,7 @@ export default function ClientDetailPage() {
                                 {clientAppointments.length > 0 ? clientAppointments.map(apt => (
                                     <TableRow key={apt.id}>
                                         <TableCell>{format(apt.dateTime, "P p", { locale: es })}</TableCell>
-                                        <TableCell>{getStatusBadge(apt.status)}</TableCell>
+                                        <TableCell>{getStatusBadge(apt.status, apt.payment)}</TableCell>
                                         <TableCell>{getPaymentMethodName(apt.payment?.method)}</TableCell>
                                         <TableCell className="text-right">
                                             {apt.payment && apt.payment.method !== 'voucher' ? `${apt.payment.amount.toFixed(2)}€` : (apt.status === 'completed' && !apt.payment ? 'Pendiente' : '')}
@@ -270,5 +276,3 @@ export default function ClientDetailPage() {
         </div>
     );
 }
-
-    
