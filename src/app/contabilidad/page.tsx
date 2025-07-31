@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart, Pie, Cell, ResponsiveContainer, Label, Tooltip } from 'recharts';
+import { ChartTooltipContent } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
 import { OfferDialog } from '@/components/offer-dialog';
 
@@ -144,30 +144,17 @@ export default function ContabilidadPage() {
         return summary;
     }, [filteredAppointments, allVoucherSales, dateRange]);
     
-    const totalPaymentRevenue = financialSummary.cashRevenue + financialSummary.bizumRevenue + financialSummary.paypalRevenue;
     const paymentChartData = [
         { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
         { name: 'Bizum', value: financialSummary.bizumRevenue, fill: 'hsl(var(--chart-2))' },
         { name: 'PayPal', value: financialSummary.paypalRevenue, fill: 'hsl(var(--chart-3))' },
     ].filter(d => d.value > 0);
     
-    const totalServiceRevenue = Object.values(financialSummary.revenueByService).reduce((acc, v) => acc + v, 0);
     const serviceChartData = Object.entries(financialSummary.revenueByService).map(([name, value], index) => ({
         name,
         value,
         fill: `hsl(var(--chart-${(index % 5) + 1}))`
     })).filter(d => d.value > 0);
-
-    const chartConfig = {
-      efectivo: { label: "Efectivo" },
-      bizum: { label: "Bizum" },
-      paypal: { label: "PayPal" },
-    };
-    
-    const serviceChartConfig = serviceChartData.reduce((acc, entry) => {
-        acc[entry.name] = { label: entry.name };
-        return acc;
-    }, {} as any);
 
     const renderCustomizedLabelWithName = ({ cx, cy, midAngle, innerRadius, outerRadius, payload, name, percent, index }: any, data: any[]) => {
         if (data.length === 1) {
@@ -491,7 +478,4 @@ export default function ContabilidadPage() {
             />
         </>
     );
-
-    
-
-    
+}
