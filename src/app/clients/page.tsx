@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ClientForm } from '@/components/client-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { format, differenceInDays, startOfToday, isBefore, isSameDay } from 'date-fns';
+import { format, differenceInDays, startOfToday, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -25,6 +25,7 @@ export default function ClientsPage() {
     const [clients, setClients] = React.useState<Client[]>([]);
     const [appointments, setAppointments] = React.useState<Appointment[]>([]);
     const [isClient, setIsClient] = React.useState(false);
+    const [today, setToday] = React.useState<Date | null>(null);
 
     React.useEffect(() => {
         try {
@@ -53,6 +54,7 @@ export default function ClientsPage() {
         } catch (error) {
             console.error("Failed to load data.", error);
         }
+        setToday(startOfToday());
         setIsClient(true);
     }, []);
 
@@ -63,8 +65,9 @@ export default function ClientsPage() {
     }, [clients, isClient]);
 
     const lastAppointmentByClient = React.useMemo(() => {
+        if (!today) return new Map<string, Date>();
+        
         const map = new Map<string, Date>();
-        const today = startOfToday();
         
         const phoneToClientId = new Map<string, string>();
         clients.forEach(client => {
@@ -85,7 +88,7 @@ export default function ClientsPage() {
 
         for (const clientId in clientAppointments) {
             const latestDate = clientAppointments[clientId]
-                .filter(date => isBefore(date, today) || isSameDay(date, today))
+                .filter(date => isBefore(date, today))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
 
             if (latestDate) {
@@ -94,7 +97,7 @@ export default function ClientsPage() {
         }
         
         return map;
-    }, [clients, appointments]);
+    }, [clients, appointments, today]);
 
     const clientsWithPendingPayments = React.useMemo(() => {
         const phoneToClientId = new Map<string, string>();
@@ -137,7 +140,7 @@ export default function ClientsPage() {
         setEditingClient(undefined);
     };
     
-    if (!isClient) {
+    if (!isClient || !today) {
         return <SplashScreen />;
     }
 
@@ -158,7 +161,7 @@ export default function ClientsPage() {
                       <AnimatePresence>
                         {clients.map(client => {
                             const lastAppointmentDate = lastAppointmentByClient.get(client.id);
-                            const daysSinceLastAppointment = lastAppointmentDate ? differenceInDays(new Date(), lastAppointmentDate) : null;
+                            const daysSinceLastAppointment = lastAppointmentDate ? differenceInDays(today, lastAppointmentDate) : null;
                             const hasPendingPayment = clientsWithPendingPayments.has(client.id);
 
                             return (
@@ -216,7 +219,7 @@ export default function ClientsPage() {
                                             {lastAppointmentDate ? (
                                                 <div className="text-muted-foreground text-sm mt-1">
                                                     <p>{format(lastAppointmentDate, "d 'de' MMMM 'de' yyyy", { locale: es })}</p>
-                                                    <p className="font-bold">{`Hace ${daysSinceLastAppointment} día(s)`}</p>
+                                                    {daysSinceLastAppointment !== null && <p className="font-bold">{`Hace ${daysSinceLastAppointment} día(s)`}</p>}
                                                 </div>
                                             ) : (
                                                 <p className="text-muted-foreground text-sm mt-1">No hay citas pasadas registradas</p>
