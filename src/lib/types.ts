@@ -49,4 +49,10 @@ export type VoucherSale = {
   paymentMethod: 'cash' | 'bizum' | 'paypal';
 };
 
+export type Service = {
+  id: string;
+  name: string;
+  duration: number; // Duration in minutes
+  price: number;
+};
     
