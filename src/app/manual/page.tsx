@@ -4,7 +4,7 @@
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -51,7 +51,13 @@ export default function ManualPage() {
                     <p>Los días que hayas bloqueado aparecerán en gris y no permitirán nuevas citas.</p>
                   </AccordionContent>
                 </AccordionItem>
-                 <AccordionItem value="item-2">
+                <AccordionItem value="item-2">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Tag className="w-4 h-4" />Asignar Servicios a Citas</div></AccordionTrigger>
+                  <AccordionContent>
+                    <p>Al crear o editar una cita, ahora puedes seleccionar un servicio específico de tu catálogo. Esto no solo agiliza el proceso, sino que también enriquece tus registros y estadísticas.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-3">
                   <AccordionTrigger><div className='flex items-center gap-2'><Euro className="w-4 h-4" />Finalizar una Cita (Cobro, Ausencias y Pagos Pendientes)</div></AccordionTrigger>
                   <AccordionContent className="space-y-2">
                     <p>En las citas pasadas (o el mismo día), verás un icono de Euro (€). Al pulsarlo, se abre un diálogo para finalizar la cita con varias opciones:</p>
@@ -62,7 +68,7 @@ export default function ManualPage() {
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-3">
+                <AccordionItem value="item-4">
                     <AccordionTrigger>
                         <div className="flex items-center gap-2">
                             <Lock className="w-4 h-4" />
@@ -73,7 +79,7 @@ export default function ManualPage() {
                     ¿Necesitas un día libre? Selecciona un día en el calendario y pulsa el botón con el icono de candado (<Lock className="inline h-4 w-4"/>). El día se marcará como no disponible y no podrás agendar citas en él. Vuelve a pulsarlo para desbloquearlo.
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-4">
+                <AccordionItem value="item-5">
                   <AccordionTrigger><div className='flex items-center gap-2'><MessageSquare className="w-4 h-4" />Confirmación por WhatsApp</div></AccordionTrigger>
                   <AccordionContent>
                     Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Incluye todos los detalles: nombre del cliente, fecha, hora y la dirección de tu negocio.
@@ -96,8 +102,8 @@ export default function ManualPage() {
                     <p>Haz clic en la tarjeta de cualquier cliente para acceder a su ficha completa. Aquí encontrarás:</p>
                      <ul className="list-disc pl-5 space-y-1 mt-2">
                       <li><strong>Datos y Detalles:</strong> Su información de contacto y cualquier nota importante (alergias, preferencias, etc.).</li>
-                      <li><strong>Resumen Financiero:</strong> Tarjetas con el total facturado, citas completadas y ausencias.</li>
-                      <li><strong>Historial Completo de Citas:</strong> Una tabla con todas sus citas (pasadas y futuras), su estado y los detalles de pago de cada una.</li>
+                      <li><strong>Resumen Financiero y de Servicios:</strong> Tarjetas con el total facturado, citas completadas, ausencias y sus servicios más frecuentes.</li>
+                      <li><strong>Historial Completo de Citas:</strong> Una tabla con todas sus citas (pasadas y futuras), el servicio realizado, su estado y los detalles de pago de cada una.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -120,6 +126,22 @@ export default function ManualPage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+            </CardContent>
+          </Card>
+
+           <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Tag /> Gestión de Servicios y Precios</CardTitle>
+              <CardDescription>Define tu catálogo de tratamientos para agilizar la creación de citas y obtener mejores estadísticas.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>En la nueva sección "Servicios", puedes crear, editar o eliminar cada uno de los tratamientos que ofreces. Asigna a cada uno:</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Nombre del Servicio:</strong> El nombre claro y descriptivo de tu tratamiento (ej. "Masaje Relajante").</li>
+                <li><strong>Duración:</strong> El tiempo en minutos que dura el servicio.</li>
+                <li><strong>Precio:</strong> El coste del servicio para el cliente.</li>
+              </ul>
+              <p className='mt-2'>Esta información se usará en la agenda para agilizar la creación de citas y en la contabilidad para darte estadísticas detalladas.</p>
             </CardContent>
           </Card>
           
@@ -154,9 +176,9 @@ export default function ManualPage() {
             <CardContent>
                  <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
-                        <AccordionTrigger><div className='flex items-center gap-2'><BarChart className="w-4 h-4" />Gráfico Interactivo de Ingresos</div></AccordionTrigger>
+                        <AccordionTrigger><div className='flex items-center gap-2'><BarChart className="w-4 h-4" />Gráficos Interactivos</div></AccordionTrigger>
                         <AccordionContent>
-                        Visualiza al instante de dónde provienen tus ganancias. Un gráfico de tarta desglosa tus ingresos por método de pago (Efectivo, Bizum, PayPal), dándote una perspectiva clara de tus canales más importantes.
+                        Visualiza al instante de dónde provienen tus ganancias. Dos gráficos de tarta desglosan tus ingresos: uno por <strong>método de pago</strong> (Efectivo, Bizum, PayPal) y otro por <strong>servicio</strong>, mostrándote qué tratamientos son los más rentables.
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-2">
@@ -168,7 +190,7 @@ export default function ManualPage() {
                      <AccordionItem value="item-3">
                         <AccordionTrigger><div className='flex items-center gap-2'><History className="w-4 h-4" />Informes Detallados e Imprimibles</div></AccordionTrigger>
                         <AccordionContent>
-                        La tabla de movimientos te ofrece un desglose de cada transacción (citas y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.
+                        La tabla de movimientos te ofrece un desglose de cada transacción (citas por servicio y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-4">
