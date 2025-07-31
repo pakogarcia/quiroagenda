@@ -4,7 +4,7 @@
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -35,14 +35,14 @@ export default function ManualPage() {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger>Visualización y Navegación</AccordionTrigger>
+                  <AccordionTrigger><Eye className="w-4 h-4 mr-2" />Visualización y Navegación</AccordionTrigger>
                   <AccordionContent className="space-y-2">
                     <p>Navega por un calendario visual e intuitivo. Los días con citas se marcan con colores para que veas de un vistazo tu ocupación futura: verde (1 cita), naranja (2 citas) y rojo (3 o más).</p>
                     <p>Los días que hayas bloqueado aparecerán en gris y no permitirán nuevas citas.</p>
                   </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="item-2">
-                  <AccordionTrigger>Finalizar una Cita (Cobro, Ausencias y Pagos Pendientes)</AccordionTrigger>
+                  <AccordionTrigger><Euro className="w-4 h-4 mr-2" />Finalizar una Cita (Cobro, Ausencias y Pagos Pendientes)</AccordionTrigger>
                   <AccordionContent className="space-y-2">
                     <p>En las citas pasadas (o el mismo día), verás un icono de Euro (€). Al pulsarlo, se abre un diálogo para finalizar la cita con varias opciones:</p>
                     <ul className="list-disc pl-5 space-y-1">
@@ -53,13 +53,13 @@ export default function ManualPage() {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-3">
-                  <AccordionTrigger>Bloqueo de Días</AccordionTrigger>
+                  <AccordionTrigger><Lock className="w-4 h-4 mr-2"/>Bloqueo de Días</AccordionTrigger>
                   <AccordionContent>
                     ¿Necesitas un día libre? Selecciona un día en el calendario y pulsa el botón con el icono de candado (<Lock className="inline h-4 w-4"/>). El día se marcará como no disponible y no podrás agendar citas en él. Vuelve a pulsarlo para desbloquearlo.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-4">
-                  <AccordionTrigger>Confirmación por WhatsApp</AccordionTrigger>
+                  <AccordionTrigger><MessageSquare className="w-4 h-4 mr-2" />Confirmación por WhatsApp</AccordionTrigger>
                   <AccordionContent>
                     Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Incluye todos los detalles: nombre del cliente, fecha, hora y la dirección de tu negocio.
                   </AccordionContent>
@@ -140,8 +140,8 @@ export default function ManualPage() {
               <p>La sección de Contabilidad es tu centro de mando financiero. Elige un rango de fechas y obtén un informe completo y fácil de entender que te ayudará a tomar el pulso de tu negocio.</p>
               <ul className="list-disc pl-5 space-y-2">
                   <li><strong className="flex items-center gap-2"><BarChart className="w-4 h-4" />Gráfico Interactivo de Ingresos:</strong> Visualiza al instante de dónde provienen tus ganancias. Un gráfico de tarta desglosa tus ingresos por método de pago (Efectivo, Bizum, PayPal), dándote una perspectiva clara de tus canales más importantes.</li>
-                  <li><strong>Resúmenes Clave:</strong> Tarjetas destacadas te muestran la información más relevante de un vistazo: los <strong>Ingresos Totales</strong> (resaltada para máxima visibilidad), el número de <strong>Citas Completadas</strong>, los <strong>Bonos Usados</strong> y, muy importante, los <strong>Pagos Pendientes</strong>.</li>
-                  <li><strong>Informes Detallados e Imprimibles:</strong> La tabla de movimientos te ofrece un desglose de cada transacción (citas y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.</li>
+                  <li><strong className="flex items-center gap-2"><FileText className="w-4 h-4" />Resúmenes Clave:</strong> Tarjetas destacadas te muestran la información más relevante de un vistazo: los <strong>Ingresos Totales</strong> (resaltada para máxima visibilidad), el número de <strong>Citas Completadas</strong>, los <strong>Bonos Usados</strong> y, muy importante, los <strong>Pagos Pendientes</strong>.</li>
+                  <li><strong className="flex items-center gap-2"><History className="w-4 h-4" />Informes Detallados e Imprimibles:</strong> La tabla de movimientos te ofrece un desglose de cada transacción (citas y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.</li>
               </ul>
               <div className="pt-2">
                 <h4 className="font-semibold flex items-center gap-2 mb-2"><ShoppingCart className="w-4 h-4"/> Venta Directa de Bonos</h4>
