@@ -11,7 +11,7 @@ import { es } from 'date-fns/locale';
 
 
 export default function ManualPage() {
-  const [today, setToday] = React.useState('');
+  const [today, setToday] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setToday(format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es }));
@@ -147,7 +147,7 @@ export default function ManualPage() {
               </Accordion>
             </CardContent>
           </Card>
-
+          
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><Tag /> Gestión de Servicios y Precios</CardTitle>
@@ -170,7 +170,7 @@ export default function ManualPage() {
               </Accordion>
             </CardContent>
           </Card>
-          
+
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><Gift /> Marketing y Comunicación</CardTitle>
@@ -239,11 +239,10 @@ export default function ManualPage() {
           </div>
           
           <footer className="text-center text-sm text-muted-foreground pt-8">
-              <p>Última actualización por Pako García el {today}.</p>
+              {today && <p>Última actualización por Pako García el {today}.</p>}
           </footer>
         </div>
       </main>
     </div>
   );
 }
-
