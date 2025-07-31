@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Plus, User, Phone, Gift, CalendarClock } from 'lucide-react';
+import { Plus, User, Phone, Gift, CalendarClock, Users, AlertCircle } from 'lucide-react';
 import type { Client, Voucher, Appointment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { format, differenceInDays, startOfToday, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
@@ -83,7 +85,7 @@ export default function ClientsPage() {
 
         for (const clientId in clientAppointments) {
             const latestDate = clientAppointments[clientId]
-                .filter(date => !isBefore(today, date))
+                .filter(date => isBefore(date, today) || isSameDay(date, today))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
 
             if (latestDate) {
@@ -92,6 +94,24 @@ export default function ClientsPage() {
         }
         
         return map;
+    }, [clients, appointments]);
+
+    const clientsWithPendingPayments = React.useMemo(() => {
+        const phoneToClientId = new Map<string, string>();
+        clients.forEach(client => {
+            phoneToClientId.set(client.phone, client.id);
+        });
+
+        const clientIds = new Set<string>();
+        appointments.forEach(apt => {
+            if (apt.status === 'completed' && !apt.payment) {
+                const clientId = phoneToClientId.get(apt.clientPhone);
+                if (clientId) {
+                    clientIds.add(clientId);
+                }
+            }
+        });
+        return clientIds;
     }, [clients, appointments]);
 
     const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -139,6 +159,7 @@ export default function ClientsPage() {
                         {clients.map(client => {
                             const lastAppointmentDate = lastAppointmentByClient.get(client.id);
                             const daysSinceLastAppointment = lastAppointmentDate ? differenceInDays(new Date(), lastAppointmentDate) : null;
+                            const hasPendingPayment = clientsWithPendingPayments.has(client.id);
 
                             return (
                                 <motion.div
@@ -150,11 +171,28 @@ export default function ClientsPage() {
                                   className="origin-top"
                                 >
                                 <Link href={`/clients/${client.id}`} className="h-full block">
-                                  <Card className="shadow-md hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col">
+                                  <Card className={cn('shadow-md hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col', {
+                                        'border-yellow-500/50': hasPendingPayment,
+                                    })}>
                                       <CardHeader>
                                           <div className="flex justify-between items-start">
                                               <div>
-                                                  <CardTitle className="text-xl text-accent flex items-center gap-2"><User className="w-5 h-5"/>{`${client.name} ${client.lastName}`}</CardTitle>
+                                                  <CardTitle className="text-xl text-accent flex items-center gap-2">
+                                                      <User className="w-5 h-5"/>
+                                                      {`${client.name} ${client.lastName}`}
+                                                       {hasPendingPayment && (
+                                                          <TooltipProvider>
+                                                              <Tooltip>
+                                                                  <TooltipTrigger>
+                                                                      <AlertCircle className="w-5 h-5 text-yellow-500" />
+                                                                  </TooltipTrigger>
+                                                                  <TooltipContent>
+                                                                      <p>Tiene pagos pendientes</p>
+                                                                  </TooltipContent>
+                                                              </Tooltip>
+                                                          </TooltipProvider>
+                                                      )}
+                                                  </CardTitle>
                                                   <CardDescription className="flex items-center gap-2 pt-2">
                                                       <Phone className="w-4 h-4"/>
                                                       {client.phone}
@@ -181,7 +219,7 @@ export default function ClientsPage() {
                                                     <p className="font-bold">{`Hace ${daysSinceLastAppointment} día(s)`}</p>
                                                 </div>
                                             ) : (
-                                                <p className="text-muted-foreground text-sm mt-1">No hay citas registradas</p>
+                                                <p className="text-muted-foreground text-sm mt-1">No hay citas pasadas registradas</p>
                                             )}
                                         </div>
                                       </CardContent>

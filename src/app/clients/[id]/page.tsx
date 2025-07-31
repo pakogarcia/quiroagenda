@@ -224,7 +224,7 @@ export default function ClientDetailPage() {
                                         <TableCell>{getStatusBadge(apt.status)}</TableCell>
                                         <TableCell>{getPaymentMethodName(apt.payment?.method)}</TableCell>
                                         <TableCell className="text-right">
-                                            {apt.payment && apt.payment.method !== 'voucher' ? `${apt.payment.amount.toFixed(2)}€` : ''}
+                                            {apt.payment && apt.payment.method !== 'voucher' ? `${apt.payment.amount.toFixed(2)}€` : (apt.status === 'completed' && !apt.payment ? 'Pendiente' : '')}
                                         </TableCell>
                                     </TableRow>
                                 )) : (
