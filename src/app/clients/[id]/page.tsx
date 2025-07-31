@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText } from 'lucide-react';
 import type { Client, Appointment, Payment, PaymentMethod } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -167,14 +167,20 @@ export default function ClientDetailPage() {
                                 {client.phone}
                             </CardDescription>
                         </CardHeader>
-                         {client.voucher && (
-                            <CardContent>
+                         <CardContent className="space-y-4">
+                            {client.details && (
+                                <div className="p-3 bg-muted/50 rounded-md">
+                                    <p className="font-semibold text-sm flex items-center gap-2 text-primary"><FileText className="w-4 h-4" /> Detalles Importantes</p>
+                                    <p className="text-muted-foreground text-sm mt-1 whitespace-pre-wrap">{client.details}</p>
+                                </div>
+                            )}
+                            {client.voucher && (
                                 <div className="p-3 bg-muted/50 rounded-md max-w-sm">
                                     <p className="font-semibold text-sm flex items-center gap-2 text-primary"><Gift className="w-4 h-4" /> Bono Activo</p>
                                     <p className="text-muted-foreground text-sm mt-1">Sesiones restantes: <span className="font-bold">{client.voucher.sessions} de {client.voucher.totalSessions}</span></p>
                                 </div>
-                            </CardContent>
-                        )}
+                            )}
+                        </CardContent>
                     </Card>
                 </div>
                 
@@ -276,3 +282,5 @@ export default function ClientDetailPage() {
         </div>
     );
 }
+
+    

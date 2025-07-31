@@ -9,14 +9,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import type { Client } from '@/lib/types';
 import { Separator } from './ui/separator';
-import { Gift, Trash2 } from 'lucide-react';
+import { Gift, Trash2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from './ui/textarea';
 
 const createClientSchema = (allClients: Client[], editingClientId?: string) => 
   z.object({
     name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
     lastName: z.string().min(2, { message: 'El apellido debe tener al menos 2 caracteres.' }),
     phone: z.string().min(9, { message: 'Por favor, introduce un número de teléfono válido.' }),
+    details: z.string().optional(),
     voucherSessions: z.coerce.number().optional(),
     voucherPrice: z.coerce.number().optional(),
   }).superRefine((data, ctx) => {
@@ -50,6 +52,7 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
       name: client?.name || '',
       lastName: client?.lastName || '',
       phone: client?.phone || '+34 ',
+      details: client?.details || '',
       voucherSessions: client?.voucher?.totalSessions || '',
       voucherPrice: client?.voucher?.price || '',
     },
@@ -71,6 +74,7 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
       name: values.name,
       lastName: values.lastName,
       phone: values.phone,
+      details: values.details,
       voucher: voucher,
     });
 
@@ -87,6 +91,7 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
       name: form.getValues('name'),
       lastName: form.getValues('lastName'),
       phone: form.getValues('phone'),
+      details: form.getValues('details'),
       voucher: undefined,
     });
      toast({
@@ -135,6 +140,19 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
               <FormLabel>Teléfono del Cliente</FormLabel>
               <FormControl>
                 <Input placeholder="+34 123 456 789" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="details"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2"><FileText className="w-4 h-4" /> Detalles / Notas</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Alergia a los aceites de frutos secos, prefiere música suave, etc." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -194,3 +212,5 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
     </Form>
   );
 }
+
+    
