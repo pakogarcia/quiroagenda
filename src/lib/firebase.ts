@@ -20,15 +20,16 @@ let remoteConfigInstance: RemoteConfig | null = null;
 
 const getRemoteConfigInstance = (): RemoteConfig => {
     if (typeof window === 'undefined') {
-        // This is a dummy or placeholder for server-side execution
-        // It won't be used for real operations on the server.
         return {} as RemoteConfig;
     }
 
     if (!remoteConfigInstance) {
         remoteConfigInstance = getRemoteConfig(app);
-        remoteConfigInstance.settings.minimumFetchIntervalMillis = process.env.NODE_ENV === 'development' ? 0 : 3600000;
-        remoteConfigInstance.defaultConfig = {};
+        // Set a very low fetch interval to ensure fresh values are fetched, bypassing cache.
+        remoteConfigInstance.settings.minimumFetchIntervalMillis = 0;
+        remoteConfigInstance.defaultConfig = {
+            "license_key_valid": false, // Default to false
+        };
     }
     return remoteConfigInstance;
 }
