@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
 import { OfferDialog } from '@/components/offer-dialog';
 
@@ -387,33 +387,35 @@ export default function ContabilidadPage() {
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <div className="lg:col-span-2 space-y-6 no-print">
+                                    <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6 no-print">
                                         <Card className="shadow-md">
                                             <CardHeader>
                                                 <CardTitle className="flex items-center gap-2"><BarChart className="w-5 h-5"/>Ingresos por Método</CardTitle>
                                             </CardHeader>
                                             <CardContent>
                                                 {paymentChartData.length > 0 ? (
-                                                <div className="mx-auto aspect-square h-[250px]">
-                                                    <PieChart width={250} height={250}>
-                                                        <Tooltip
-                                                            cursor={false}
-                                                            content={<ChartTooltipContent hideLabel />}
-                                                        />
-                                                        <Pie 
-                                                            data={paymentChartData} 
-                                                            dataKey="value" 
-                                                            nameKey="name" 
-                                                            label={(props) => renderCustomizedLabelWithName(props, paymentChartData)}
-                                                            labelLine={false}
-                                                            outerRadius={100}
-                                                        >
-                                                            {paymentChartData.map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                                                            ))}
-                                                        </Pie>
-                                                    </PieChart>
-                                                </div>
+                                                <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Tooltip
+                                                                cursor={false}
+                                                                content={<ChartTooltipContent hideLabel />}
+                                                            />
+                                                            <Pie 
+                                                                data={paymentChartData} 
+                                                                dataKey="value" 
+                                                                nameKey="name" 
+                                                                label={(props) => renderCustomizedLabelWithName(props, paymentChartData)}
+                                                                labelLine={false}
+                                                                outerRadius={80}
+                                                            >
+                                                                {paymentChartData.map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                                ))}
+                                                            </Pie>
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                </ChartContainer>
                                                 ) : (
                                                     <div className="flex items-center justify-center h-[250px] text-muted-foreground">
                                                         No hay datos para mostrar.
@@ -427,26 +429,28 @@ export default function ContabilidadPage() {
                                             </CardHeader>
                                             <CardContent>
                                                 {serviceChartData.length > 0 ? (
-                                                <div className="mx-auto aspect-square h-[250px]">
-                                                    <PieChart width={250} height={250}>
-                                                         <Tooltip
-                                                            cursor={false}
-                                                            content={<ChartTooltipContent hideLabel />}
-                                                        />
-                                                        <Pie 
-                                                            data={serviceChartData} 
-                                                            dataKey="value" 
-                                                            nameKey="name" 
-                                                            label={(props) => renderCustomizedLabelWithName(props, serviceChartData)}
-                                                            labelLine={false}
-                                                            outerRadius={100}
-                                                        >
-                                                            {serviceChartData.map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                                                            ))}
-                                                        </Pie>
-                                                    </PieChart>
-                                                </div>
+                                                <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Tooltip
+                                                                cursor={false}
+                                                                content={<ChartTooltipContent hideLabel />}
+                                                            />
+                                                            <Pie 
+                                                                data={serviceChartData} 
+                                                                dataKey="value" 
+                                                                nameKey="name" 
+                                                                label={(props) => renderCustomizedLabelWithName(props, serviceChartData)}
+                                                                labelLine={false}
+                                                                outerRadius={80}
+                                                            >
+                                                                {serviceChartData.map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                                ))}
+                                                            </Pie>
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                </ChartContainer>
                                                 ) : (
                                                     <div className="flex items-center justify-center h-[250px] text-muted-foreground">
                                                         No hay datos para mostrar.
@@ -479,3 +483,4 @@ export default function ContabilidadPage() {
         </>
     );
 }
+      
