@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Client } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useAppData } from '@/context/app-data-context';
 
-const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
 const VOUCHER_SALES_STORAGE_KEY = 'quiroagenda_voucher_sales';
 
 const voucherSaleSchema = z.object({
@@ -31,7 +31,7 @@ type VoucherSaleFormProps = {
 };
 
 export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormProps) {
-  const [clients, setClients] = React.useState<Client[]>([]);
+  const { clients, setClients } = useAppData();
   const { toast } = useToast();
 
   const form = useForm<VoucherSaleFormValues>({
@@ -43,17 +43,6 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
       paymentMethod: 'cash',
     },
   });
-
-  React.useEffect(() => {
-    try {
-      const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-      if (storedClients) {
-        setClients(JSON.parse(storedClients));
-      }
-    } catch (error) {
-      console.error("Failed to load clients.", error);
-    }
-  }, []);
 
   const handleSubmit = (values: VoucherSaleFormValues) => {
     const selectedClient = clients.find(c => c.id === values.clientId);
@@ -73,8 +62,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
     const updatedClient: Client = { ...selectedClient, voucher: newVoucher };
 
     // 2. Save the updated client list
-    const updatedClients = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
-    localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(updatedClients));
+    setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
     
     // 3. Create and save the voucher sale transaction
     const newSale = {

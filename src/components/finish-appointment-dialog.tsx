@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { z } from 'zod';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,7 @@ import { Send, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'luc
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
-
-const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
-const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
+import { useAppData } from '@/context/app-data-context';
 
 const paymentSchema = z.object({
   paymentMethod: z.enum(['cash', 'bizum', 'voucher', 'paypal']),
@@ -47,13 +45,12 @@ type FinishAppointmentDialogProps = {
 };
 
 export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointmentFinished }: FinishAppointmentDialogProps) {
+  const { clients, setClients, profile } = useAppData();
   const [step, setStep] = React.useState<'selectAction' | 'paymentForm' | 'voucherUpdateMessage'>('selectAction');
   const [client, setClient] = React.useState<Client | null>(null);
-  const [allClients, setAllClients] = React.useState<Client[]>([]);
   const [voucherPayingClient, setVoucherPayingClient] = React.useState<Client | null>(null);
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
-  const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
   const { toast } = useToast();
 
   const form = useForm<PaymentFormValues>({
@@ -66,8 +63,8 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   });
 
   const clientsWithVouchers = React.useMemo(() => {
-    return allClients.filter(c => c.voucher && c.voucher.sessions > 0);
-  }, [allClients]);
+    return clients.filter(c => c.voucher && c.voucher.sessions > 0);
+  }, [clients]);
   
   React.useEffect(() => {
     if (appointment) {
@@ -76,31 +73,16 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       setVoucherPayingClient(null);
       setGeneratedMessage('');
       
-      try {
-        const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-        if (storedClients) {
-          const clients: Client[] = JSON.parse(storedClients);
-          setAllClients(clients);
-          const currentClient = clients.find(c => c.name.toLowerCase().trim() === appointment.clientName.toLowerCase().trim() || c.phone === appointment.clientPhone);
-          setClient(currentClient || null);
-          
-          form.reset({ 
-              amount: undefined, 
-              paymentMethod: 'cash',
-              voucherPayerId: currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined,
-          });
-        }
-
-        const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
-        if(storedProfile) {
-            setBusinessProfile(JSON.parse(storedProfile));
-        }
-
-      } catch (error) {
-        console.error("Failed to load client data.", error);
-      }
+      const currentClient = clients.find(c => c.name.toLowerCase().trim() === appointment.clientName.toLowerCase().trim() || c.phone === appointment.clientPhone);
+      setClient(currentClient || null);
+      
+      form.reset({ 
+          amount: undefined, 
+          paymentMethod: 'cash',
+          voucherPayerId: currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined,
+      });
     }
-  }, [appointment, form]);
+  }, [appointment, form, clients]);
   
   const handleNoShow = () => {
     if (!appointment) return;
@@ -132,7 +114,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     };
     
     if (data.paymentMethod === 'voucher') {
-        const payerClient = allClients.find(c => c.id === data.voucherPayerId);
+        const payerClient = clients.find(c => c.id === data.voucherPayerId);
         if (!payerClient || !payerClient.voucher) {
             toast({ title: 'Error', description: 'El cliente seleccionado para pagar con bono no es válido.', variant: 'destructive' });
             return;
@@ -143,12 +125,8 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         setVoucherPayingClient(updatedPayerClient);
         
         try {
-            const updatedAllClients = allClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c);
-            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(updatedAllClients));
-            setAllClients(updatedAllClients);
-            
+            setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
             generateAndShowVoucherMessage(updatedPayerClient);
-            
         } catch (error) {
             console.error("Failed to update client voucher.", error);
             toast({
@@ -189,12 +167,12 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const result = await generateVoucherUpdateWhatsapp({
             clientName: payerClient.name.split(' ')[0],
             remainingSessions: payerClient.voucher.sessions,
-            businessName: businessProfile?.name,
-            website: socials.website ? businessProfile?.website : undefined,
-            instagram: socials.instagram ? businessProfile?.instagram : undefined,
-            facebook: socials.facebook ? businessProfile?.facebook : undefined,
-            tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
-            youtube: socials.youtube ? businessProfile?.youtube : undefined,
+            businessName: profile?.name,
+            website: socials.website ? profile?.website : undefined,
+            instagram: socials.instagram ? profile?.instagram : undefined,
+            facebook: socials.facebook ? profile?.facebook : undefined,
+            tiktok: socials.tiktok ? profile?.tiktok : undefined,
+            youtube: socials.youtube ? profile?.youtube : undefined,
         });
         setGeneratedMessage(result.whatsappMessage);
     } catch(e) {
@@ -351,7 +329,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
   if (!appointment) return null;
 
-  const showSocials = step === 'paymentForm' && form.getValues('paymentMethod') === 'voucher' && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+  const showSocials = step === 'paymentForm' && form.getValues('paymentMethod') === 'voucher' && profile && (profile.website || profile.instagram || profile.facebook || profile.tiktok || profile.youtube);
 
 
   return (
@@ -373,31 +351,31 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 <div className="pt-4 space-y-4">
                      <h4 className="font-medium text-sm">Incluir Redes Sociales en el mensaje de WhatsApp</h4>
                      <div className="flex flex-wrap items-center gap-4">
-                        {businessProfile?.website && (
+                        {profile?.website && (
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="web" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
                                 <label htmlFor="web" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Globe /> Web</label>
                             </div>
                         )}
-                        {businessProfile?.instagram && (
+                        {profile?.instagram && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="ig" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />
                                 <label htmlFor="ig" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Instagram /> Instagram</label>
                              </div>
                         )}
-                         {businessProfile?.facebook && (
+                         {profile?.facebook && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="fb" checked={socials.facebook} onCheckedChange={(checked) => setSocials(s => ({...s, facebook: !!checked}))} />
                                 <label htmlFor="fb" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Facebook /> Facebook</label>
                              </div>
                         )}
-                         {businessProfile?.tiktok && (
+                         {profile?.tiktok && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="tt" checked={socials.tiktok} onCheckedChange={(checked) => setSocials(s => ({...s, tiktok: !!checked}))} />
                                 <label htmlFor="tt" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> TikTok</label>
                              </div>
                         )}
-                         {businessProfile?.youtube && (
+                         {profile?.youtube && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="yt" checked={socials.youtube} onCheckedChange={(checked) => setSocials(s => ({...s, youtube: !!checked}))} />
                                 <label htmlFor="yt" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Youtube /> YouTube</label>

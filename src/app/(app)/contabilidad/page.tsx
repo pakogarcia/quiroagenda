@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { type DateRange } from 'react-day-picker';
 import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Appointment, Payment, VoucherSale } from '@/lib/types';
+import type { Appointment, VoucherSale } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart, AlertCircle, BarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,52 +19,15 @@ import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
 import { OfferDialog } from '@/components/offer-dialog';
-
-const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
-const VOUCHER_SALES_STORAGE_KEY = 'quiroagenda_voucher_sales';
+import { useAppData } from '@/context/app-data-context';
 
 type Transaction = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
 
 export default function ContabilidadPage() {
-    const [isClient, setIsClient] = React.useState(false);
-    const [allAppointments, setAllAppointments] = React.useState<Appointment[]>([]);
-    const [allVoucherSales, setAllVoucherSales] = React.useState<VoucherSale[]>([]);
+    const { appointments, voucherSales, isLoading, loadData } = useAppData();
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
     const [isVoucherSaleDialogOpen, setIsVoucherSaleDialogOpen] = React.useState(false);
     const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
-
-    const loadData = React.useCallback(() => {
-        try {
-            const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-            if (storedAppointments) {
-                const parsedAppointments = JSON.parse(storedAppointments)
-                    .map((apt: any) => ({
-                        ...apt,
-                        dateTime: new Date(apt.dateTime),
-                        status: apt.status || 'scheduled',
-                        payment: apt.payment || undefined,
-                    }))
-                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime())); // Get all appointments first
-                setAllAppointments(parsedAppointments);
-            }
-            const storedVoucherSales = localStorage.getItem(VOUCHER_SALES_STORAGE_KEY);
-            if (storedVoucherSales) {
-                const parsedVoucherSales = JSON.parse(storedVoucherSales)
-                    .map((sale: any) => ({
-                        ...sale,
-                        date: new Date(sale.date),
-                    }));
-                setAllVoucherSales(parsedVoucherSales);
-            }
-        } catch (error) {
-            console.error("Failed to load data.", error);
-        }
-        setIsClient(true);
-    }, []);
-
-    React.useEffect(() => {
-        loadData();
-    }, [loadData]);
     
     const filteredAppointments = React.useMemo(() => {
         if (!dateRange?.from || !dateRange?.to) {
@@ -73,8 +36,8 @@ export default function ContabilidadPage() {
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to);
 
-        return allAppointments.filter(apt => isWithinInterval(apt.dateTime, { start, end }));
-    }, [allAppointments, dateRange]);
+        return appointments.filter(apt => isWithinInterval(apt.dateTime, { start, end }));
+    }, [appointments, dateRange]);
 
     const filteredTransactions = React.useMemo(() => {
         if (!dateRange?.from || !dateRange?.to) {
@@ -88,14 +51,14 @@ export default function ContabilidadPage() {
             .filter(apt => apt.status === 'completed')
             .map(apt => ({ ...apt, type: 'appointment' }));
         
-        const voucherSalesInRange: Transaction[] = allVoucherSales
+        const voucherSalesInRange: Transaction[] = voucherSales
             .filter(sale => isWithinInterval(sale.date, { start, end }))
             .map(sale => ({ ...sale, type: 'voucher_sale' }));
 
         return [...completedAppointmentsInRange, ...voucherSalesInRange]
             .sort((a, b) => (b.type === 'appointment' ? b.dateTime.getTime() : b.date.getTime()) - (a.type === 'appointment' ? a.dateTime.getTime() : a.date.getTime()));
             
-    }, [filteredAppointments, allVoucherSales, dateRange]);
+    }, [filteredAppointments, voucherSales, dateRange]);
 
     const financialSummary = React.useMemo(() => {
         const summary = {
@@ -130,7 +93,7 @@ export default function ContabilidadPage() {
             }
         }
         
-        for (const sale of allVoucherSales) {
+        for (const sale of voucherSales) {
              if (dateRange?.from && dateRange?.to && isWithinInterval(sale.date, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) {
                 if (sale.paymentMethod === 'cash' || sale.paymentMethod === 'bizum' || sale.paymentMethod === 'paypal') {
                     summary.totalRevenue += sale.amount;
@@ -142,7 +105,7 @@ export default function ContabilidadPage() {
         }
 
         return summary;
-    }, [filteredAppointments, allVoucherSales, dateRange]);
+    }, [filteredAppointments, voucherSales, dateRange]);
     
     const paymentChartData = [
         { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
@@ -216,7 +179,7 @@ export default function ContabilidadPage() {
     };
 
 
-    if (!isClient) {
+    if (isLoading) {
         return <SplashScreen />;
     }
 
@@ -483,4 +446,3 @@ export default function ContabilidadPage() {
         </>
     );
 }
-      

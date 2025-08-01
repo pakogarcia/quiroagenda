@@ -17,16 +17,7 @@ import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { format } from 'date-fns';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-
-const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
-const STORAGE_KEYS = [
-    'quiroagenda_appointments', 
-    'quiroagenda_clients', 
-    'quiroagenda_services', 
-    'quiroagenda_blocked_days', 
-    'quiroagenda_profile', 
-    'quiroagenda_voucher_sales'
-];
+import { useAppData } from '@/context/app-data-context';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
@@ -43,7 +34,7 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const [isClient, setIsClient] = React.useState(false);
+  const { profile, setProfile, exportData, importData, isLoading } = useAppData();
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
@@ -64,17 +55,10 @@ export default function ProfilePage() {
   });
 
   React.useEffect(() => {
-    try {
-      const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
-      if (storedProfile) {
-        const profileData: BusinessProfile = JSON.parse(storedProfile);
-        form.reset(profileData);
-      }
-    } catch (error) {
-      console.error('Failed to load profile.', error);
+    if (profile) {
+      form.reset(profile);
     }
-    setIsClient(true);
-  }, [form]);
+  }, [profile, form]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -108,13 +92,11 @@ export default function ProfilePage() {
           tiktok: data.tiktok || undefined,
           youtube: data.youtube || undefined,
       };
-      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileToSave));
+      setProfile(profileToSave);
       toast({
         title: 'Perfil guardado',
         description: 'La información de tu negocio ha sido actualizada.',
       });
-      // Force header update
-      window.dispatchEvent(new Event('storage'));
       form.reset(data, { keepValues: true }); // Resets dirty state
     } catch (error) {
       console.error('Failed to save profile.', error);
@@ -127,38 +109,11 @@ export default function ProfilePage() {
   };
 
   const handleExportData = () => {
-    try {
-        const dataToExport: { [key: string]: any } = {};
-        STORAGE_KEYS.forEach(key => {
-            const data = localStorage.getItem(key);
-            if (data) {
-                dataToExport[key] = JSON.parse(data);
-            }
-        });
-
-        const jsonString = JSON.stringify(dataToExport, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        const date = format(new Date(), 'yyyy-MM-dd');
-        link.download = `quiroagenda_backup_${date}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast({
-            title: 'Exportación completada',
-            description: 'Tus datos se han guardado en un archivo de copia de seguridad.'
-        });
-    } catch (error) {
-        console.error('Failed to export data', error);
-        toast({
-            variant: 'destructive',
-            title: 'Error de exportación',
-            description: 'No se pudieron exportar los datos.'
-        });
-    }
+    exportData();
+    toast({
+        title: 'Exportación completada',
+        description: 'Tus datos se han guardado en un archivo de copia de seguridad.'
+    });
   };
 
   const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,24 +127,11 @@ export default function ProfilePage() {
             if (typeof text !== 'string') {
                 throw new Error("El archivo no es válido.");
             }
-            const data = JSON.parse(text);
-
-            // Clear existing data
-            STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
-
-            // Import new data
-            Object.keys(data).forEach(key => {
-                if (STORAGE_KEYS.includes(key)) {
-                    localStorage.setItem(key, JSON.stringify(data[key]));
-                }
-            });
-
+            importData(text);
             toast({
                 title: 'Importación completada',
                 description: 'Tus datos han sido restaurados. La aplicación se recargará ahora.'
             });
-
-            // Reload the page to apply changes
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
@@ -206,7 +148,7 @@ export default function ProfilePage() {
     reader.readAsText(file);
   };
 
-  if (!isClient) {
+  if (isLoading) {
     return <SplashScreen />;
   }
   
@@ -431,5 +373,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

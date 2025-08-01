@@ -21,9 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { type DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
-
-const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
-const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
+import { useAppData } from '@/context/app-data-context';
 
 type Offer = {
   clientId: string;
@@ -38,31 +36,17 @@ type OfferDialogProps = {
 };
 
 export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
+  const { clients, profile } = useAppData();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [offerMessage, setOfferMessage] = useState('');
   const [generatedOffers, setGeneratedOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
   const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
 
 
   React.useEffect(() => {
-    if (isOpen) {
-      try {
-        const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-        if (storedClients) {
-          setClients(JSON.parse(storedClients));
-        }
-        const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
-        if (storedProfile) {
-          setBusinessProfile(JSON.parse(storedProfile));
-        }
-      } catch (error) {
-        console.error("Failed to load data from storage.", error);
-      }
-    } else {
+    if (!isOpen) {
       setIsGenerated(false);
       setGeneratedOffers([]);
       setOfferMessage('');
@@ -88,12 +72,12 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
           clientName: client.name,
           offerMessage: offerMessage,
           dateRange: formattedDateRange,
-          businessName: businessProfile?.name,
-          website: socials.website ? businessProfile?.website : undefined,
-          instagram: socials.instagram ? businessProfile?.instagram : undefined,
-          facebook: socials.facebook ? businessProfile?.facebook : undefined,
-          tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
-          youtube: socials.youtube ? businessProfile?.youtube : undefined,
+          businessName: profile?.name,
+          website: socials.website ? profile?.website : undefined,
+          instagram: socials.instagram ? profile?.instagram : undefined,
+          facebook: socials.facebook ? profile?.facebook : undefined,
+          tiktok: socials.tiktok ? profile?.tiktok : undefined,
+          youtube: socials.youtube ? profile?.youtube : undefined,
         });
         newOffers.push({
           clientId: client.id,
@@ -109,9 +93,9 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
     
     setIsLoading(false);
     setIsGenerated(true);
-  }, [dateRange, offerMessage, clients, businessProfile, socials]);
+  }, [dateRange, offerMessage, clients, profile, socials]);
 
-  const showSocials = !isGenerated && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+  const showSocials = !isGenerated && profile && (profile.website || profile.instagram || profile.facebook || profile.tiktok || profile.youtube);
 
   const renderContent = () => {
     if (isLoading) {
@@ -233,31 +217,31 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
                 <div className="py-4 space-y-4">
                      <h4 className="font-medium text-sm">Incluir Redes Sociales</h4>
                      <div className="flex flex-wrap items-center gap-4">
-                        {businessProfile?.website && (
+                        {profile?.website && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="web-offer" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
                                 <label htmlFor="web-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Globe /> Web</label>
                              </div>
                         )}
-                        {businessProfile?.instagram && (
+                        {profile?.instagram && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="ig-offer" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />
                                 <label htmlFor="ig-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Instagram /> Instagram</label>
                              </div>
                         )}
-                         {businessProfile?.facebook && (
+                         {profile?.facebook && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="fb-offer" checked={socials.facebook} onCheckedChange={(checked) => setSocials(s => ({...s, facebook: !!checked}))} />
                                 <label htmlFor="fb-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Facebook /> Facebook</label>
                              </div>
                         )}
-                         {businessProfile?.tiktok && (
+                         {profile?.tiktok && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="tt-offer" checked={socials.tiktok} onCheckedChange={(checked) => setSocials(s => ({...s, tiktok: !!checked}))} />
                                 <label htmlFor="tt-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> TikTok</label>
                              </div>
                         )}
-                         {businessProfile?.youtube && (
+                         {profile?.youtube && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="yt-offer" checked={socials.youtube} onCheckedChange={(checked) => setSocials(s => ({...s, youtube: !!checked}))} />
                                 <label htmlFor="yt-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Youtube /> YouTube</label>

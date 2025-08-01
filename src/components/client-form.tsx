@@ -12,6 +12,7 @@ import { Separator } from './ui/separator';
 import { Gift, Trash2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from './ui/textarea';
+import { useAppData } from '@/context/app-data-context';
 
 const createClientSchema = (allClients: Client[], editingClientId?: string) => 
   z.object({
@@ -39,12 +40,12 @@ type ClientFormValues = z.infer<ReturnType<typeof createClientSchema>>;
 type ClientFormProps = {
   onSubmit: (data: Omit<Client, 'id'>) => void;
   client?: Client;
-  allClients: Client[];
 };
 
-export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
+export function ClientForm({ onSubmit, client }: ClientFormProps) {
+  const { clients } = useAppData();
   const { toast } = useToast();
-  const clientSchema = createClientSchema(allClients, client?.id);
+  const clientSchema = createClientSchema(clients, client?.id);
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -53,8 +54,8 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
       lastName: client?.lastName || '',
       phone: client?.phone || '+34 ',
       details: client?.details || '',
-      voucherSessions: client?.voucher?.totalSessions || '',
-      voucherPrice: client?.voucher?.price || '',
+      voucherSessions: client?.voucher?.totalSessions || undefined,
+      voucherPrice: client?.voucher?.price || undefined,
     },
   });
 
@@ -184,7 +185,7 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
                   <FormItem>
                     <FormLabel>Nº de Sesiones</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="p. ej., 5" {...field} />
+                      <Input type="number" placeholder="p. ej., 5" {...field} value={field.value || ''}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,7 +198,7 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
                   <FormItem>
                     <FormLabel>Precio del Bono (€)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="p. ej., 150" {...field} />
+                      <Input type="number" placeholder="p. ej., 150" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -212,5 +213,3 @@ export function ClientForm({ onSubmit, client, allClients }: ClientFormProps) {
     </Form>
   );
 }
-
-    

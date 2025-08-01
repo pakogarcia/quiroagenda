@@ -18,9 +18,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
-
-const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
-const SERVICES_STORAGE_KEY = 'quiroagenda_services';
+import { useAppData } from '@/context/app-data-context';
 
 const appointmentSchema = z.object({
   clientName: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
@@ -37,12 +35,10 @@ type AppointmentFormProps = {
   onSubmit: (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => void;
   appointment?: Appointment;
   selectedDate?: Date;
-  blockedDays: string[];
 };
 
-export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDays }: AppointmentFormProps) {
-  const [clients, setClients] = React.useState<Client[]>([]);
-  const [services, setServices] = React.useState<Service[]>([]);
+export function AppointmentForm({ onSubmit, appointment, selectedDate }: AppointmentFormProps) {
+  const { clients, services, blockedDays } = useAppData();
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -55,28 +51,6 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate, blockedDa
       serviceId: appointment?.serviceId || undefined,
     },
   });
-
-  React.useEffect(() => {
-    try {
-        const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-        if (storedClients) {
-            const parsedClients = JSON.parse(storedClients);
-            const migratedClients = parsedClients.map((client: any) => ({
-                ...client,
-                lastName: client.lastName || '',
-            }));
-            setClients(migratedClients);
-        }
-        
-        const storedServices = localStorage.getItem(SERVICES_STORAGE_KEY);
-        if (storedServices) {
-            setServices(JSON.parse(storedServices));
-        }
-
-    } catch (error) {
-        console.error("Failed to load data.", error);
-    }
-  }, []);
 
   const handleClientChange = (clientId: string) => {
       const selectedClient = clients.find(c => c.id === clientId);

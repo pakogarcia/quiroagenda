@@ -6,63 +6,26 @@ import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Plus, User, Phone, Gift, CalendarClock, Users, AlertCircle, MessageSquare } from 'lucide-react';
-import type { Client, Voucher, Appointment } from '@/lib/types';
+import type { Client, Appointment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ClientForm } from '@/components/client-form';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SplashScreen } from '@/components/layout/splash-screen';
 import { format, differenceInDays, startOfToday, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppData } from '@/context/app-data-context';
+import { SplashScreen } from '@/components/layout/splash-screen';
 
-const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
-const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 
 export default function ClientsPage() {
-    const [clients, setClients] = React.useState<Client[]>([]);
-    const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-    const [isClient, setIsClient] = React.useState(false);
+    const { clients, setClients, appointments, isLoading } = useAppData();
     const [today, setToday] = React.useState<Date | null>(null);
 
     React.useEffect(() => {
-        try {
-            const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-            if (storedClients) {
-                const parsedClients = JSON.parse(storedClients);
-                const migratedClients = parsedClients.map((client: any) => ({
-                    ...client,
-                    lastName: client.lastName || '',
-                    voucher: client.voucher || undefined,
-                }));
-                setClients(migratedClients);
-            }
-            
-            const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-            if (storedAppointments) {
-                 const parsedAppointments = JSON.parse(storedAppointments)
-                    .map((apt: any) => ({
-                      ...apt,
-                      dateTime: new Date(apt.dateTime),
-                    }))
-                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()));
-                setAppointments(parsedAppointments);
-            }
-
-        } catch (error) {
-            console.error("Failed to load data.", error);
-        }
         setToday(startOfToday());
-        setIsClient(true);
     }, []);
-
-    React.useEffect(() => {
-        if (isClient) {
-            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
-        }
-    }, [clients, isClient]);
 
     const lastAppointmentByClient = React.useMemo(() => {
         if (!today) return new Map<string, Date>();
@@ -147,7 +110,7 @@ export default function ClientsPage() {
         window.open(whatsappLink, '_blank', 'noopener,noreferrer');
     }
     
-    if (!isClient || !today) {
+    if (isLoading || !today) {
         return <SplashScreen />;
     }
 
@@ -254,23 +217,20 @@ export default function ClientsPage() {
                 )}
             </main>
 
-            {isClient && (
-              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                  <DialogContent>
-                      <DialogHeader>
-                          <DialogTitle>{editingClient ? 'Editar Cliente' : 'Añadir Nuevo Cliente'}</DialogTitle>
-                           <DialogDescription>
-                              {editingClient ? 'Modifica los datos del cliente.' : 'Añade un nuevo cliente a tu lista.'}
-                           </DialogDescription>
-                      </DialogHeader>
-                      <ClientForm 
-                          onSubmit={editingClient ? (data) => handleUpdateClient(editingClient.id, data) : handleAddClient}
-                          client={editingClient}
-                          allClients={clients}
-                      />
-                  </DialogContent>
-              </Dialog>
-            )}
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingClient ? 'Editar Cliente' : 'Añadir Nuevo Cliente'}</DialogTitle>
+                         <DialogDescription>
+                            {editingClient ? 'Modifica los datos del cliente.' : 'Añade un nuevo cliente a tu lista.'}
+                         </DialogDescription>
+                    </DialogHeader>
+                    <ClientForm 
+                        onSubmit={editingClient ? (data) => handleUpdateClient(editingClient.id, data) : handleAddClient}
+                        client={editingClient}
+                    />
+                </DialogContent>
+            </Dialog>
 
         </div>
     );

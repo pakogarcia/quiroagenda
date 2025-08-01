@@ -6,7 +6,6 @@ import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay } from '
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock, AlertCircle, Tag } from 'lucide-react';
-import { getInitialAppointments } from '@/lib/data';
 import type { Appointment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -19,61 +18,25 @@ import { WhatsappReminderDialog } from '@/components/whatsapp-reminder-dialog';
 import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog';
 import { Badge } from '@/components/ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { SplashScreen } from '@/components/layout/splash-screen';
 import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-
-const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
-const BLOCKED_DAYS_STORAGE_KEY = 'quiroagenda_blocked_days';
+import { useAppData } from '@/context/app-data-context';
+import { SplashScreen } from '@/components/layout/splash-screen';
 
 export default function Home() {
-  const [appointments, setAppointments] = React.useState<Appointment[]>([]);
-  const [blockedDays, setBlockedDays] = React.useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
-  const [isClient, setIsClient] = React.useState(false);
+  const { 
+    appointments, 
+    setAppointments, 
+    blockedDays, 
+    setBlockedDays,
+    isLoading 
+  } = useAppData();
+  
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
   const { toast } = useToast();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    try {
-      const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-      const initialAppointments = storedAppointments
-        ? JSON.parse(storedAppointments)
-            .map((apt: any) => ({
-              ...apt,
-              dateTime: new Date(apt.dateTime),
-              status: apt.status || 'scheduled',
-              payment: apt.payment || undefined,
-            }))
-            .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()))
-        : getInitialAppointments(new Date());
-      setAppointments(initialAppointments);
-
-      const storedBlockedDays = localStorage.getItem(BLOCKED_DAYS_STORAGE_KEY);
-      if (storedBlockedDays) {
-        setBlockedDays(JSON.parse(storedBlockedDays));
-      }
-    } catch (error) {
-      console.error("Failed to load data, using initial data.", error);
-      setAppointments(getInitialAppointments(new Date()));
-    }
-    setSelectedDate(new Date());
-    setIsClient(true);
-  }, []);
-
-  React.useEffect(() => {
-    if (isClient) {
-      localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
-    }
-  }, [appointments, isClient]);
-
-  React.useEffect(() => {
-    if (isClient) {
-        localStorage.setItem(BLOCKED_DAYS_STORAGE_KEY, JSON.stringify(blockedDays));
-    }
-  }, [blockedDays, isClient]);
-
+  
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAppointment, setEditingAppointment] = React.useState<Appointment | undefined>(undefined);
   
@@ -96,15 +59,13 @@ export default function Home() {
   }, [appointments, selectedDate]);
   
   const futureAppointments = React.useMemo(() => {
-    if (!isClient) return [];
     const today = startOfToday();
     return appointments
       .filter(apt => (isSameDay(apt.dateTime, today) || !isBefore(apt.dateTime, today)) && apt.status === 'scheduled')
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
-  }, [appointments, isClient]);
+  }, [appointments]);
 
   const upcomingAppointments = React.useMemo(() => {
-    if (!isClient) return [];
     const today = startOfToday();
     const nextWeek = addDays(today, 7);
     
@@ -115,7 +76,7 @@ export default function Home() {
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
       .slice(0, 7); // To ensure we only show a limited number
-  }, [appointments, isClient, isDayBlocked]);
+  }, [appointments, isDayBlocked]);
 
   const appointmentsByDay = React.useMemo(() => {
     const counts: Record<string, number> = {};
@@ -130,8 +91,6 @@ export default function Home() {
 
   const modifiers = React.useMemo(() => {
     const today = startOfToday();
-    const blockedDates = blockedDays.map(d => new Date(d));
-
     return {
       blocked: (date: Date) => blockedDays.includes(format(date, 'yyyy-MM-dd')),
       oneAppointment: (date: Date) => {
@@ -251,7 +210,7 @@ export default function Home() {
     }
   }
   
-  if (!isClient) {
+  if (isLoading) {
     return <SplashScreen />;
   }
 
@@ -495,7 +454,6 @@ export default function Home() {
               onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment}
               appointment={editingAppointment}
               selectedDate={selectedDate!}
-              blockedDays={blockedDays}
             />
         </DialogContent>
       </Dialog>

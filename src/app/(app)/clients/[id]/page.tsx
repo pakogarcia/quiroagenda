@@ -19,67 +19,40 @@ import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog';
 import { cn } from '@/lib/utils';
-
-const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
-const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
+import { useAppData } from '@/context/app-data-context';
 
 export default function ClientDetailPage() {
-    const [clients, setClients] = React.useState<Client[]>([]);
-    const [client, setClient] = React.useState<Client | null>(null);
-    const [clientAppointments, setClientAppointments] = React.useState<Appointment[]>([]);
-    const [isClientLoaded, setIsClientLoaded] = React.useState(false);
+    const { clients, setClients, appointments, setAppointments, isLoading } = useAppData();
     const router = useRouter();
     const params = useParams();
     const clientId = params.id as string;
-    const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
 
-    React.useEffect(() => {
-        if (clientId) {
-            try {
-                const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-                const allClients: Client[] = storedClients ? JSON.parse(storedClients) : [];
-                setClients(allClients);
-
-                const currentClient = allClients.find(c => c.id === clientId);
-                if (currentClient) {
-                    setClient(currentClient);
-
-                    const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-                    const allAppointments: Appointment[] = storedAppointments
-                        ? JSON.parse(storedAppointments).map((apt: any) => ({
-                              ...apt,
-                              dateTime: new Date(apt.dateTime),
-                          }))
-                        : [];
-                    
-                    const appointmentsForClient = allAppointments
-                        .filter(apt => apt.clientPhone === currentClient.phone)
-                        .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
-                    
-                    setClientAppointments(appointmentsForClient);
-                } else {
-                    router.push('/clients');
-                }
-            } catch (error) {
-                console.error("Failed to load data.", error);
-                router.push('/clients');
-            }
-        }
-        setIsClientLoaded(true);
-    }, [clientId, router]);
-
-    React.useEffect(() => {
-        if (isClientLoaded) {
-            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
-        }
-    }, [clients, isClientLoaded]);
+    const [client, setClient] = React.useState<Client | null>(null);
+    const [clientAppointments, setClientAppointments] = React.useState<Appointment[]>([]);
     
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
+    const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
+
+    React.useEffect(() => {
+        if (!isLoading && clientId) {
+            const currentClient = clients.find(c => c.id === clientId);
+            if (currentClient) {
+                setClient(currentClient);
+
+                const appointmentsForClient = appointments
+                    .filter(apt => apt.clientPhone === currentClient.phone)
+                    .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
+                
+                setClientAppointments(appointmentsForClient);
+            } else {
+                router.push('/clients');
+            }
+        }
+    }, [clientId, router, clients, appointments, isLoading]);
 
     const handleUpdateClient = (id: string, data: Omit<Client, 'id'>) => {
         const updatedClient = { ...client, ...data } as Client;
-        setClient(updatedClient);
         setClients(prev => prev.map(c => (c.id === id ? updatedClient : c)));
         setIsFormOpen(false);
     };
@@ -121,19 +94,9 @@ export default function ClientDetailPage() {
     }, [clientAppointments]);
 
      const handleAppointmentFinished = (updatedAppointment: Appointment) => {
-        const updatedAppointments = clientAppointments.map(apt => 
+        setAppointments(prev => prev.map(apt => 
             apt.id === updatedAppointment.id ? updatedAppointment : apt
-        );
-        setClientAppointments(updatedAppointments);
-
-        const allAppointments = JSON.parse(localStorage.getItem(APPOINTMENTS_STORAGE_KEY) || '[]')
-            .map((apt: any) => ({ ...apt, dateTime: new Date(apt.dateTime) }));
-        
-        const allUpdatedAppointments = allAppointments.map((apt: Appointment) => 
-            apt.id === updatedAppointment.id ? updatedAppointment : apt
-        );
-        localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(allUpdatedAppointments));
-
+        ));
         setFinishingAppointment(null);
     };
 
@@ -169,7 +132,7 @@ export default function ClientDetailPage() {
         }
     };
 
-    if (!isClientLoaded || !client) {
+    if (isLoading || !client) {
         return <SplashScreen />;
     }
     
@@ -327,7 +290,6 @@ export default function ClientDetailPage() {
                     <ClientForm 
                         onSubmit={(data) => handleUpdateClient(client.id, data)}
                         client={client}
-                        allClients={clients}
                     />
                 </DialogContent>
             </Dialog>
@@ -355,5 +317,3 @@ export default function ClientDetailPage() {
         </div>
     );
 }
-
-    

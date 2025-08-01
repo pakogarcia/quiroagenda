@@ -12,38 +12,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ServiceForm } from '@/components/service-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SplashScreen } from '@/components/layout/splash-screen';
+import { useAppData } from '@/context/app-data-context';
 
-const SERVICES_STORAGE_KEY = 'quiroagenda_services';
-
-const getInitialServices = (): Service[] => {
-    return [
-        { id: '1', name: 'Masaje Relajante', duration: 60, price: 50 },
-        { id: '2', name: 'Drenaje Linfático', duration: 50, price: 45 },
-    ];
-};
 
 export default function ServicesPage() {
-    const [services, setServices] = React.useState<Service[]>([]);
-    const [isClient, setIsClient] = React.useState(false);
-
-    React.useEffect(() => {
-        try {
-            const storedServices = localStorage.getItem(SERVICES_STORAGE_KEY);
-            const initialServices = storedServices ? JSON.parse(storedServices) : getInitialServices();
-            setServices(initialServices);
-        } catch (error) {
-            console.error("Failed to load services, using initial data.", error);
-            setServices(getInitialServices());
-        }
-        setIsClient(true);
-    }, []);
-
-    React.useEffect(() => {
-        if (isClient) {
-            localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
-        }
-    }, [services, isClient]);
-
+    const { services, setServices, isLoading } = useAppData();
+    
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [editingService, setEditingService] = React.useState<Service | undefined>(undefined);
     
@@ -79,7 +53,7 @@ export default function ServicesPage() {
         setIsDeleteConfirmOpen(true);
     };
 
-    if (!isClient) {
+    if (isLoading) {
         return <SplashScreen />;
     }
 
