@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { LicenseGate } from '@/components/license-gate';
 import { AppDataProvider } from '@/context/app-data-context';
+import { PasswordGate } from '@/components/password-gate';
 
 export const metadata: Metadata = {
   title: 'QuiroAgenda',
@@ -23,9 +24,11 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased" suppressHydrationWarning={true}>
         <LicenseGate>
-          <AppDataProvider>
-            {children}
-          </AppDataProvider>
+          <PasswordGate>
+            <AppDataProvider>
+              {children}
+            </AppDataProvider>
+          </PasswordGate>
         </LicenseGate>
         <Toaster />
       </body>

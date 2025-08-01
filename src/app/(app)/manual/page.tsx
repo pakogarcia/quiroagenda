@@ -4,7 +4,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound } from 'lucide-react';
 
 
 export default function ManualPage() {
@@ -229,17 +229,32 @@ export default function ManualPage() {
             <CardContent>
                  <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
-                        <AccordionTrigger><div className='flex items-center gap-2'><Lock className="w-4 h-4" />Licencia y Acceso</div></AccordionTrigger>
+                        <AccordionTrigger><div className='flex items-center gap-2'><KeyRound className="w-4 h-4" />Contraseña de Acceso Local</div></AccordionTrigger>
                         <AccordionContent>
-                        <p>Para proteger tu información, el acceso a QuiroAgenda está controlado por una <strong>clave de licencia única</strong>. Esta clave se genera automáticamente en tu navegador la primera vez que usas la aplicación.</p>
+                        <p>Para proteger el acceso a la aplicación en un dispositivo, QuiroAgenda te pedirá que establezcas una contraseña la primera vez que la uses (después de que tu licencia sea validada). Esta contraseña se guarda de forma segura en el navegador de ese dispositivo específico.</p>
                         <ul className="list-disc pl-5 space-y-1 mt-2">
-                          <li><strong>¿Qué pasa si la licencia no es válida?</strong> Si ves una pantalla de "Licencia no Válida", significa que el administrador necesita activar tu clave. En esa misma pantalla aparecerá tu clave de licencia. Cópiala y envíala al administrador para que la active.</li>
-                          <li><strong>¿La clave es por usuario o por dispositivo?</strong> La clave es por navegador. Si accedes desde Chrome en tu portátil y luego desde Safari en tu móvil, generarás dos claves distintas que necesitarán ser activadas individualmente.</li>
-                           <li><strong>¿Y si borro las cookies?</strong> Si borras los datos de navegación, se generará una nueva clave y deberás volver a solicitar su activación.</li>
+                          <li><strong>¿Tengo que usar la misma contraseña en todos los dispositivos?</strong> No. Puedes (y deberías) establecer una contraseña diferente para cada navegador/dispositivo desde el que accedas.</li>
+                          <li><strong>¿Qué pasa si olvido la contraseña?</strong> Dado que la contraseña es local y está encriptada, no se puede recuperar. La única solución es borrar los datos de navegación de ese navegador (cookies y datos de sitios). Al hacerlo, se eliminará la contraseña olvidada y podrás establecer una nueva la próxima vez que abras la aplicación.</li>
                         </ul>
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-2">
+                        <AccordionTrigger><div className='flex items-center gap-2'><Lock className="w-4 h-4" />Licencia de Administrador (Fase 2)</div></AccordionTrigger>
+                        <AccordionContent>
+                        <p>El primer nivel de seguridad lo controlas tú como administrador. Cada navegador/dispositivo desde el que se intenta acceder genera una <strong>clave de licencia única</strong>. Para que alguien pueda usar la aplicación (y establecer su propia contraseña local), primero debes activar su clave.</p>
+                         <p className="font-semibold mt-2">¿Cómo activar una clave?</p>
+                        <ol className="list-decimal pl-5 space-y-1 mt-2">
+                          <li>El usuario te enviará la clave que ve en su pantalla de "Licencia no Válida".</li>
+                          <li>Accede a tu proyecto en la <strong>Consola de Firebase</strong>.</li>
+                          <li>Ve a <strong>Compilación &gt; Remote Config</strong> en el menú lateral.</li>
+                          <li>Haz clic en <strong>"Añadir parámetro"</strong>.</li>
+                           <li>En "Nombre del parámetro", pega la clave del usuario.</li>
+                           <li>Asegúrate de que el tipo sea **Booleano** y el valor esté en `true`.</li>
+                           <li>Guarda y haz clic en el botón verde <strong>"Publicar cambios"</strong>.</li>
+                        </ol>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-3">
                         <AccordionTrigger><div className='flex items-center gap-2'><Database className="w-4 h-4" />Copias de Seguridad</div></AccordionTrigger>
                         <AccordionContent>
                         <p>Toda tu información (clientes, citas, servicios, etc.) se guarda localmente en tu navegador. Tú tienes el control total de tus datos. En la sección <strong>"Quién Eres" &gt; "Gestión de Datos"</strong>, puedes:</p>
