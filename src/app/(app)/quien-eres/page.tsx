@@ -13,11 +13,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle, Copy, Save } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle, KeyRound, Save } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useAppData } from '@/context/app-data-context';
 import { PasswordConfirmationDialog } from '@/components/password-confirmation-dialog';
+import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
@@ -39,6 +40,7 @@ export default function ProfilePage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
   const [isExportConfirmOpen, setIsExportConfirmOpen] = React.useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = React.useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -338,7 +340,7 @@ export default function ProfilePage() {
                           <CardHeader>
                               <CardTitle className="text-2xl font-bold font-headline text-primary">Gestión de Datos</CardTitle>
                               <CardDescription>
-                                  Crea o restaura una copia de seguridad de todos los datos de tu aplicación.
+                                  Crea o restaura una copia de seguridad y gestiona tu contraseña.
                               </CardDescription>
                           </CardHeader>
                           <CardContent className="flex flex-col gap-4">
@@ -358,6 +360,10 @@ export default function ProfilePage() {
                                       ref={importInputRef}
                                       onChange={handleImportData}
                                   />
+                                  <Button type="button" variant="outline" className="w-full" onClick={() => setIsChangePasswordOpen(true)}>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    Cambiar Contraseña
+                                  </Button>
                               </div>
                               <Alert variant="destructive">
                                 <AlertTriangle className="h-4 w-4" />
@@ -380,6 +386,10 @@ export default function ProfilePage() {
         onConfirm={handleExportConfirmed}
         title="Confirmar Exportación"
         description="Por seguridad, introduce tu contraseña para descargar la copia de seguridad."
+    />
+    <ChangePasswordDialog
+        isOpen={isChangePasswordOpen}
+        onOpenChange={setIsChangePasswordOpen}
     />
     </>
   );

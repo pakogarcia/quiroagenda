@@ -232,9 +232,10 @@ export default function ManualPage() {
                     <AccordionItem value="item-1">
                         <AccordionTrigger><div className='flex items-center gap-2'><KeyRound className="w-4 h-4" />Contraseña de Acceso Local</div></AccordionTrigger>
                         <AccordionContent>
-                        <p>Para proteger el acceso a la aplicación en un dispositivo, QuiroAgenda te pedirá que establezcas una contraseña la primera vez que la uses (después de que tu licencia sea validada). Esta contraseña se guarda de forma segura en el navegador de ese dispositivo específico.</p>
+                        <p>Para proteger el acceso a la aplicación en un dispositivo, QuiroAgenda te pedirá que establezcas una contraseña la primera vez que la uses. Esta contraseña se guarda de forma segura en el navegador de ese dispositivo específico.</p>
                         <ul className="list-disc pl-5 space-y-1 mt-2">
                           <li><strong>¿Tengo que usar la misma contraseña en todos los dispositivos?</strong> No. Puedes (y deberías) establecer una contraseña diferente para cada navegador/dispositivo desde el que accedas.</li>
+                          <li><strong>¿Cómo cambio mi contraseña?</strong> En la sección "Quién Eres" > "Gestión de Datos", encontrarás un botón para cambiar tu contraseña local. Deberás introducir tu contraseña actual para poder establecer una nueva.</li>
                           <li><strong>¿Qué pasa si olvido la contraseña?</strong> Dado que la contraseña es local y está encriptada, no se puede recuperar. La única solución es borrar los datos de navegación de ese navegador (cookies y datos de sitios). Al hacerlo, se eliminará la contraseña olvidada y podrás establecer una nueva la próxima vez que abras la aplicación.</li>
                         </ul>
                         </AccordionContent>
@@ -244,7 +245,7 @@ export default function ManualPage() {
                         <AccordionContent>
                         <p>Toda tu información (clientes, citas, servicios, etc.) se guarda localmente en tu navegador. Tú tienes el control total de tus datos. En la sección <strong>"Quién Eres" &gt; "Gestión de Datos"</strong>, puedes:</p>
                         <ul className="list-disc pl-5 space-y-1 mt-2">
-                          <li><strong>Exportar Copia:</strong> Descarga un archivo JSON con todos los datos de tu aplicación. Es muy recomendable hacer copias de seguridad periódicas. <strong>¡Atención!</strong> Este archivo contiene datos sensibles. Guárdalo en un lugar seguro y privado.</li>
+                          <li><strong>Exportar Copia:</strong> Descarga un archivo JSON con todos los datos de tu aplicación. Es muy recomendable hacer copias de seguridad periódicas. <strong>¡Atención!</strong> Esta acción está protegida por tu contraseña local y el archivo contiene datos sensibles. Guárdalo en un lugar seguro y privado.</li>
                           <li><strong>Importar Copia:</strong> Restaura toda tu aplicación a partir de un archivo de copia de seguridad. <strong>Importante:</strong> Al importar, se borrarán todos los datos actuales y se reemplazarán por los del archivo.</li>
                         </ul>
                         </AccordionContent>
@@ -270,5 +271,3 @@ export default function ManualPage() {
     </div>
   );
 }
-
-    

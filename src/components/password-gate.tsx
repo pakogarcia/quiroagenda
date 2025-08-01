@@ -23,7 +23,7 @@ function str2ab(str: string): ArrayBuffer {
 }
 
 // Creates a SHA-256 hash of a string
-async function createHash(password: string): Promise<string> {
+export async function createHash(password: string): Promise<string> {
   const data = str2ab(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   // Convert buffer to hex string
