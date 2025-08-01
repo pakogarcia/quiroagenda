@@ -360,7 +360,7 @@ export default function ProfilePage() {
                                       ref={importInputRef}
                                       onChange={handleImportData}
                                   />
-                                  <Button type="button" variant="outline" className="w-full" onClick={() => setIsChangePasswordOpen(true)}>
+                                  <Button type="button" variant="secondary" className="w-full" onClick={() => setIsChangePasswordOpen(true)}>
                                     <KeyRound className="mr-2 h-4 w-4" />
                                     Cambiar Contraseña
                                   </Button>
@@ -394,3 +394,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
+    
