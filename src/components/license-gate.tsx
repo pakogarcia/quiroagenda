@@ -51,8 +51,8 @@ export function LicenseGate({ children }: { children: React.ReactNode }) {
 
     const checkLicense = async (keyToCheck: string) => {
       try {
-        await fetchAndActivate(remoteConfig);
-        const isValid = getBoolean(remoteConfig, keyToCheck);
+        await fetchAndActivate(remoteConfig());
+        const isValid = getBoolean(remoteConfig(), keyToCheck);
         
         if (isValid) {
           setLicenseStatus('valid');
