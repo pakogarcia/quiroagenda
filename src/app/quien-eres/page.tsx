@@ -220,7 +220,6 @@ export default function ProfilePage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   
-                  {/* Columna 1: Datos básicos */}
                   <Card className="shadow-lg">
                     <CardHeader>
                       <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
@@ -309,7 +308,6 @@ export default function ProfilePage() {
                     </CardContent>
                   </Card>
                   
-                  {/* Columna 2: Redes Sociales */}
                    <Card className="shadow-lg">
                     <CardHeader>
                       <CardTitle className="text-2xl font-bold font-headline text-primary">Web y Redes Sociales</CardTitle>
@@ -390,7 +388,6 @@ export default function ProfilePage() {
                     </CardContent>
                   </Card>
 
-                   {/* Fila 2: Gestión de datos */}
                    <div className="lg:col-span-2">
                       <Card className="shadow-lg">
                           <CardHeader>
@@ -400,7 +397,7 @@ export default function ProfilePage() {
                               </CardDescription>
                           </CardHeader>
                           <CardContent className="flex flex-col gap-4">
-                              <div className="flex flex-col sm:flex-row lg:flex-row gap-4">
+                              <div className="flex flex-col md:flex-row gap-4">
                                   <Button type="button" variant="outline" className="w-full" onClick={handleExportData}>
                                       <Download className="mr-2 h-4 w-4" />
                                       Exportar Copia
@@ -434,3 +431,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
