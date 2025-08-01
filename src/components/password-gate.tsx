@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -32,7 +33,7 @@ async function createHash(password: string): Promise<string> {
 }
 
 // Verifies a password against a stored hash
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   const newHash = await createHash(password);
   return newHash === hash;
 }

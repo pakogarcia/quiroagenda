@@ -15,9 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
 import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle, Copy, Save } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { format } from 'date-fns';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useAppData } from '@/context/app-data-context';
+import { PasswordConfirmationDialog } from '@/components/password-confirmation-dialog';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
@@ -38,6 +38,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
+  const [isExportConfirmOpen, setIsExportConfirmOpen] = React.useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -108,12 +109,13 @@ export default function ProfilePage() {
     }
   };
 
-  const handleExportData = () => {
+  const handleExportConfirmed = () => {
     exportData();
     toast({
         title: 'Exportación completada',
         description: 'Tus datos se han guardado en un archivo de copia de seguridad.'
     });
+    setIsExportConfirmOpen(false);
   };
 
   const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,6 +157,7 @@ export default function ProfilePage() {
   const logoPreview = form.watch('logo');
 
   return (
+    <>
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <AppHeader />
       <main className="flex-1 p-4 md:p-8 flex justify-center">
@@ -340,7 +343,7 @@ export default function ProfilePage() {
                           </CardHeader>
                           <CardContent className="flex flex-col gap-4">
                               <div className="flex flex-col md:flex-row gap-4">
-                                  <Button type="button" variant="outline" className="w-full" onClick={handleExportData}>
+                                  <Button type="button" variant="outline" className="w-full" onClick={() => setIsExportConfirmOpen(true)}>
                                       <Download className="mr-2 h-4 w-4" />
                                       Exportar Copia
                                   </Button>
@@ -371,5 +374,13 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+    <PasswordConfirmationDialog
+        isOpen={isExportConfirmOpen}
+        onOpenChange={setIsExportConfirmOpen}
+        onConfirm={handleExportConfirmed}
+        title="Confirmar Exportación"
+        description="Por seguridad, introduce tu contraseña para descargar la copia de seguridad."
+    />
+    </>
   );
 }
