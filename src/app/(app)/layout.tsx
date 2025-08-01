@@ -1,4 +1,4 @@
-import { AppDataProvider } from '@/context/app-data-context';
+
 
 export default function AppPagesLayout({
     children,
@@ -6,8 +6,8 @@ export default function AppPagesLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <AppDataProvider>
+        <>
             {children}
-        </AppDataProvider>
+        </>
     );
 }
