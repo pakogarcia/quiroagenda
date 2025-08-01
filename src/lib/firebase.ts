@@ -18,14 +18,12 @@ const remoteConfig = getRemoteConfig(app);
 
 // It's a good practice to set default values in case fetching fails
 // or for the first time a user opens the app.
-if (typeof window !== 'undefined') {
-    remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
-    
-    // Default values
-    remoteConfig.defaultConfig = {
-      'license_key_valid': false, // Default to false
-    };
-}
+remoteConfig.settings.minimumFetchIntervalMillis = process.env.NODE_ENV === 'development' ? 0 : 3600000; // 0 for dev, 1h for prod
+
+// Default values
+remoteConfig.defaultConfig = {
+    'license_key_valid': false, // Default to false for security
+};
 
 
 export { app, remoteConfig };
