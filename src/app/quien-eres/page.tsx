@@ -13,10 +13,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 const STORAGE_KEYS = [
@@ -395,27 +396,36 @@ export default function ProfilePage() {
                         Crea o restaura una copia de seguridad de todos los datos de tu aplicación (citas, clientes, etc.).
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-4">
-                    <Button variant="outline" className="w-full" onClick={handleExportData}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Exportar Copia de Seguridad
-                    </Button>
-                    <Button variant="outline" className="w-full" onClick={() => importInputRef.current?.click()}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Importar Copia de Seguridad
-                    </Button>
-                    <Input 
-                        type="file"
-                        accept=".json"
-                        className="hidden"
-                        ref={importInputRef}
-                        onChange={handleImportData}
-                    />
+                <CardContent className="flex flex-col gap-4">
+                     <div className="flex flex-col sm:flex-row gap-4">
+                        <Button variant="outline" className="w-full" onClick={handleExportData}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Exportar Copia de Seguridad
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={() => importInputRef.current?.click()}>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Importar Copia de Seguridad
+                        </Button>
+                        <Input 
+                            type="file"
+                            accept=".json"
+                            className="hidden"
+                            ref={importInputRef}
+                            onChange={handleImportData}
+                        />
+                    </div>
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>¡Atención!</AlertTitle>
+                      <AlertDescription>
+                        El archivo de copia de seguridad contiene datos sensibles no encriptados. Guárdalo en un lugar seguro y privado (ej. un disco duro externo o una carpeta cifrada).
+                      </AlertDescription>
+                    </Alert>
                 </CardContent>
             </Card>
         </div>
       </main>
     </div>
   );
-}
 
+    
