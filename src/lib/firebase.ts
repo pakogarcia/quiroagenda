@@ -1,7 +1,8 @@
+
 'use client';
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getRemoteConfig } from 'firebase/remote-config';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getRemoteConfig, type RemoteConfig } from 'firebase/remote-config';
 
 const firebaseConfig = {
   projectId: 'quiroagenda',
@@ -13,16 +14,23 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const remoteConfig = getRemoteConfig(app);
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// It's a good practice to set default values in case fetching fails
-// or for the first time a user opens the app.
-remoteConfig.settings.minimumFetchIntervalMillis = process.env.NODE_ENV === 'development' ? 0 : 3600000; // 0 for dev, 1h for prod
+let remoteConfigInstance: RemoteConfig | null = null;
 
-// Default values - We no longer need a single default, as each key will be checked.
-// If a key does not exist in Remote Config, it will return the default value for getBoolean(), which is false.
-remoteConfig.defaultConfig = {};
+const getRemoteConfigInstance = (): RemoteConfig => {
+    if (typeof window === 'undefined') {
+        // This is a dummy or placeholder for server-side execution
+        // It won't be used for real operations on the server.
+        return {} as RemoteConfig;
+    }
 
+    if (!remoteConfigInstance) {
+        remoteConfigInstance = getRemoteConfig(app);
+        remoteConfigInstance.settings.minimumFetchIntervalMillis = process.env.NODE_ENV === 'development' ? 0 : 3600000;
+        remoteConfigInstance.defaultConfig = {};
+    }
+    return remoteConfigInstance;
+}
 
-export { app, remoteConfig };
+export { app, getRemoteConfigInstance as remoteConfig };
