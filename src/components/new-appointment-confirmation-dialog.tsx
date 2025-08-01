@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { type Appointment, type BusinessProfile } from '@/lib/types';
-import { Send, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon } from 'lucide-react';
+import { Send, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
 import { generateNewAppointmentWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -141,7 +141,7 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
                         {businessProfile?.website && (
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="web-confirm" checked={socials.website} onCheckedChange={(checked) => handleSocialsChange('website', !!checked)} />
-                                <label htmlFor="web-confirm" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> Web</label>
+                                <label htmlFor="web-confirm" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Globe /> Web</label>
                             </div>
                         )}
                         {businessProfile?.instagram && (

@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { type Appointment, type Client, type BusinessProfile, Payment, Voucher } from '@/lib/types';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Instagram, Facebook, Youtube, Link as LinkIcon } from 'lucide-react';
+import { Send, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
@@ -376,7 +376,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                         {businessProfile?.website && (
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="web" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
-                                <label htmlFor="web" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> Web</label>
+                                <label htmlFor="web" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Globe /> Web</label>
                             </div>
                         )}
                         {businessProfile?.instagram && (

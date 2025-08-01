@@ -13,7 +13,7 @@ import { generateOfferWhatsapp } from '@/ai/flows/generate-offer-whatsapp';
 import type { Client, BusinessProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon } from 'lucide-react';
+import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
@@ -236,7 +236,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
                         {businessProfile?.website && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="web-offer" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
-                                <label htmlFor="web-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> Web</label>
+                                <label htmlFor="web-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Globe /> Web</label>
                              </div>
                         )}
                         {businessProfile?.instagram && (

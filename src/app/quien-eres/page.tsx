@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Separator } from '@/components/ui/separator';
 
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                         name="website"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />Página Web</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
                             <FormControl>
                               <Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} />
                             </FormControl>

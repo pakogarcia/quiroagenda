@@ -13,7 +13,7 @@ import { generateWhatsappReminder } from '@/ai/flows/generate-whatsapp-reminder'
 import type { Appointment, BusinessProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MessageSquare, Send, CheckCircle, Smartphone, Instagram, Facebook, Youtube, Link as LinkIcon } from 'lucide-react';
+import { MessageSquare, Send, CheckCircle, Smartphone, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
@@ -255,7 +255,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
                         {businessProfile?.website && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="web-reminder" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
-                                <label htmlFor="web-reminder" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> Web</label>
+                                <label htmlFor="web-reminder" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Globe /> Web</label>
                              </div>
                         )}
                         {businessProfile?.instagram && (
