@@ -20,10 +20,9 @@ const remoteConfig = getRemoteConfig(app);
 // or for the first time a user opens the app.
 remoteConfig.settings.minimumFetchIntervalMillis = process.env.NODE_ENV === 'development' ? 0 : 3600000; // 0 for dev, 1h for prod
 
-// Default values
-remoteConfig.defaultConfig = {
-    'license_key_valid': false, // Default to false for security
-};
+// Default values - We no longer need a single default, as each key will be checked.
+// If a key does not exist in Remote Config, it will return the default value for getBoolean(), which is false.
+remoteConfig.defaultConfig = {};
 
 
 export { app, remoteConfig };
