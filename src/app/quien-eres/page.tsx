@@ -13,11 +13,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Separator } from '@/components/ui/separator';
+import { format } from 'date-fns';
 
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
+const STORAGE_KEYS = [
+    'quiroagenda_appointments', 
+    'quiroagenda_clients', 
+    'quiroagenda_services', 
+    'quiroagenda_blocked_days', 
+    'quiroagenda_profile', 
+    'quiroagenda_voucher_sales'
+];
 
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
@@ -37,6 +46,7 @@ export default function ProfilePage() {
   const [isClient, setIsClient] = React.useState(false);
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const importInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -115,6 +125,86 @@ export default function ProfilePage() {
     }
   };
 
+  const handleExportData = () => {
+    try {
+        const dataToExport: { [key: string]: any } = {};
+        STORAGE_KEYS.forEach(key => {
+            const data = localStorage.getItem(key);
+            if (data) {
+                dataToExport[key] = JSON.parse(data);
+            }
+        });
+
+        const jsonString = JSON.stringify(dataToExport, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const date = format(new Date(), 'yyyy-MM-dd');
+        link.download = `quiroagenda_backup_${date}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast({
+            title: 'Exportación completada',
+            description: 'Tus datos se han guardado en un archivo de copia de seguridad.'
+        });
+    } catch (error) {
+        console.error('Failed to export data', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error de exportación',
+            description: 'No se pudieron exportar los datos.'
+        });
+    }
+  };
+
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const text = e.target?.result;
+            if (typeof text !== 'string') {
+                throw new Error("El archivo no es válido.");
+            }
+            const data = JSON.parse(text);
+
+            // Clear existing data
+            STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+
+            // Import new data
+            Object.keys(data).forEach(key => {
+                if (STORAGE_KEYS.includes(key)) {
+                    localStorage.setItem(key, JSON.stringify(data[key]));
+                }
+            });
+
+            toast({
+                title: 'Importación completada',
+                description: 'Tus datos han sido restaurados. La aplicación se recargará ahora.'
+            });
+
+            // Reload the page to apply changes
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+
+        } catch (error) {
+            console.error('Failed to import data', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error de importación',
+                description: 'El archivo de copia de seguridad no es válido o está corrupto.'
+            });
+        }
+    };
+    reader.readAsText(file);
+  };
+
   if (!isClient) {
     return <SplashScreen />;
   }
@@ -125,123 +215,66 @@ export default function ProfilePage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <AppHeader />
       <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-        <Card className="w-full max-w-lg shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
-            <CardDescription>
-              Completa la información de tu negocio. Se usará para personalizar los mensajes automáticos y futuras integraciones.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-4">
+        <div className="w-full max-w-lg space-y-8">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
+                <CardDescription>
+                  Completa la información de tu negocio. Se usará para personalizar los mensajes automáticos y futuras integraciones.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="space-y-4">
 
-                  {logoPreview && (
-                      <div className="flex flex-col items-center">
-                          <FormLabel>Vista previa del Logotipo</FormLabel>
-                          <div className="mt-2 relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
-                              <Image src={logoPreview} alt="Vista previa del logo" layout="fill" objectFit="cover" />
+                      {logoPreview && (
+                          <div className="flex flex-col items-center">
+                              <FormLabel>Vista previa del Logotipo</FormLabel>
+                              <div className="mt-2 relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
+                                  <Image src={logoPreview} alt="Vista previa del logo" layout="fill" objectFit="cover" />
+                              </div>
                           </div>
-                      </div>
-                  )}
-                  
-                  <FormField
-                    control={form.control}
-                    name="logo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
-                        <FormControl>
-                            <div>
-                                <Input
-                                    type="file"
-                                    accept=".jpg, .jpeg"
-                                    className="hidden"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                />
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  className="w-full"
-                                  onClick={() => fileInputRef.current?.click()}
-                                >
-                                  {logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}
-                                </Button>
-                            </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
-                        <FormControl>
-                          <Input placeholder="p. ej., Centro de Masajes Zen" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
-                        <FormControl>
-                          <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+34 987 654 321" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                     <h3 className="text-lg font-medium text-primary">Web y Redes Sociales</h3>
+                      )}
+                      
                       <FormField
                         control={form.control}
-                        name="website"
+                        name="logo"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
+                            <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
                             <FormControl>
-                              <Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} />
+                                <div>
+                                    <Input
+                                        type="file"
+                                        accept=".jpg, .jpeg"
+                                        className="hidden"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                    />
+                                    <Button 
+                                      type="button" 
+                                      variant="outline" 
+                                      className="w-full"
+                                      onClick={() => fileInputRef.current?.click()}
+                                    >
+                                      {logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}
+                                    </Button>
+                                </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                     <FormField
+
+                      <FormField
                         control={form.control}
-                        name="instagram"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
                             <FormControl>
-                              <Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} />
+                              <Input placeholder="p. ej., Centro de Masajes Zen" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -249,54 +282,140 @@ export default function ProfilePage() {
                       />
                       <FormField
                         control={form.control}
-                        name="facebook"
+                        name="address"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
                             <FormControl>
-                              <Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} />
+                              <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                       <FormField
+                      <FormField
                         control={form.control}
-                        name="tiktok"
+                        name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
                             <FormControl>
-                              <Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/>
+                              <Input placeholder="+34 987 654 321" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                       <FormField
-                        control={form.control}
-                        name="youtube"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                         <h3 className="text-lg font-medium text-primary">Web y Redes Sociales</h3>
+                          <FormField
+                            control={form.control}
+                            name="website"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                         <FormField
+                            control={form.control}
+                            name="instagram"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="facebook"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name="tiktok"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name="youtube"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                    </div>
 
 
-                <Button type="submit" className="w-full" disabled={!form.formState.isDirty}>
-                  Guardar Información
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                    <Button type="submit" className="w-full" disabled={!form.formState.isDirty}>
+                      Guardar Información
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-xl font-bold font-headline text-primary">Gestión de Datos</CardTitle>
+                    <CardDescription>
+                        Crea o restaura una copia de seguridad de todos los datos de tu aplicación (citas, clientes, etc.).
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col sm:flex-row gap-4">
+                    <Button variant="outline" className="w-full" onClick={handleExportData}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Exportar Copia de Seguridad
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => importInputRef.current?.click()}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Importar Copia de Seguridad
+                    </Button>
+                    <Input 
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        ref={importInputRef}
+                        onChange={handleImportData}
+                    />
+                </CardContent>
+            </Card>
+        </div>
       </main>
     </div>
   );
 }
+
