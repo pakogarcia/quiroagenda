@@ -15,11 +15,14 @@ export function LicenseGate({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     // This effect should only run once on the client side.
     let key = localStorage.getItem(LICENSE_KEY_STORAGE);
-    if (!key) {
-      // Generate a valid key for Remote Config: starts with a letter, no hyphens.
+    
+    // Check if the key is in the old, invalid format (contains hyphens) or doesn't exist.
+    if (!key || key.includes('-')) {
+      // Generate a new, valid key for Remote Config: starts with a letter, no hyphens.
       key = `key_${crypto.randomUUID().replace(/-/g, '')}`;
       localStorage.setItem(LICENSE_KEY_STORAGE, key);
     }
+    
     setLicenseKey(key);
 
     const checkLicense = async (keyToCheck: string) => {

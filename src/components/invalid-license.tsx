@@ -52,7 +52,7 @@ export function InvalidLicense({ licenseKey }: InvalidLicenseProps) {
           <div className="mt-4 w-full">
             <p className="text-sm text-muted-foreground">Proporciona el siguiente código de licencia:</p>
             <div className="mt-2 flex items-center justify-center gap-2 w-full">
-                 <pre className="p-2 bg-muted rounded-md text-muted-foreground overflow-x-auto w-full max-w-xs">
+                 <pre className="p-3 bg-muted rounded-md text-muted-foreground overflow-x-auto text-left w-full max-w-sm whitespace-pre-wrap break-all">
                      <code>{licenseKey}</code>
                  </pre>
                  <Button variant="outline" size="icon" onClick={handleCopy} title="Copiar código">
