@@ -16,7 +16,8 @@ export function LicenseGate({ children }: { children: React.ReactNode }) {
     // This effect should only run once on the client side.
     let key = localStorage.getItem(LICENSE_KEY_STORAGE);
     if (!key) {
-      key = crypto.randomUUID();
+      // Generate a valid key for Remote Config: starts with a letter, no hyphens.
+      key = `key_${crypto.randomUUID().replace(/-/g, '')}`;
       localStorage.setItem(LICENSE_KEY_STORAGE, key);
     }
     setLicenseKey(key);
@@ -33,6 +34,7 @@ export function LicenseGate({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error fetching remote config for license check:", error);
+        // Default to invalid if there's an error, to be safe.
         setLicenseStatus('invalid');
       }
     };
