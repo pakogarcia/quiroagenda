@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -238,22 +239,6 @@ export default function ManualPage() {
                         </ul>
                         </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="item-2">
-                        <AccordionTrigger><div className='flex items-center gap-2'><Lock className="w-4 h-4" />Licencia de Administrador (Fase 2)</div></AccordionTrigger>
-                        <AccordionContent>
-                        <p>El primer nivel de seguridad lo controlas tú como administrador. Cada navegador/dispositivo desde el que se intenta acceder genera una <strong>clave de licencia única</strong>. Para que alguien pueda usar la aplicación (y establecer su propia contraseña local), primero debes activar su clave.</p>
-                         <p className="font-semibold mt-2">¿Cómo activar una clave?</p>
-                        <ol className="list-decimal pl-5 space-y-1 mt-2">
-                          <li>El usuario te enviará la clave que ve en su pantalla de "Licencia no Válida".</li>
-                          <li>Accede a tu proyecto en la <strong>Consola de Firebase</strong>.</li>
-                          <li>Ve a <strong>Compilación &gt; Remote Config</strong> en el menú lateral.</li>
-                          <li>Haz clic en <strong>"Añadir parámetro"</strong>.</li>
-                           <li>En "Nombre del parámetro", pega la clave del usuario.</li>
-                           <li>Asegúrate de que el tipo sea **Booleano** y el valor esté en `true`.</li>
-                           <li>Guarda y haz clic en el botón verde <strong>"Publicar cambios"</strong>.</li>
-                        </ol>
-                        </AccordionContent>
-                    </AccordionItem>
                     <AccordionItem value="item-3">
                         <AccordionTrigger><div className='flex items-center gap-2'><Database className="w-4 h-4" />Copias de Seguridad</div></AccordionTrigger>
                         <AccordionContent>
@@ -285,3 +270,5 @@ export default function ManualPage() {
     </div>
   );
 }
+
+    
