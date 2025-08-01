@@ -17,6 +17,7 @@ const GenerateWhatsappReminderInputSchema = z.object({
   appointmentDateTime: z.string().describe('The date and time of the appointment, pre-formatted for display.'),
   clientPhoneNumber: z.string().describe('The client phone number to send the whatsapp reminder.'),
   businessName: z.string().optional().describe('The name of the business sending the reminder.'),
+  website: z.string().url().optional().describe('The website URL of the business.'),
   instagram: z.string().url().optional().describe('The Instagram profile URL of the business.'),
   facebook: z.string().url().optional().describe('The Facebook profile URL of the business.'),
   tiktok: z.string().url().optional().describe('The TikTok profile URL of the business.'),
@@ -44,7 +45,7 @@ const generateWhatsappReminderPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp amigable y profesional para recordarle a {{clientName}} sobre su próxima cita.
 
   El mensaje debe seguir este formato exacto, incluyendo los emojis y el formato de negrita (asteriscos):
-  'Hola {{clientName}} 👋, este es un recordatorio sobre tu próxima cita para el *{{appointmentDateTime}}*. Por favor, confirma o reprograma si es necesario. ¡Nos vemos pronto!{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}'
+  'Hola {{clientName}} 👋, este es un recordatorio sobre tu próxima cita para el *{{appointmentDateTime}}*. Por favor, confirma o reprograma si es necesario. ¡Nos vemos pronto!{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}'
   `,
 });
 

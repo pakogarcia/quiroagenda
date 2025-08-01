@@ -45,7 +45,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
   const [isGenerated, setIsGenerated] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
-  const [socials, setSocials] = React.useState({ instagram: false, facebook: false, tiktok: false, youtube: false });
+  const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
 
 
   React.useEffect(() => {
@@ -89,6 +89,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
           offerMessage: offerMessage,
           dateRange: formattedDateRange,
           businessName: businessProfile?.name,
+          website: socials.website ? businessProfile?.website : undefined,
           instagram: socials.instagram ? businessProfile?.instagram : undefined,
           facebook: socials.facebook ? businessProfile?.facebook : undefined,
           tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
@@ -110,7 +111,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
     setIsGenerated(true);
   }, [dateRange, offerMessage, clients, businessProfile, socials]);
 
-  const showSocials = !isGenerated && businessProfile && (businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+  const showSocials = !isGenerated && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   const renderContent = () => {
     if (isLoading) {
@@ -232,6 +233,12 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
                 <div className="py-4 space-y-4">
                      <h4 className="font-medium text-sm">Incluir Redes Sociales</h4>
                      <div className="flex flex-wrap items-center gap-4">
+                        {businessProfile?.website && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="web-offer" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
+                                <label htmlFor="web-offer" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> Web</label>
+                             </div>
+                        )}
                         {businessProfile?.instagram && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="ig-offer" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />

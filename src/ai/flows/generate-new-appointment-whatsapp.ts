@@ -17,6 +17,7 @@ const GenerateNewAppointmentWhatsappInputSchema = z.object({
   appointmentDateTime: z.string().describe('The date and time of the appointment, pre-formatted for display.'),
   businessAddress: z.string().describe('The address of the business.'),
   businessName: z.string().optional().describe('The name of the business sending the confirmation.'),
+  website: z.string().url().optional().describe('The website URL of the business.'),
   instagram: z.string().url().optional().describe('The Instagram profile URL of the business.'),
   facebook: z.string().url().optional().describe('The Facebook profile URL of the business.'),
   tiktok: z.string().url().optional().describe('The TikTok profile URL of the business.'),
@@ -44,7 +45,7 @@ const generateNewAppointmentWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp para confirmar una nueva cita, usando la siguiente plantilla y rellenando los datos proporcionados. No añadas ningún saludo o texto adicional que no esté en la plantilla.
 
   Plantilla:
-  "¡Hola {{clientName}}! Te confirmo tu nueva cita para el *{{appointmentDateTime}}*. Nos vemos en nuestra consulta en {{businessAddress}}. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! Te confirmo tu nueva cita para el *{{appointmentDateTime}}*. Nos vemos en nuestra consulta en {{businessAddress}}. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   `,
 });
 

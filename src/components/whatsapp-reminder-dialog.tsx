@@ -39,7 +39,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'generate' | 'finished'>('select');
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
-  const [socials, setSocials] = React.useState({ instagram: false, facebook: false, tiktok: false, youtube: false });
+  const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
 
 
   const appointmentsToRemind = appointments.filter(apt => !apt.reminderSent);
@@ -79,6 +79,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
           appointmentDateTime: format(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
           clientPhoneNumber: apt.clientPhone,
           businessName: businessProfile?.name,
+          website: socials.website ? businessProfile?.website : undefined,
           instagram: socials.instagram ? businessProfile?.instagram : undefined,
           facebook: socials.facebook ? businessProfile?.facebook : undefined,
           tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
@@ -113,7 +114,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
     }
   };
 
-  const showSocials = step === 'select' && businessProfile && (businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+  const showSocials = step === 'select' && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   const renderContent = () => {
     if (step === 'generate') {
@@ -249,8 +250,14 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
              <>
                 <Separator />
                 <div className="py-4 space-y-4">
-                     <h4 className="font-medium text-sm">Incluir Redes Sociales</h4>
+                     <h4 className="font-medium text-sm">Incluir Web y Redes Sociales</h4>
                      <div className="flex flex-wrap items-center gap-4">
+                        {businessProfile?.website && (
+                             <div className="flex items-center space-x-2">
+                                <Checkbox id="web-reminder" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
+                                <label htmlFor="web-reminder" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> Web</label>
+                             </div>
+                        )}
                         {businessProfile?.instagram && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="ig-reminder" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />

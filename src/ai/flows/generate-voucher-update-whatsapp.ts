@@ -16,6 +16,7 @@ const GenerateVoucherUpdateWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the client.'),
   remainingSessions: z.number().describe('The number of remaining sessions in the voucher.'),
   businessName: z.string().optional().describe('The name of the business sending the message.'),
+  website: z.string().url().optional().describe('The website URL of the business.'),
   instagram: z.string().url().optional().describe('The Instagram profile URL of the business.'),
   facebook: z.string().url().optional().describe('The Facebook profile URL of the business.'),
   tiktok: z.string().url().optional().describe('The TikTok profile URL of the business.'),
@@ -44,10 +45,10 @@ const generateVoucherUpdateWhatsappPrompt = ai.definePrompt({
 
   {{#if remainingSessions}}
   Plantilla para sesiones restantes:
-  "¡Hola {{clientName}}! 👋 Hemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! 👋 Hemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   {{else}}
   Plantilla para 0 sesiones restantes:
-  "¡Hola {{clientName}}! 🎉 ¡Felicidades por completar tu bono! Ha sido tu última sesión, pero nos encantaría seguir cuidándote. Puedes adquirir un nuevo bono cuando quieras para no perder el ritmo. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! 🎉 ¡Felicidades por completar tu bono! Ha sido tu última sesión, pero nos encantaría seguir cuidándote. Puedes adquirir un nuevo bono cuando quieras para no perder el ritmo. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   {{/if}}
   `,
 });

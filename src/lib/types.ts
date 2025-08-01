@@ -40,6 +40,7 @@ export type BusinessProfile = {
   address: string;
   phone: string;
   logo?: string;
+  website?: string;
   instagram?: string;
   facebook?: string;
   tiktok?: string;

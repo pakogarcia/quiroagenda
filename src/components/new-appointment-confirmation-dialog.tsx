@@ -26,7 +26,7 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [error, setError] = React.useState('');
   const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
-  const [socials, setSocials] = React.useState({ instagram: false, facebook: false, tiktok: false, youtube: false });
+  const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
   const [isGenerating, setIsGenerating] = React.useState(false);
 
   const generateMessage = React.useCallback(async () => {
@@ -48,6 +48,7 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
         appointmentDateTime: format(appointment.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
         businessAddress: businessProfile.address,
         businessName: businessProfile.name,
+        website: socials.website ? businessProfile.website : undefined,
         instagram: socials.instagram ? businessProfile.instagram : undefined,
         facebook: socials.facebook ? businessProfile.facebook : undefined,
         tiktok: socials.tiktok ? businessProfile.tiktok : undefined,
@@ -97,7 +98,7 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
     setSocials(s => ({...s, [social]: checked }));
   }
 
-  const showSocials = !isLoading && businessProfile && (businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+  const showSocials = !isLoading && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   return (
     <Dialog open={!!appointment} onOpenChange={handleClose}>
@@ -137,6 +138,12 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
                 <div className="pt-4 space-y-4">
                      <h4 className="font-medium text-sm">Incluir Redes Sociales</h4>
                      <div className="flex flex-wrap items-center gap-4">
+                        {businessProfile?.website && (
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="web-confirm" checked={socials.website} onCheckedChange={(checked) => handleSocialsChange('website', !!checked)} />
+                                <label htmlFor="web-confirm" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> Web</label>
+                            </div>
+                        )}
                         {businessProfile?.instagram && (
                              <div className="flex items-center space-x-2">
                                 <Checkbox id="ig-confirm" checked={socials.instagram} onCheckedChange={(checked) => handleSocialsChange('instagram', !!checked)} />

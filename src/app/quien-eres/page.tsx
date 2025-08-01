@@ -24,6 +24,7 @@ const profileSchema = z.object({
   address: z.string().optional(),
   phone: z.string().optional(),
   logo: z.string().optional(),
+  website: z.string().url().or(z.literal('')).optional(),
   instagram: z.string().url().or(z.literal('')).optional(),
   facebook: z.string().url().or(z.literal('')).optional(),
   tiktok: z.string().url().or(z.literal('')).optional(),
@@ -44,6 +45,7 @@ export default function ProfilePage() {
       address: '',
       phone: '',
       logo: '',
+      website: '',
       instagram: '',
       facebook: '',
       tiktok: '',
@@ -90,6 +92,7 @@ export default function ProfilePage() {
           address: data.address || '',
           phone: data.phone || '',
           logo: data.logo || undefined,
+          website: data.website || undefined,
           instagram: data.instagram || undefined,
           facebook: data.facebook || undefined,
           tiktok: data.tiktok || undefined,
@@ -217,7 +220,20 @@ export default function ProfilePage() {
                 <Separator />
 
                 <div className="space-y-4">
-                     <h3 className="text-lg font-medium text-primary">Redes Sociales</h3>
+                     <h3 className="text-lg font-medium text-primary">Web y Redes Sociales</h3>
+                      <FormField
+                        control={form.control}
+                        name="website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />Página Web</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                      <FormField
                         control={form.control}
                         name="instagram"

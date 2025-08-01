@@ -17,6 +17,7 @@ const GenerateOfferWhatsappInputSchema = z.object({
   offerMessage: z.string().describe('The core message of the promotional offer.'),
   dateRange: z.string().describe('The formatted date range for when the offer is valid.'),
   businessName: z.string().optional().describe('The name of the business sending the offer.'),
+  website: z.string().url().optional().describe('The website URL of the business.'),
   instagram: z.string().url().optional().describe('The Instagram profile URL of the business.'),
   facebook: z.string().url().optional().describe('The Facebook profile URL of the business.'),
   tiktok: z.string().url().optional().describe('The TikTok profile URL of the business.'),
@@ -44,7 +45,7 @@ const generateOfferWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp personalizado para informar a un cliente sobre una oferta especial, utilizando la siguiente plantilla y rellenando los datos proporcionados. No añadas ningún saludo o texto adicional.
 
   Plantilla:
-  "¡Hola {{clientName}}! 🥳 Queremos cuidarte y por eso te traemos una oferta especial. {{{offerMessage}}}. Esta promoción es válida {{dateRange}}. ¡No te la pierdas y reserva tu cita! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! 🥳 Queremos cuidarte y por eso te traemos una oferta especial. {{{offerMessage}}}. Esta promoción es válida {{dateRange}}. ¡No te la pierdas y reserva tu cita! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   `,
 });
 
