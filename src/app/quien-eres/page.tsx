@@ -13,9 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle, Copy } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle, Copy, Save } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
@@ -116,6 +115,7 @@ export default function ProfilePage() {
       });
       // Force header update
       window.dispatchEvent(new Event('storage'));
+      form.reset(data, { keepValues: true }); // Resets dirty state
     } catch (error) {
       console.error('Failed to save profile.', error);
       toast({
@@ -217,223 +217,220 @@ export default function ProfilePage() {
       <AppHeader />
       <main className="flex-1 p-4 md:p-8 flex justify-center">
         <div className="w-full max-w-6xl">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-               
-                {/* Columna principal del formulario */}
-                <div className="lg:col-span-2">
-                    <Card className="shadow-lg">
-                      <CardHeader>
-                        <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
-                        <CardDescription>
-                          Completa la información de tu negocio. Se usará para personalizar los mensajes automáticos y futuras integraciones.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="space-y-4">
-                              {logoPreview && (
-                                  <div className="flex flex-col items-center">
-                                      <FormLabel>Vista previa del Logotipo</FormLabel>
-                                      <div className="mt-2 relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
-                                          <Image src={logoPreview} alt="Vista previa del logo" layout="fill" objectFit="cover" />
-                                      </div>
-                                  </div>
-                              )}
-                              
-                              <FormField
-                                control={form.control}
-                                name="logo"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
-                                    <FormControl>
-                                        <div>
-                                            <Input
-                                                type="file"
-                                                accept=".jpg, .jpeg"
-                                                className="hidden"
-                                                ref={fileInputRef}
-                                                onChange={handleFileChange}
-                                            />
-                                            <Button 
-                                              type="button" 
-                                              variant="outline" 
-                                              className="w-full"
-                                              onClick={() => fileInputRef.current?.click()}
-                                            >
-                                              {logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}
-                                            </Button>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="p. ej., Centro de Masajes Zen" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="address"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="phone"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="+34 987 654 321" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                  
+                  {/* Columna 1: Datos básicos */}
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
+                      <CardDescription>
+                        Completa la información de tu negocio.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {logoPreview && (
+                            <div className="flex flex-col items-center">
+                                <FormLabel>Vista previa del Logotipo</FormLabel>
+                                <div className="mt-2 relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
+                                    <Image src={logoPreview} alt="Vista previa del logo" layout="fill" objectFit="cover" />
+                                </div>
                             </div>
+                        )}
+                        
+                        <FormField
+                            control={form.control}
+                            name="logo"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
+                                <FormControl>
+                                    <div>
+                                        <Input
+                                            type="file"
+                                            accept=".jpg, .jpeg"
+                                            className="hidden"
+                                            ref={fileInputRef}
+                                            onChange={handleFileChange}
+                                        />
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            className="w-full"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            {logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}
+                                        </Button>
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
+                                <FormControl>
+                                <Input placeholder="p. ej., Centro de Masajes Zen" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
+                                <FormControl>
+                                <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
+                                <FormControl>
+                                <Input placeholder="+34 987 654 321" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Columna 2: Redes Sociales */}
+                   <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="text-2xl font-bold font-headline text-primary">Web y Redes Sociales</CardTitle>
+                      <CardDescription>
+                        Añade tus enlaces para que aparezcan en los mensajes.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <FormField
+                            control={form.control}
+                            name="website"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
+                                <FormControl>
+                                <Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="instagram"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
+                                <FormControl>
+                                <Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="facebook"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
+                                <FormControl>
+                                <Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="tiktok"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
+                                <FormControl>
+                                <Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="youtube"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
+                                <FormControl>
+                                <Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                         <Button type="submit" className="w-full" disabled={!form.formState.isDirty}>
+                            <Save className="mr-2 h-4 w-4" />
+                            Guardar Información
+                        </Button>
+                    </CardContent>
+                  </Card>
 
-                            <Separator />
-
-                            <div className="space-y-4">
-                                 <h3 className="text-lg font-medium text-primary">Web y Redes Sociales</h3>
-                                  <FormField
-                                    control={form.control}
-                                    name="website"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
-                                        <FormControl>
-                                          <Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
+                   {/* Fila 2: Gestión de datos */}
+                   <div className="lg:col-span-2">
+                      <Card className="shadow-lg">
+                          <CardHeader>
+                              <CardTitle className="text-2xl font-bold font-headline text-primary">Gestión de Datos</CardTitle>
+                              <CardDescription>
+                                  Crea o restaura una copia de seguridad de todos los datos de tu aplicación.
+                              </CardDescription>
+                          </CardHeader>
+                          <CardContent className="flex flex-col gap-4">
+                              <div className="flex flex-col sm:flex-row lg:flex-row gap-4">
+                                  <Button type="button" variant="outline" className="w-full" onClick={handleExportData}>
+                                      <Download className="mr-2 h-4 w-4" />
+                                      Exportar Copia
+                                  </Button>
+                                  <Button type="button" variant="outline" className="w-full" onClick={() => importInputRef.current?.click()}>
+                                      <Upload className="mr-2 h-4 w-4" />
+                                      Importar Copia
+                                  </Button>
+                                  <Input 
+                                      type="file"
+                                      accept=".json"
+                                      className="hidden"
+                                      ref={importInputRef}
+                                      onChange={handleImportData}
                                   />
-                                 <FormField
-                                    control={form.control}
-                                    name="instagram"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
-                                        <FormControl>
-                                          <Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <FormField
-                                    control={form.control}
-                                    name="facebook"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
-                                        <FormControl>
-                                          <Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                   <FormField
-                                    control={form.control}
-                                    name="tiktok"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
-                                        <FormControl>
-                                          <Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/>
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                   <FormField
-                                    control={form.control}
-                                    name="youtube"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
-                                        <FormControl>
-                                          <Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/>
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                            </div>
-                            <Button type="submit" className="w-full" disabled={!form.formState.isDirty}>
-                              Guardar Información
-                            </Button>
-                          </form>
-                        </Form>
-                      </CardContent>
-                    </Card>
-                </div>
-                
-                {/* Columna lateral para gestión de datos */}
-                <div className="lg:col-span-1 space-y-8">
-                    <Card className="shadow-lg">
-                        <CardHeader>
-                            <CardTitle className="text-xl font-bold font-headline text-primary">Gestión de Datos</CardTitle>
-                            <CardDescription>
-                                Crea o restaura una copia de seguridad de todos los datos de tu aplicación.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-4">
-                             <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
-                                <Button variant="outline" className="w-full" onClick={handleExportData}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Exportar Copia
-                                </Button>
-                                <Button variant="outline" className="w-full" onClick={() => importInputRef.current?.click()}>
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    Importar Copia
-                                </Button>
-                                <Input 
-                                    type="file"
-                                    accept=".json"
-                                    className="hidden"
-                                    ref={importInputRef}
-                                    onChange={handleImportData}
-                                />
-                            </div>
-                            <Alert variant="destructive">
-                              <AlertTriangle className="h-4 w-4" />
-                              <AlertTitle>¡Atención!</AlertTitle>
-                              <AlertDescription>
-                                El archivo de copia de seguridad contiene datos sensibles no encriptados. Guárdalo en un lugar seguro y privado.
-                              </AlertDescription>
-                            </Alert>
-                        </CardContent>
-                    </Card>
-                </div>
-
-            </div>
+                              </div>
+                              <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>¡Atención!</AlertTitle>
+                                <AlertDescription>
+                                  El archivo de copia de seguridad contiene datos sensibles no encriptados. Guárdalo en un lugar seguro y privado.
+                                </AlertDescription>
+                              </Alert>
+                          </CardContent>
+                      </Card>
+                    </div>
+              </form>
+            </Form>
         </div>
       </main>
     </div>
   );
 }
-
-    
