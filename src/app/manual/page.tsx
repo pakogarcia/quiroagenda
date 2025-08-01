@@ -5,7 +5,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database } from 'lucide-react';
 
 
 export default function ManualPage() {
@@ -221,6 +221,38 @@ export default function ManualPage() {
                  </Accordion>
             </CardContent>
           </Card>
+
+           <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><ShieldCheck /> Seguridad y Datos</CardTitle>
+              <CardDescription>Gestiona el acceso a tu aplicación y tus datos.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger><div className='flex items-center gap-2'><Lock className="w-4 h-4" />Licencia y Acceso</div></AccordionTrigger>
+                        <AccordionContent>
+                        <p>Para proteger tu información, el acceso a QuiroAgenda está controlado por una <strong>clave de licencia única</strong>. Esta clave se genera automáticamente en tu navegador la primera vez que usas la aplicación.</p>
+                        <ul className="list-disc pl-5 space-y-1 mt-2">
+                          <li><strong>¿Qué pasa si la licencia no es válida?</strong> Si ves una pantalla de "Licencia no Válida", significa que el administrador necesita activar tu clave. En esa misma pantalla aparecerá tu clave de licencia. Cópiala y envíala al administrador para que la active.</li>
+                          <li><strong>¿La clave es por usuario o por dispositivo?</strong> La clave es por navegador. Si accedes desde Chrome en tu portátil y luego desde Safari en tu móvil, generarás dos claves distintas que necesitarán ser activadas individualmente.</li>
+                           <li><strong>¿Y si borro las cookies?</strong> Si borras los datos de navegación, se generará una nueva clave y deberás volver a solicitar su activación.</li>
+                        </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                        <AccordionTrigger><div className='flex items-center gap-2'><Database className="w-4 h-4" />Copias de Seguridad</div></AccordionTrigger>
+                        <AccordionContent>
+                        <p>Toda tu información (clientes, citas, servicios, etc.) se guarda localmente en tu navegador. Tú tienes el control total de tus datos. En la sección <strong>"Quién Eres" &gt; "Gestión de Datos"</strong>, puedes:</p>
+                        <ul className="list-disc pl-5 space-y-1 mt-2">
+                          <li><strong>Exportar Copia:</strong> Descarga un archivo JSON con todos los datos de tu aplicación. Es muy recomendable hacer copias de seguridad periódicas. <strong>¡Atención!</strong> Este archivo contiene datos sensibles. Guárdalo en un lugar seguro y privado.</li>
+                          <li><strong>Importar Copia:</strong> Restaura toda tu aplicación a partir de un archivo de copia de seguridad. <strong>Importante:</strong> Al importar, se borrarán todos los datos actuales y se reemplazarán por los del archivo.</li>
+                        </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                 </Accordion>
+            </CardContent>
+          </Card>
           
 
           <div className="text-center pt-8">
@@ -239,3 +271,4 @@ export default function ManualPage() {
     </div>
   );
 }
+
