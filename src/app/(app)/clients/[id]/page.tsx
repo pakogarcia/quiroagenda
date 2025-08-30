@@ -439,7 +439,7 @@ export default function ClientDetailPage() {
             />
 
             <NewAppointmentConfirmationDialog
-                voucherUpdateData={notifyingVoucherClient ? { client: notifyingVoucherClient, remainingSessions: notifyingVoucherClient.voucher!.sessions } : null}
+                voucherUpdateData={notifyingVoucherClient ? { client: notifyingVoucherClient, remainingSessions: notifyingVoucherClient.voucher!.sessions, informativeOnly: true } : null}
                 onOpenChange={() => setNotifyingVoucherClient(null)}
             />
         </div>

@@ -49,7 +49,7 @@ type FinishAppointmentDialogProps = {
 export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointmentFinished, isEditing = false }: FinishAppointmentDialogProps) {
   const { clients, setClients } = useAppData();
   const [step, setStep] = React.useState<'selectAction' | 'paymentForm'>('selectAction');
-  const [confirmationData, setConfirmationData] = React.useState<{client: Client, remainingSessions: number} | null>(null);
+  const [confirmationData, setConfirmationData] = React.useState<{client: Client, remainingSessions: number, informativeOnly?: boolean} | null>(null);
   const { toast } = useToast();
 
   const form = useForm<PaymentFormValues>({
@@ -167,7 +167,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         });
 
         // Set data for the confirmation dialog and close the current one
-        setConfirmationData({ client: updatedPayerClient, remainingSessions: updatedVoucher.sessions });
+        setConfirmationData({ client: updatedPayerClient, remainingSessions: updatedVoucher.sessions, informativeOnly: false });
         onOpenChange(false);
 
     } else {

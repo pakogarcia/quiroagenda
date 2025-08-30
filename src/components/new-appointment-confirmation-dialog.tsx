@@ -20,7 +20,7 @@ type DialogMode = 'newAppointment' | 'voucherUpdate';
 
 type NewAppointmentConfirmationDialogProps = {
   appointment?: Appointment | null;
-  voucherUpdateData?: { client: Client; remainingSessions: number } | null;
+  voucherUpdateData?: { client: Client; remainingSessions: number; informativeOnly?: boolean } | null;
   onOpenChange: (isOpen: boolean) => void;
 };
 
@@ -64,6 +64,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
             const result = await generateVoucherUpdateWhatsapp({
                 clientName: voucherUpdateData.client.name.split(' ')[0],
                 remainingSessions: voucherUpdateData.remainingSessions,
+                informativeOnly: voucherUpdateData.informativeOnly,
                 businessName: businessProfile.name,
                 website: socials.website ? businessProfile.website : undefined,
                 instagram: socials.instagram ? businessProfile.instagram : undefined,
@@ -106,12 +107,12 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   const showSocials = !isLoading && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   const getDialogTitle = () => {
-    if (mode === 'voucherUpdate') return "Bono Actualizado";
+    if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Notificar Sesiones Restantes" : "Bono Actualizado";
     return "Cita Confirmada";
   }
   
   const getDialogDescription = () => {
-      if (mode === 'voucherUpdate') return "Se ha descontado una sesión del bono. Puedes enviar una notificación por WhatsApp.";
+      if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Envía un mensaje a tu cliente para informarle de las sesiones que le quedan." : "Se ha descontado una sesión del bono. Puedes enviar una notificación por WhatsApp.";
       return "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp.";
   }
 
