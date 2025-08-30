@@ -54,6 +54,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const [voucherPayingClient, setVoucherPayingClient] = React.useState<Client | null>(null);
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [isGeneratingMessage, setIsGeneratingMessage] = React.useState(false);
+  const [finalAppointmentState, setFinalAppointmentState] = React.useState<Appointment | null>(null);
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
   const { toast } = useToast();
 
@@ -73,6 +74,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     setVoucherPayingClient(null);
     setGeneratedMessage('');
     setIsGeneratingMessage(false);
+    setFinalAppointmentState(null);
 
     const defaultPayment = appointment?.payment;
     const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
@@ -134,6 +136,13 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     onOpenChange(false);
   };
 
+  const handleCloseDialog = () => {
+    if (finalAppointmentState) {
+        onAppointmentFinished(finalAppointmentState);
+    }
+    onOpenChange(false);
+  };
+
   const handlePaymentSubmit = async (data: PaymentFormValues) => {
     if (!appointment) return;
 
@@ -169,11 +178,11 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
         const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
         setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
+        setVoucherPayingClient(updatedPayerClient);
         
         const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-        
-        onAppointmentFinished(updatedAppointment);
+        setFinalAppointmentState(updatedAppointment);
         
         toast({
             title: 'Bono actualizado',
@@ -182,8 +191,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
         setStep('voucherUpdateMessage');
         setIsGeneratingMessage(true);
-        setVoucherPayingClient(updatedPayerClient); // This line is crucial
-
+        
         try {
             const result = await generateVoucherUpdateWhatsapp({
                 clientName: updatedPayerClient.name.split(' ')[0],
@@ -203,11 +211,10 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 title: "Error",
                 description: "No se pudo generar el mensaje de actualización del bono."
             });
-            handleClose();
+            handleCloseDialog();
         } finally {
             setIsGeneratingMessage(false);
         }
-
     } else {
         const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
         const updatedAppointment = { ...appointment, status: 'completed', payment };
@@ -219,10 +226,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         onOpenChange(false);
     }
   };
-  
-  const handleClose = () => {
-    onOpenChange(false);
-  }
   
   const paymentMethod = form.watch('paymentMethod');
   const wasPaidWithVoucher = appointment?.payment?.method === 'voucher';
@@ -354,6 +357,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 <div className="my-4 p-4 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap min-h-[100px]">
                     {isGeneratingMessage ? (
                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground animate-pulse">Generando mensaje...</p>
                             <Skeleton className="h-4 w-2/3" />
                             <Skeleton className="h-4 w-full" />
                             <Skeleton className="h-4 w-4/5" />
@@ -362,7 +366,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                         generatedMessage
                     )}
                 </div>
-                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleCloseDialog}>
                     <Button disabled={isGeneratingMessage || !generatedMessage} className="w-full">
                         <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp y Cerrar
                     </Button>
@@ -386,14 +390,14 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       case 'paymentForm':
         return (
           <>
-            <Button variant="ghost" onClick={isEditing ? handleClose : () => setStep('selectAction')}>
+            <Button variant="ghost" onClick={isEditing ? handleCloseDialog : () => setStep('selectAction')}>
               {isEditing ? 'Cancelar' : 'Volver'}
             </Button>
             <Button type="submit" form="payment-form" disabled={form.formState.isSubmitting}>Confirmar</Button>
           </>
         );
       case 'voucherUpdateMessage':
-        return <Button variant="secondary" onClick={handleClose}>Cerrar sin enviar</Button>;
+        return <Button variant="secondary" onClick={handleCloseDialog}>Cerrar sin enviar</Button>;
       case 'selectAction':
       default:
         return <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button>;
@@ -406,7 +410,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
   return (
     <Dialog open={!!appointment} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent onEscapeKeyDown={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Pago' : 'Finalizar Cita'}: {appointment?.clientName}</DialogTitle>
           {step === 'selectAction' && (
@@ -479,3 +483,5 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
+
+    
