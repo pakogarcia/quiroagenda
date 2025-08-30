@@ -215,7 +215,7 @@ export default function ClientDetailPage() {
                                     <p className="text-muted-foreground text-sm mt-1 whitespace-pre-wrap">{client.details}</p>
                                 </div>
                             )}
-                            {client.voucher && (
+                            {client.voucher && client.voucher.sessions > 0 && (
                                 <div className="p-3 bg-muted/50 rounded-md max-w-sm">
                                     <p className="font-semibold text-sm flex items-center gap-2 text-primary"><Gift className="w-4 h-4" /> Bono Activo</p>
                                     <p className="text-muted-foreground text-sm mt-1">Sesiones restantes: <span className="font-bold">{client.voucher.sessions} de {client.voucher.totalSessions}</span></p>
@@ -411,4 +411,3 @@ export default function ClientDetailPage() {
 }
 
     
-

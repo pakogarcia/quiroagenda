@@ -7,12 +7,14 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import type { Client } from '@/lib/types';
+import type { Client, Voucher } from '@/lib/types';
 import { Separator } from './ui/separator';
 import { Gift, Trash2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from './ui/textarea';
 import { useAppData } from '@/context/app-data-context';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import React from 'react';
 
 const createClientSchema = (allClients: Client[], editingClientId?: string) => 
   z.object({
@@ -45,6 +47,8 @@ type ClientFormProps = {
 export function ClientForm({ onSubmit, client }: ClientFormProps) {
   const { clients } = useAppData();
   const { toast } = useToast();
+  const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = React.useState(false);
+
   const clientSchema = createClientSchema(clients, client?.id);
 
   const form = useForm<ClientFormValues>({
@@ -60,15 +64,20 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
   });
 
   const handleSubmit = (values: ClientFormValues) => {
-    let voucher;
-    if (values.voucherSessions && values.voucherSessions > 0) {
+    let voucher: Voucher | undefined;
+    
+    if (client?.voucher && client.voucher.sessions > 0) {
+        // If an active voucher exists, don't change it from this form.
+        voucher = client.voucher;
+    } else if (values.voucherSessions && values.voucherSessions > 0) {
+        // Create a new voucher only if one doesn't exist or is depleted
         voucher = {
             sessions: values.voucherSessions,
             totalSessions: values.voucherSessions,
             price: values.voucherPrice || 0,
         };
     } else {
-      voucher = undefined;
+        voucher = undefined;
     }
 
     onSubmit({
@@ -100,116 +109,132 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
         description: "Se ha eliminado el bono del cliente.",
         variant: "destructive"
     });
+    setIsRemoveConfirmOpen(false);
   };
   
   const currentVoucher = client?.voucher;
+  const hasActiveVoucher = !!currentVoucher && currentVoucher.sessions > 0;
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre del Cliente</FormLabel>
-              <FormControl>
-                <Input placeholder="p. ej., Ana" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Apellidos del Cliente</FormLabel>
-              <FormControl>
-                <Input placeholder="p. ej., Pérez García" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Teléfono del Cliente</FormLabel>
-              <FormControl>
-                <Input placeholder="+34 123 456 789" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="details"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2"><FileText className="w-4 h-4" /> Detalles / Notas</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Alergia a los aceites de frutos secos, prefiere música suave, etc." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Separator />
-        
-        <div>
-          <h3 className="text-lg font-medium flex items-center gap-2 mb-4"><Gift /> Gestión de Bono</h3>
-          
-          {currentVoucher && (
-            <div className="mb-4 p-3 bg-muted/50 rounded-md text-sm">
-                <p>Este cliente tiene un bono activo con <span className="font-bold">{currentVoucher.sessions} de {currentVoucher.totalSessions}</span> sesiones restantes.</p>
-                <p>Para modificar el bono, debe eliminar el actual y crear uno nuevo.</p>
-                 <Button type="button" variant="destructive" size="sm" className="mt-2" onClick={handleRemoveVoucher}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Eliminar Bono Actual
-                </Button>
+    <>
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Nombre del Cliente</FormLabel>
+                <FormControl>
+                    <Input placeholder="p. ej., Ana" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Apellidos del Cliente</FormLabel>
+                <FormControl>
+                    <Input placeholder="p. ej., Pérez García" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Teléfono del Cliente</FormLabel>
+                <FormControl>
+                    <Input placeholder="+34 123 456 789" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="details"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel className="flex items-center gap-2"><FileText className="w-4 h-4" /> Detalles / Notas</FormLabel>
+                <FormControl>
+                    <Textarea placeholder="Alergia a los aceites de frutos secos, prefiere música suave, etc." {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            
+            <Separator />
+            
+            <div>
+            <h3 className="text-lg font-medium flex items-center gap-2 mb-4"><Gift /> Gestión de Bono</h3>
+            
+            {hasActiveVoucher ? (
+                <div className="mb-4 p-3 bg-muted/50 rounded-md text-sm">
+                    <p>Este cliente tiene un bono activo con <span className="font-bold">{currentVoucher.sessions} de {currentVoucher.totalSessions}</span> sesiones restantes.</p>
+                    <p className='mt-1'>La venta de un nuevo bono reemplazará al actual.</p>
+                    <Button type="button" variant="destructive" size="sm" className="mt-2" onClick={() => setIsRemoveConfirmOpen(true)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar Bono Actual
+                    </Button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="voucherSessions"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Nº de Sesiones</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="p. ej., 5" {...field} value={field.value || ''}/>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="voucherPrice"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Precio del Bono (€)</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="p. ej., 150" {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                </div>
+            )}
             </div>
-          )}
-
-          {!currentVoucher && (
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="voucherSessions"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nº de Sesiones</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="p. ej., 5" {...field} value={field.value || ''}/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="voucherPrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Precio del Bono (€)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="p. ej., 150" {...field} value={field.value || ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
-        </div>
-        
-        <Button type="submit" className="w-full">{client ? 'Actualizar Cliente' : 'Crear Cliente'}</Button>
-      </form>
-    </Form>
+            
+            <Button type="submit" className="w-full">{client ? 'Actualizar Cliente' : 'Crear Cliente'}</Button>
+        </form>
+        </Form>
+        <AlertDialog open={isRemoveConfirmOpen} onOpenChange={setIsRemoveConfirmOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar Bono?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Se eliminará el bono activo del cliente, incluyendo las sesiones restantes.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleRemoveVoucher} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
   );
 }
