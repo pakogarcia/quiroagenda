@@ -402,7 +402,7 @@ export default function Home() {
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(apt.id)}>
+                                        <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(apt.id)} disabled={apt.status !== 'scheduled'}>
                                             <Trash2 className="w-5 h-5 text-destructive" />
                                         </Button>
                                     </TooltipTrigger>
