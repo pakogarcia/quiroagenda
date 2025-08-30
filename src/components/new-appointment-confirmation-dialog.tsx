@@ -26,7 +26,7 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [error, setError] = React.useState('');
   const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
-  const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
+  const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
   const [isGenerating, setIsGenerating] = React.useState(false);
 
   const generateMessage = React.useCallback(async () => {
@@ -169,6 +169,9 @@ export function NewAppointmentConfirmationDialog({ appointment, onOpenChange }: 
                              </div>
                         )}
                      </div>
+                     <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
+                        Regenerar Mensaje
+                    </Button>
                 </div>
             </>
         )}

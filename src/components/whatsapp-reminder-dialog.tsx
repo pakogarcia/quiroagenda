@@ -38,7 +38,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'generate' | 'finished'>('select');
-  const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
+  const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
 
 
   const appointmentsToRemind = appointments.filter(apt => !apt.reminderSent);

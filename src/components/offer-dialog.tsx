@@ -42,7 +42,7 @@ export function OfferDialog({ isOpen, onOpenChange }: OfferDialogProps) {
   const [generatedOffers, setGeneratedOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
-  const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
+  const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
 
 
   React.useEffect(() => {
