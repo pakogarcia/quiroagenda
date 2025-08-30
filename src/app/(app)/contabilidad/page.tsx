@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -36,7 +37,7 @@ export default function ContabilidadPage() {
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to);
 
-        return appointments.filter(apt => isWithinInterval(apt.dateTime, { start, end }));
+        return appointments.filter(apt => isWithinInterval(new Date(apt.dateTime), { start, end }));
     }, [appointments, dateRange]);
 
     const filteredTransactions = React.useMemo(() => {
@@ -52,11 +53,15 @@ export default function ContabilidadPage() {
             .map(apt => ({ ...apt, type: 'appointment' }));
         
         const voucherSalesInRange: Transaction[] = voucherSales
-            .filter(sale => isWithinInterval(sale.date, { start, end }))
+            .filter(sale => isWithinInterval(new Date(sale.date), { start, end }))
             .map(sale => ({ ...sale, type: 'voucher_sale' }));
 
         return [...completedAppointmentsInRange, ...voucherSalesInRange]
-            .sort((a, b) => (b.type === 'appointment' ? b.dateTime.getTime() : b.date.getTime()) - (a.type === 'appointment' ? a.dateTime.getTime() : a.date.getTime()));
+            .sort((a, b) => {
+                const dateA = new Date(a.type === 'appointment' ? a.dateTime : a.date);
+                const dateB = new Date(b.type === 'appointment' ? b.dateTime : b.date);
+                return dateB.getTime() - dateA.getTime();
+            });
             
     }, [filteredAppointments, voucherSales, dateRange]);
 
@@ -94,7 +99,7 @@ export default function ContabilidadPage() {
         }
         
         for (const sale of voucherSales) {
-             if (dateRange?.from && dateRange?.to && isWithinInterval(sale.date, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) {
+             if (dateRange?.from && dateRange?.to && isWithinInterval(new Date(sale.date), { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) {
                 if (sale.paymentMethod === 'cash' || sale.paymentMethod === 'bizum' || sale.paymentMethod === 'paypal') {
                     summary.totalRevenue += sale.amount;
                     if (sale.paymentMethod === 'cash') summary.cashRevenue += sale.amount;
@@ -320,7 +325,7 @@ export default function ContabilidadPage() {
                                                         {filteredTransactions.length > 0 ? (
                                                             filteredTransactions.map(item => (
                                                                 <TableRow key={item.id}>
-                                                                    <TableCell className="font-medium">{format(item.type === 'appointment' ? item.dateTime : item.date, "P", { locale: es })}</TableCell>
+                                                                    <TableCell className="font-medium">{format(new Date(item.type === 'appointment' ? item.dateTime : item.date), "P", { locale: es })}</TableCell>
                                                                     <TableCell>{item.clientName}</TableCell>
                                                                     <TableCell className='flex items-center gap-2'>
                                                                         {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}

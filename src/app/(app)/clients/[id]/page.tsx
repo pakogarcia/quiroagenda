@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -21,11 +22,12 @@ import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog'
 import { cn } from '@/lib/utils';
 import { useAppData } from '@/context/app-data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { EditVoucherSaleDialog } from '@/components/edit-voucher-sale-dialog';
 
 type HistoryItem = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
 
 export default function ClientDetailPage() {
-    const { clients, setClients, appointments, setAppointments, voucherSales, isLoading } = useAppData();
+    const { clients, setClients, appointments, setAppointments, voucherSales, setVoucherSales, isLoading } = useAppData();
     const router = useRouter();
     const params = useParams();
     const clientId = params.id as string;
@@ -36,6 +38,7 @@ export default function ClientDetailPage() {
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
     const [editingAppointment, setEditingAppointment] = React.useState<Appointment | null>(null);
+    const [editingVoucherSale, setEditingVoucherSale] = React.useState<VoucherSale | null>(null);
 
     React.useEffect(() => {
         if (!isLoading && clientId) {
@@ -55,7 +58,7 @@ export default function ClientDetailPage() {
                     .sort((a, b) => {
                         const dateA = a.type === 'appointment' ? a.dateTime : a.date;
                         const dateB = b.type === 'appointment' ? b.dateTime : b.date;
-                        return dateB.getTime() - dateA.getTime();
+                        return new Date(dateB).getTime() - new Date(dateA).getTime();
                     });
                 
                 setClientHistory(combinedHistory);
@@ -125,6 +128,13 @@ export default function ClientDetailPage() {
         ));
         setEditingAppointment(null);
     };
+    
+     const handleVoucherSaleUpdated = (updatedSale: VoucherSale) => {
+        setVoucherSales(prev => prev.map(sale => 
+            sale.id === updatedSale.id ? updatedSale : sale
+        ));
+        setEditingVoucherSale(null);
+    };
 
     const getStatusBadge = (appointment: Appointment) => {
         switch (appointment.status) {
@@ -162,7 +172,7 @@ export default function ClientDetailPage() {
         return <SplashScreen />;
     }
     
-    const whatsappLink = `https://wa.me/${client.phone.replace(/\D/g, '')}`;
+    const whatsappLink = client.phone ? `https://wa.me/${client.phone.replace(/\D/g, '')}` : '';
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -287,7 +297,7 @@ export default function ClientDetailPage() {
                                     <TableRow key={item.id}>
                                     {item.type === 'appointment' ? (
                                         <>
-                                            <TableCell>{format(item.dateTime, "P p", { locale: es })}</TableCell>
+                                            <TableCell>{format(new Date(item.dateTime), "P p", { locale: es })}</TableCell>
                                             <TableCell className="flex items-center gap-2">
                                                 <CreditCard className="w-4 h-4 text-muted-foreground"/>
                                                 {item.serviceName || 'Cita'}
@@ -316,7 +326,7 @@ export default function ClientDetailPage() {
                                         </>
                                     ) : (
                                         <>
-                                            <TableCell>{format(item.date, "P", { locale: es })}</TableCell>
+                                            <TableCell>{format(new Date(item.date), "P", { locale: es })}</TableCell>
                                             <TableCell className="flex items-center gap-2">
                                                 <ShoppingCart className="w-4 h-4 text-muted-foreground"/>
                                                 Compra de Bono ({item.sessions} sesiones)
@@ -324,7 +334,20 @@ export default function ClientDetailPage() {
                                             <TableCell><Badge variant="secondary">Completada</Badge></TableCell>
                                             <TableCell>{getPaymentMethodName(item.paymentMethod)}</TableCell>
                                             <TableCell className="text-right">{item.amount.toFixed(2)}€</TableCell>
-                                            <TableCell></TableCell>
+                                            <TableCell>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="ghost" size="icon" onClick={() => setEditingVoucherSale(item)}>
+                                                                <Edit className="w-4 h-4" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Editar Venta de Bono</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </TableCell>
                                         </>
                                     )}
                                 </TableRow>
@@ -377,8 +400,15 @@ export default function ClientDetailPage() {
                 onAppointmentFinished={handleAppointmentFinished}
                 isEditing
             />
+            
+            <EditVoucherSaleDialog
+                sale={editingVoucherSale}
+                onOpenChange={() => setEditingVoucherSale(null)}
+                onVoucherSaleUpdated={handleVoucherSaleUpdated}
+            />
         </div>
     );
 }
 
     
+

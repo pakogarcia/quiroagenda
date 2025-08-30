@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -71,7 +72,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                         status: apt.status || 'scheduled',
                         payment: apt.payment || undefined,
                     }))
-                    .filter((apt: Appointment) => apt.dateTime && !isNaN(apt.dateTime.getTime()))
+                    .filter((apt: Appointment) => apt.dateTime && !isNaN(new Date(apt.dateTime).getTime()))
                 : getInitialAppointments(new Date());
             setAppointments(initialAppointments);
 
