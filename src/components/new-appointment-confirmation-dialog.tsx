@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
+import { useAppData } from '@/context/app-data-context';
 
 type DialogMode = 'newAppointment' | 'voucherUpdate';
 
@@ -23,15 +24,14 @@ type NewAppointmentConfirmationDialogProps = {
   onOpenChange: (isOpen: boolean) => void;
 };
 
-const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 
 export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateData, onOpenChange }: NewAppointmentConfirmationDialogProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [error, setError] = React.useState('');
-  const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const { profile: businessProfile } = useAppData();
 
   const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : null;
   
@@ -83,21 +83,6 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   }, [appointment, voucherUpdateData, businessProfile, socials, mode]);
 
 
-  React.useEffect(() => {
-    if (mode) {
-        setIsLoading(true);
-        try {
-          const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
-          const profile: BusinessProfile | null = storedProfile ? JSON.parse(storedProfile) : null;
-          setBusinessProfile(profile);
-        } catch (e) {
-            console.error(e)
-        } finally {
-            setIsLoading(false);
-        }
-    }
-  }, [mode]);
-  
   React.useEffect(() => {
     if (businessProfile && (appointment || voucherUpdateData)) {
         generateMessage();
@@ -198,22 +183,26 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
                              </div>
                         )}
                      </div>
-                     <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
-                        Regenerar Mensaje
-                    </Button>
                 </div>
             </>
         )}
-
-        <DialogFooter className="gap-2 sm:justify-end pt-4">
-           <Button variant="outline" onClick={handleClose}>Cerrar</Button>
-           {generatedMessage && !isGenerating && clientData?.phone && (
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
-                <Button>
-                    <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
+        
+        <DialogFooter className="pt-4">
+            <div className="flex justify-between w-full items-center">
+                <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
+                    Regenerar Mensaje
                 </Button>
-            </a>
-           )}
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={handleClose}>Cerrar</Button>
+                    {generatedMessage && !isGenerating && clientData?.phone && (
+                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
+                            <Button>
+                                <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
+                            </Button>
+                        </a>
+                    )}
+                </div>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
