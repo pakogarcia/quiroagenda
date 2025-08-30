@@ -79,22 +79,23 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   }, [appointment, form, clients]);
   
   const clientsWithVouchers = React.useMemo(() => {
-      const clientSet = new Set<Client>();
-      
-      // Add the current appointment's client if they have a voucher
-      if (client?.voucher && client.voucher.sessions > 0) {
-          clientSet.add(client);
-      }
-      
-      // Add all other clients with vouchers
-      clients.forEach(c => {
-          if (c.voucher && c.voucher.sessions > 0) {
-              clientSet.add(c);
-          }
-      });
-      
-      return Array.from(clientSet);
-  }, [clients, client]);
+    const clientSet = new Set<Client>();
+    
+    // Add the current appointment's client if they have a voucher
+    const currentClient = clients.find(c => c.phone === appointment?.clientPhone);
+    if (currentClient?.voucher && currentClient.voucher.sessions > 0) {
+        clientSet.add(currentClient);
+    }
+    
+    // Add all other clients with vouchers
+    clients.forEach(c => {
+        if (c.voucher && c.voucher.sessions > 0) {
+            clientSet.add(c);
+        }
+    });
+    
+    return Array.from(clientSet);
+}, [clients, appointment]);
 
   const handleNoShow = () => {
     if (!appointment) return;
