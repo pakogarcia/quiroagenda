@@ -62,19 +62,13 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   });
 
-  const clientsWithVouchers = React.useMemo(() => {
-    return clients.filter(c => c.voucher && c.voucher.sessions > 0);
-  }, [clients]);
-  
   React.useEffect(() => {
     if (appointment) {
       setStep('selectAction');
-      setClient(null);
+      const currentClient = clients.find(c => c.phone === appointment.clientPhone);
+      setClient(currentClient || null);
       setVoucherPayingClient(null);
       setGeneratedMessage('');
-      
-      const currentClient = clients.find(c => c.name.toLowerCase().trim() === appointment.clientName.toLowerCase().trim() || c.phone === appointment.clientPhone);
-      setClient(currentClient || null);
       
       form.reset({ 
           amount: undefined, 
@@ -84,6 +78,24 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   }, [appointment, form, clients]);
   
+  const clientsWithVouchers = React.useMemo(() => {
+      const clientSet = new Set<Client>();
+      
+      // Add the current appointment's client if they have a voucher
+      if (client?.voucher && client.voucher.sessions > 0) {
+          clientSet.add(client);
+      }
+      
+      // Add all other clients with vouchers
+      clients.forEach(c => {
+          if (c.voucher && c.voucher.sessions > 0) {
+              clientSet.add(c);
+          }
+      });
+      
+      return Array.from(clientSet);
+  }, [clients, client]);
+
   const handleNoShow = () => {
     if (!appointment) return;
     const updatedAppointment: Appointment = { ...appointment, status: 'no-show' };
@@ -124,19 +136,16 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
         
         try {
-            // Update client first
-            setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
-
-            // Then, update the appointment
             const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
             onAppointmentFinished(updatedAppointment);
+
+            setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
 
             toast({
                 title: 'Bono actualizado',
                 description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
             });
             
-            // Finally, generate message and move to the next step
             setVoucherPayingClient(updatedPayerClient);
             await generateAndShowVoucherMessage(updatedPayerClient);
 
@@ -147,7 +156,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 description: 'No se pudo actualizar el bono del cliente.',
                 variant: 'destructive',
             });
-            onOpenChange(false); // Close dialog on error
+            onOpenChange(false);
         }
     } else {
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
@@ -392,3 +401,5 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
+
+    
