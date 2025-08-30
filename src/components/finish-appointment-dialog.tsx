@@ -62,34 +62,29 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   });
 
-  const resetState = React.useCallback(() => {
-    const initialStep = isEditing ? 'paymentForm' : 'selectAction';
-    setStep(initialStep);
-    setConfirmationData(null);
-
-    const defaultPayment = appointment?.payment;
-    const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
-    
-    // Set default amount from service price if available and not editing a voucher payment
-    const defaultAmount = defaultPayment?.method !== 'voucher'
-        ? defaultPayment?.amount
-        : (appointment?.servicePrice || undefined);
-
-    form.reset({
-        amount: defaultAmount,
-        paymentMethod: defaultPayment?.method || 'cash',
-        voucherPayerId: defaultPayment?.method === 'voucher'
-            ? defaultPayment.payerClientId
-            : (currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined),
-        refundVoucher: true,
-    });
-  }, [isEditing, appointment, clients, form]);
-
   React.useEffect(() => {
     if (appointment) {
-      resetState();
+        const initialStep = isEditing ? 'paymentForm' : 'selectAction';
+        setStep(initialStep);
+        setConfirmationData(null);
+
+        const defaultPayment = appointment.payment;
+        const currentClient = clients.find(c => c.phone === appointment.clientPhone);
+        
+        const defaultAmount = defaultPayment?.method !== 'voucher'
+            ? defaultPayment?.amount ?? appointment?.servicePrice
+            : appointment?.servicePrice;
+
+        form.reset({
+            amount: defaultAmount ?? undefined,
+            paymentMethod: defaultPayment?.method || (currentClient?.voucher && currentClient.voucher.sessions > 0 ? 'voucher' : 'cash'),
+            voucherPayerId: defaultPayment?.method === 'voucher'
+                ? defaultPayment.payerClientId
+                : (currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined),
+            refundVoucher: true,
+        });
     }
-  }, [appointment, resetState]);
+  }, [appointment, isEditing, clients, form]);
   
   const clientsWithVouchers = React.useMemo(() => {
     const clientSet = new Set<Client>();
