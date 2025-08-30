@@ -162,10 +162,6 @@ export default function ContabilidadPage() {
     const handlePrint = () => {
         window.print();
     };
-
-    const onVoucherSold = () => {
-        loadData(); // Re-fetch data to reflect the new sale
-    }
     
     const getPaymentMethodName = (method?: 'cash' | 'bizum' | 'paypal' | 'voucher') => {
         if (!method) return '';
@@ -437,7 +433,6 @@ export default function ContabilidadPage() {
             <VoucherSaleDialog
                 isOpen={isVoucherSaleDialogOpen}
                 onOpenChange={setIsVoucherSaleDialogOpen}
-                onVoucherSold={onVoucherSold}
             />
             <OfferDialog
                 isOpen={isOfferDialogOpen}
@@ -446,3 +441,5 @@ export default function ContabilidadPage() {
         </>
     );
 }
+
+    

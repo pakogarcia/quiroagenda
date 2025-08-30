@@ -24,11 +24,10 @@ const voucherSaleSchema = z.object({
 type VoucherSaleFormValues = z.infer<typeof voucherSaleSchema>;
 
 type VoucherSaleFormProps = {
-  onVoucherSold: () => void;
   closeDialog: () => void;
 };
 
-export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormProps) {
+export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
   const { clients, setClients, voucherSales, setVoucherSales } = useAppData();
   const { toast } = useToast();
 
@@ -77,8 +76,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
         title: 'Bono Vendido',
         description: `Se ha vendido un bono de ${values.sessions} sesiones a ${selectedClient.name}.`
     });
-
-    onVoucherSold();
+    
     closeDialog();
   };
 
@@ -185,3 +183,5 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
     </Form>
   );
 }
+
+    

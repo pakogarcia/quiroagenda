@@ -9,10 +9,9 @@ import { ShoppingCart } from 'lucide-react';
 type VoucherSaleDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onVoucherSold: () => void;
 };
 
-export function VoucherSaleDialog({ isOpen, onOpenChange, onVoucherSold }: VoucherSaleDialogProps) {
+export function VoucherSaleDialog({ isOpen, onOpenChange }: VoucherSaleDialogProps) {
   if (!isOpen) return null;
 
   return (
@@ -26,7 +25,6 @@ export function VoucherSaleDialog({ isOpen, onOpenChange, onVoucherSold }: Vouch
         </DialogHeader>
         <div className="py-4">
           <VoucherSaleForm 
-            onVoucherSold={onVoucherSold} 
             closeDialog={() => onOpenChange(false)} 
           />
         </div>
@@ -34,6 +32,8 @@ export function VoucherSaleDialog({ isOpen, onOpenChange, onVoucherSold }: Vouch
     </Dialog>
   );
 }
+
+    
 
     
 
