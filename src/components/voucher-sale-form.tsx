@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Client } from '@/lib/types';
+import { Client, Voucher, VoucherSale } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAppData } from '@/context/app-data-context';
 
@@ -50,17 +50,17 @@ export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
 
     // 1. Create or update the client's voucher
     const existingVoucher = selectedClient.voucher;
-    const updatedVoucher = {
+    const updatedVoucher: Voucher = {
         sessions: (existingVoucher?.sessions || 0) + values.sessions,
         totalSessions: (existingVoucher?.totalSessions || 0) + values.sessions,
-        price: values.amount,
+        price: (existingVoucher?.price || 0) + values.amount,
     };
     
     const updatedClient: Client = { ...selectedClient, voucher: updatedVoucher };
     setClients(prevClients => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
 
     // 2. Create and save the voucher sale transaction
-    const newSale = {
+    const newSale: VoucherSale = {
         id: crypto.randomUUID(),
         clientId: values.clientId,
         clientName: `${selectedClient.name} ${selectedClient.lastName}`,
@@ -183,5 +183,3 @@ export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
     </Form>
   );
 }
-
-    
