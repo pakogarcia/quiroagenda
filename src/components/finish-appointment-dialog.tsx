@@ -55,7 +55,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [isGeneratingMessage, setIsGeneratingMessage] = React.useState(false);
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
-  const [finalAppointmentState, setFinalAppointmentState] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
 
   const form = useForm<PaymentFormValues>({
@@ -71,7 +70,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const resetState = React.useCallback(() => {
     const initialStep = isEditing ? 'paymentForm' : 'selectAction';
     setStep(initialStep);
-    setFinalAppointmentState(null);
     setVoucherPayingClient(null);
     setGeneratedMessage('');
     setIsGeneratingMessage(false);
@@ -92,9 +90,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   React.useEffect(() => {
     if (appointment) {
       resetState();
-    } else {
-      setStep('selectAction');
-      setFinalAppointmentState(null);
     }
   }, [appointment, resetState]);
   
@@ -177,8 +172,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         
-        setFinalAppointmentState(updatedAppointment);
-        setVoucherPayingClient(updatedPayerClient);
+        onAppointmentFinished(updatedAppointment);
 
         toast({
             title: 'Bono actualizado',
@@ -187,6 +181,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
         setStep('voucherUpdateMessage');
         setIsGeneratingMessage(true);
+        setVoucherPayingClient(updatedPayerClient);
 
         try {
             const result = await generateVoucherUpdateWhatsapp({
@@ -205,7 +200,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "No se pudo generar el mensaje de actualización del bono. La cita se ha guardado igualmente."
+                description: "No se pudo generar el mensaje de actualización del bono."
             });
             handleClose();
         } finally {
@@ -225,9 +220,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   };
   
   const handleClose = () => {
-    if (finalAppointmentState) {
-        onAppointmentFinished(finalAppointmentState);
-    }
     onOpenChange(false);
   }
   
@@ -486,5 +478,3 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
-
-    
