@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog';
 import { cn } from '@/lib/utils';
 import { useAppData } from '@/context/app-data-context';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function ClientDetailPage() {
     const { clients, setClients, appointments, setAppointments, isLoading } = useAppData();
@@ -32,7 +33,7 @@ export default function ClientDetailPage() {
     
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
-    const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
+    const [editingAppointment, setEditingAppointment] = React.useState<Appointment | null>(null);
 
     React.useEffect(() => {
         if (!isLoading && clientId) {
@@ -97,7 +98,7 @@ export default function ClientDetailPage() {
         setAppointments(prev => prev.map(apt => 
             apt.id === updatedAppointment.id ? updatedAppointment : apt
         ));
-        setFinishingAppointment(null);
+        setEditingAppointment(null);
     };
 
     const getStatusBadge = (appointment: Appointment) => {
@@ -107,7 +108,7 @@ export default function ClientDetailPage() {
                     return <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Completada</Badge>;
                 } else {
                     return (
-                         <Button variant="outline" size="sm" className="h-auto py-0.5 px-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700" onClick={() => setFinishingAppointment(appointment)}>
+                         <Button variant="outline" size="sm" className="h-auto py-0.5 px-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700" onClick={() => setEditingAppointment(appointment)}>
                             <AlertCircle className="w-3 h-3 mr-1" /> Pendiente de Pago
                         </Button>
                     );
@@ -253,6 +254,7 @@ export default function ClientDetailPage() {
                                     <TableHead>Estado</TableHead>
                                     <TableHead>Pago</TableHead>
                                     <TableHead className="text-right">Importe</TableHead>
+                                    <TableHead className="w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -265,10 +267,26 @@ export default function ClientDetailPage() {
                                         <TableCell className="text-right">
                                             {apt.payment && apt.payment.method !== 'voucher' ? `${apt.payment.amount.toFixed(2)}€` : (apt.status === 'completed' && !apt.payment ? 'Pendiente' : '')}
                                         </TableCell>
+                                        <TableCell>
+                                            {apt.status === 'completed' && apt.payment && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="ghost" size="icon" onClick={() => setEditingAppointment(apt)}>
+                                                                <Edit className="w-4 h-4" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Editar Pago</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 )) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center h-24">
+                                        <TableCell colSpan={6} className="text-center h-24">
                                             Este cliente no tiene citas registradas.
                                         </TableCell>
                                     </TableRow>
@@ -310,10 +328,13 @@ export default function ClientDetailPage() {
             </AlertDialog>
             
             <FinishAppointmentDialog
-                appointment={finishingAppointment}
-                onOpenChange={() => setFinishingAppointment(null)}
+                appointment={editingAppointment}
+                onOpenChange={() => setEditingAppointment(null)}
                 onAppointmentFinished={handleAppointmentFinished}
+                isEditing
             />
         </div>
     );
 }
+
+    

@@ -19,6 +19,7 @@ import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
 import { useAppData } from '@/context/app-data-context';
 import { Skeleton } from './ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 const paymentSchema = z.object({
   paymentMethod: z.enum(['cash', 'bizum', 'voucher', 'paypal']),
@@ -43,9 +44,10 @@ type FinishAppointmentDialogProps = {
   appointment: Appointment | null;
   onOpenChange: (isOpen: boolean) => void;
   onAppointmentFinished: (updatedAppointment: Appointment) => void;
+  isEditing?: boolean;
 };
 
-export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointmentFinished }: FinishAppointmentDialogProps) {
+export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointmentFinished, isEditing = false }: FinishAppointmentDialogProps) {
   const { clients, setClients, profile } = useAppData();
   const [step, setStep] = React.useState<'selectAction' | 'paymentForm' | 'voucherUpdateMessage'>('selectAction');
   const [voucherPayingClient, setVoucherPayingClient] = React.useState<Client | null>(null);
@@ -64,34 +66,41 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   });
 
-  const resetState = () => {
-    setStep('selectAction');
-    const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
+  const resetState = React.useCallback(() => {
+    const initialStep = isEditing ? 'paymentForm' : 'selectAction';
+    setStep(initialStep);
+    
     setVoucherPayingClient(null);
     setGeneratedMessage('');
     setIsGeneratingMessage(false);
     setFinalizedAppointment(null);
+
+    const defaultPayment = appointment?.payment;
+    const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
+    
     form.reset({ 
-        amount: undefined, 
-        paymentMethod: 'cash',
-        voucherPayerId: currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined,
+        amount: defaultPayment?.method !== 'voucher' ? defaultPayment?.amount : undefined, 
+        paymentMethod: defaultPayment?.method || 'cash',
+        voucherPayerId: defaultPayment?.method === 'voucher' 
+            ? defaultPayment.payerClientId 
+            : (currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined),
     });
-  }
+  }, [isEditing, appointment, clients, form]);
 
   React.useEffect(() => {
     if (appointment) {
       resetState();
     }
-  }, [appointment]);
+  }, [appointment, resetState]);
   
   const clientsWithVouchers = React.useMemo(() => {
-    if (!appointment) return [];
-    
     const clientSet = new Set<Client>();
     
-    const currentClient = clients.find(c => c.phone === appointment.clientPhone);
-    if (currentClient?.voucher && currentClient.voucher.sessions > 0) {
-        clientSet.add(currentClient);
+    if (appointment) {
+        const currentClient = clients.find(c => c.phone === appointment.clientPhone);
+        if (currentClient?.voucher && currentClient.voucher.sessions > 0) {
+            clientSet.add(currentClient);
+        }
     }
     
     clients.forEach(c => {
@@ -103,7 +112,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     return Array.from(clientSet);
   }, [clients, appointment]);
 
-
   const handleNoShow = () => {
     if (!appointment) return;
     const updatedAppointment: Appointment = { ...appointment, status: 'no-show' };
@@ -112,6 +120,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       title: 'Cita actualizada',
       description: 'Se ha marcado la cita como "No Presentado".',
     });
+    onOpenChange(false);
   };
   
   const handlePendingPayment = () => {
@@ -122,10 +131,17 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       title: 'Cita Completada',
       description: 'La cita se marcó como completada. El pago está pendiente.',
     });
+    onOpenChange(false);
   };
 
   const handlePaymentSubmit = async (data: PaymentFormValues) => {
     if (!appointment) return;
+
+    // Prevent editing voucher payments to avoid complex logic of session re-crediting
+    if (isEditing && appointment.payment?.method === 'voucher' && data.paymentMethod !== 'voucher') {
+        toast({ title: 'Acción no permitida', description: 'No se puede cambiar un pago de bono a otro método. Por favor, contacta con soporte para este cambio.', variant: 'destructive' });
+        return;
+    }
 
     if (data.paymentMethod === 'voucher') {
         const payerClient = clients.find(c => c.id === data.voucherPayerId);
@@ -136,8 +152,25 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
         setIsGeneratingMessage(true);
         setStep('voucherUpdateMessage');
-        setVoucherPayingClient(payerClient); // Ensure client is set here
+        setVoucherPayingClient(payerClient);
 
+        // Update client and appointment data first
+        const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
+        const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
+        setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
+
+        const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
+        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
+        
+        onAppointmentFinished(updatedAppointment); // Update appointment in context immediately
+        setFinalizedAppointment(updatedAppointment); // Store for later reference
+
+        toast({
+            title: 'Bono actualizado',
+            description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
+        });
+
+        // Now, generate the message
         let message = '';
         try {
             const result = await generateVoucherUpdateWhatsapp({
@@ -158,43 +191,24 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 title: "Error",
                 description: "No se pudo generar el mensaje de actualización del bono."
             });
-            setIsGeneratingMessage(false);
-            setStep('paymentForm'); // Go back to payment form on error
-            setVoucherPayingClient(null); // Reset client on error
-            return;
         }
-
-        const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
-        const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
-        setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
-
-        const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
-        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         
         setGeneratedMessage(message);
-        setFinalizedAppointment(updatedAppointment); // Store the finalized appointment
         setIsGeneratingMessage(false);
-
-        toast({
-            title: 'Bono actualizado',
-            description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
-        });
 
     } else {
         const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         onAppointmentFinished(updatedAppointment);
         toast({
-          title: 'Pago registrado',
+          title: isEditing ? 'Pago actualizado' : 'Pago registrado',
           description: `Se ha registrado un pago de ${(data.amount || 0).toFixed(2)}€.`,
         });
+        onOpenChange(false);
     }
   };
   
   const handleClose = () => {
-    if (finalizedAppointment) {
-      onAppointmentFinished(finalizedAppointment);
-    }
     onOpenChange(false);
   }
   
@@ -230,9 +244,9 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                             <FormControl><RadioGroupItem value="paypal" /></FormControl>
                             <FormLabel className="font-normal">PayPal</FormLabel>
                           </FormItem>
-                          {clientsWithVouchers.length > 0 && (
+                          {(clientsWithVouchers.length > 0 || (isEditing && appointment?.payment?.method === 'voucher')) && (
                               <FormItem className="flex items-center space-x-3 space-y-0">
-                                  <FormControl><RadioGroupItem value="voucher" /></FormControl>
+                                  <FormControl><RadioGroupItem value="voucher" disabled={isEditing && appointment?.payment?.method === 'voucher'} /></FormControl>
                                   <FormLabel className="font-normal">Bono</FormLabel>
                               </FormItem>
                           )}
@@ -250,7 +264,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Pagar con el bono de...</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditing}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecciona el cliente que paga" />
@@ -264,6 +278,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {isEditing && <AlertDescription className="text-xs text-muted-foreground mt-1">No se puede cambiar el pagador de un bono ya utilizado.</AlertDescription>}
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -331,7 +346,9 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       case 'paymentForm':
         return (
           <>
-            <Button variant="ghost" onClick={() => setStep('selectAction')}>Volver</Button>
+            <Button variant="ghost" onClick={isEditing ? handleClose : () => setStep('selectAction')}>
+              {isEditing ? 'Cancelar' : 'Volver'}
+            </Button>
             <Button type="submit" form="payment-form" disabled={isGeneratingMessage}>Confirmar</Button>
           </>
         );
@@ -352,9 +369,17 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     <Dialog open={!!appointment} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Finalizar Cita: {appointment?.clientName}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Pago' : 'Finalizar Cita'}: {appointment?.clientName}</DialogTitle>
           {step === 'selectAction' && (
             <DialogDescription>Elige una acción para esta cita.</DialogDescription>
+          )}
+           {step === 'paymentForm' && isEditing && (
+            <Alert variant="destructive" className="mt-2">
+                <AlertTitle>Estás editando un pago</AlertTitle>
+                <AlertDescription>
+                    Ten cuidado, los cambios afectarán a tus registros de contabilidad. No se puede modificar un pago de bono.
+                </AlertDescription>
+            </Alert>
           )}
         </DialogHeader>
         <div className="py-4">
