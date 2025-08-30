@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ClientForm } from '@/components/client-form';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, differenceInDays, startOfToday, isBefore } from 'date-fns';
+import { format, differenceInDays, startOfToday, isBefore, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -40,18 +40,20 @@ export default function ClientsPage() {
         const clientAppointments: { [key: string]: Date[] } = {};
 
         appointments.forEach(apt => {
-            const clientId = phoneToClientId.get(apt.clientPhone);
-            if (clientId) {
-                if (!clientAppointments[clientId]) {
-                    clientAppointments[clientId] = [];
+            if (apt.status === 'completed') {
+                const clientId = phoneToClientId.get(apt.clientPhone);
+                if (clientId) {
+                    if (!clientAppointments[clientId]) {
+                        clientAppointments[clientId] = [];
+                    }
+                    clientAppointments[clientId].push(apt.dateTime);
                 }
-                clientAppointments[clientId].push(apt.dateTime);
             }
         });
 
         for (const clientId in clientAppointments) {
             const latestDate = clientAppointments[clientId]
-                .filter(date => isBefore(date, today))
+                .filter(date => isBefore(date, today) || isSameDay(date, today))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
 
             if (latestDate) {
