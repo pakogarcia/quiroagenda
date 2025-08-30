@@ -81,13 +81,11 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const clientsWithVouchers = React.useMemo(() => {
     const clientSet = new Set<Client>();
     
-    // Add the current appointment's client if they have a voucher
     const currentClient = clients.find(c => c.phone === appointment?.clientPhone);
     if (currentClient?.voucher && currentClient.voucher.sessions > 0) {
         clientSet.add(currentClient);
     }
     
-    // Add all other clients with vouchers
     clients.forEach(c => {
         if (c.voucher && c.voucher.sessions > 0) {
             clientSet.add(c);
@@ -126,6 +124,8 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       payerClientId: data.paymentMethod === 'voucher' ? data.voucherPayerId : undefined,
     };
     
+    const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
+    
     if (data.paymentMethod === 'voucher') {
         const payerClient = clients.find(c => c.id === data.voucherPayerId);
         if (!payerClient || !payerClient.voucher) {
@@ -137,9 +137,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
         
         try {
-            const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-            onAppointmentFinished(updatedAppointment);
-
             setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
 
             toast({
@@ -148,7 +145,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             });
             
             setVoucherPayingClient(updatedPayerClient);
-            await generateAndShowVoucherMessage(updatedPayerClient);
+            await generateAndShowVoucherMessage(updatedPayerClient, updatedAppointment);
 
         } catch (error) {
             console.error("Failed to update client voucher.", error);
@@ -160,7 +157,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             onOpenChange(false);
         }
     } else {
-        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         onAppointmentFinished(updatedAppointment);
         toast({
           title: 'Pago registrado',
@@ -169,7 +165,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   };
 
-  const generateAndShowVoucherMessage = async (payerClient: Client) => {
+  const generateAndShowVoucherMessage = async (payerClient: Client, updatedApt: Appointment) => {
     setStep('voucherUpdateMessage');
     if (!payerClient.voucher) return;
     try {
@@ -191,11 +187,16 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             title: "Error",
             description: "No se pudo generar el mensaje de actualización del bono."
         });
+        onAppointmentFinished(updatedApt);
         handleClose();
     }
   };
   
   const handleClose = () => {
+    if (appointment && step === 'voucherUpdateMessage') {
+      const payment: Payment = { method: 'voucher', amount: 0, payerClientId: voucherPayingClient?.id };
+      onAppointmentFinished({ ...appointment, status: 'completed', payment });
+    }
     onOpenChange(false);
   }
   
@@ -402,5 +403,3 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
-
-    
