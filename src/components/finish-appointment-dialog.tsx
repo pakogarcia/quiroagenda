@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { type Appointment, type Client, type BusinessProfile, Payment, Voucher } from '@/lib/types';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
+import { Send, Instagram, Facebook, Youtube, Link as LinkIcon, Globe, AlertTriangle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
@@ -25,6 +25,7 @@ const paymentSchema = z.object({
   paymentMethod: z.enum(['cash', 'bizum', 'voucher', 'paypal']),
   amount: z.coerce.number().optional(),
   voucherPayerId: z.string().optional(),
+  refundVoucher: z.boolean().optional(),
 }).refine(data => {
     if (data.paymentMethod === 'cash' || data.paymentMethod === 'bizum' || data.paymentMethod === 'paypal') {
         return data.amount !== undefined && data.amount > 0;
@@ -63,6 +64,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         amount: undefined,
         paymentMethod: 'cash',
         voucherPayerId: undefined,
+        refundVoucher: true,
     }
   });
 
@@ -84,6 +86,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         voucherPayerId: defaultPayment?.method === 'voucher' 
             ? defaultPayment.payerClientId 
             : (currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined),
+        refundVoucher: true,
     });
   }, [isEditing, appointment, clients, form]);
 
@@ -112,6 +115,37 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     return Array.from(clientSet);
   }, [clients, appointment]);
 
+
+  const generateAndShowVoucherMessage = async (payerClient: Client) => {
+    setIsGeneratingMessage(true);
+    setStep('voucherUpdateMessage');
+
+    let message = '';
+    try {
+        const result = await generateVoucherUpdateWhatsapp({
+            clientName: payerClient.name.split(' ')[0],
+            remainingSessions: payerClient.voucher!.sessions,
+            businessName: profile?.name,
+            website: socials.website ? profile?.website : undefined,
+            instagram: socials.instagram ? profile?.instagram : undefined,
+            facebook: socials.facebook ? profile?.facebook : undefined,
+            tiktok: socials.tiktok ? profile?.tiktok : undefined,
+            youtube: socials.youtube ? profile?.youtube : undefined,
+        });
+        message = result.whatsappMessage;
+    } catch (e) {
+        console.error("Failed to generate voucher update message", e);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudo generar el mensaje de actualización del bono."
+        });
+    }
+    
+    setGeneratedMessage(message);
+    setIsGeneratingMessage(false);
+  }
+
   const handleNoShow = () => {
     if (!appointment) return;
     const updatedAppointment: Appointment = { ...appointment, status: 'no-show' };
@@ -137,11 +171,30 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const handlePaymentSubmit = async (data: PaymentFormValues) => {
     if (!appointment) return;
 
-    // Prevent editing voucher payments to avoid complex logic of session re-crediting
+    let updatedAppointment: Appointment;
+
+    // --- Bono a Efectivo/Bizum/Paypal ---
     if (isEditing && appointment.payment?.method === 'voucher' && data.paymentMethod !== 'voucher') {
-        toast({ title: 'Acción no permitida', description: 'No se puede cambiar un pago de bono a otro método. Por favor, contacta con soporte para este cambio.', variant: 'destructive' });
+        if (data.refundVoucher) {
+            const originalPayer = clients.find(c => c.id === appointment.payment?.payerClientId);
+            if (originalPayer?.voucher) {
+                const updatedVoucher: Voucher = { 
+                    ...originalPayer.voucher, 
+                    sessions: originalPayer.voucher.sessions + 1 
+                };
+                const updatedClient: Client = { ...originalPayer, voucher: updatedVoucher };
+                setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
+                toast({ title: 'Sesión devuelta', description: `Se ha devuelto una sesión al bono de ${originalPayer.name}.` });
+            }
+        }
+        const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
+        updatedAppointment = { ...appointment, status: 'completed', payment };
+        onAppointmentFinished(updatedAppointment);
+        toast({ title: 'Pago actualizado', description: 'El pago se ha actualizado correctamente.' });
+        onOpenChange(false);
         return;
     }
+
 
     if (data.paymentMethod === 'voucher') {
         const payerClient = clients.find(c => c.id === data.voucherPayerId);
@@ -150,55 +203,26 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             return;
         }
 
-        setIsGeneratingMessage(true);
-        setStep('voucherUpdateMessage');
-        setVoucherPayingClient(payerClient);
-
-        // Update client and appointment data first
         const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
         const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
         setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
+        
+        setVoucherPayingClient(updatedPayerClient);
 
         const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
-        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-        
-        onAppointmentFinished(updatedAppointment); // Update appointment in context immediately
-        setFinalizedAppointment(updatedAppointment); // Store for later reference
+        updatedAppointment = { ...appointment, status: 'completed', payment };
+        setFinalizedAppointment(updatedAppointment);
 
         toast({
             title: 'Bono actualizado',
             description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
         });
 
-        // Now, generate the message
-        let message = '';
-        try {
-            const result = await generateVoucherUpdateWhatsapp({
-                clientName: payerClient.name.split(' ')[0],
-                remainingSessions: payerClient.voucher.sessions - 1,
-                businessName: profile?.name,
-                website: socials.website ? profile?.website : undefined,
-                instagram: socials.instagram ? profile?.instagram : undefined,
-                facebook: socials.facebook ? profile?.facebook : undefined,
-                tiktok: socials.tiktok ? profile?.tiktok : undefined,
-                youtube: socials.youtube ? profile?.youtube : undefined,
-            });
-            message = result.whatsappMessage;
-        } catch (e) {
-            console.error("Failed to generate voucher update message", e);
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "No se pudo generar el mensaje de actualización del bono."
-            });
-        }
-        
-        setGeneratedMessage(message);
-        setIsGeneratingMessage(false);
+        await generateAndShowVoucherMessage(updatedPayerClient);
 
     } else {
         const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
-        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
+        updatedAppointment = { ...appointment, status: 'completed', payment };
         onAppointmentFinished(updatedAppointment);
         toast({
           title: isEditing ? 'Pago actualizado' : 'Pago registrado',
@@ -209,10 +233,15 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   };
   
   const handleClose = () => {
+    if (finalizedAppointment) {
+        onAppointmentFinished(finalizedAppointment);
+    }
     onOpenChange(false);
   }
   
   const paymentMethod = form.watch('paymentMethod');
+  const wasPaidWithVoucher = appointment?.payment?.method === 'voucher';
+  const isChangingFromVoucher = isEditing && wasPaidWithVoucher && paymentMethod !== 'voucher';
 
   const renderContent = () => {
     switch (step) {
@@ -246,7 +275,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                           </FormItem>
                           {(clientsWithVouchers.length > 0 || (isEditing && appointment?.payment?.method === 'voucher')) && (
                               <FormItem className="flex items-center space-x-3 space-y-0">
-                                  <FormControl><RadioGroupItem value="voucher" disabled={isEditing && appointment?.payment?.method === 'voucher'} /></FormControl>
+                                  <FormControl><RadioGroupItem value="voucher" /></FormControl>
                                   <FormLabel className="font-normal">Bono</FormLabel>
                               </FormItem>
                           )}
@@ -264,7 +293,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Pagar con el bono de...</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditing}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditing && wasPaidWithVoucher}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecciona el cliente que paga" />
@@ -278,7 +307,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {isEditing && <AlertDescription className="text-xs text-muted-foreground mt-1">No se puede cambiar el pagador de un bono ya utilizado.</AlertDescription>}
+                                {isEditing && wasPaidWithVoucher && <FormMessage className="text-xs text-muted-foreground mt-1">No se puede cambiar el pagador de un bono ya utilizado. Cambia a otro método de pago si es necesario.</FormMessage>}
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -300,6 +329,32 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                         )}
                     />
                 )}
+                
+                {isChangingFromVoucher && (
+                    <FormField
+                        control={form.control}
+                        name="refundVoucher"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                    <FormLabel>
+                                    Devolver la sesión al bono original
+                                    </FormLabel>
+                                    <FormMessage>
+                                    Al marcar esta casilla, se añadirá 1 sesión al bono del cliente que pagó originalmente.
+                                    </FormMessage>
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+                )}
+
             </form>
           </Form>
         );
@@ -364,7 +419,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
   const showSocials = step === 'paymentForm' && form.getValues('paymentMethod') === 'voucher' && profile && (profile.website || profile.instagram || profile.facebook || profile.tiktok || profile.youtube);
 
-
   return (
     <Dialog open={!!appointment} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -375,9 +429,13 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
           )}
            {step === 'paymentForm' && isEditing && (
             <Alert variant="destructive" className="mt-2">
+                <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Estás editando un pago</AlertTitle>
                 <AlertDescription>
-                    Ten cuidado, los cambios afectarán a tus registros de contabilidad. No se puede modificar un pago de bono.
+                    {wasPaidWithVoucher
+                        ? 'Estás editando un pago realizado con un bono. Si cambias el método, puedes optar por devolver la sesión.'
+                        : 'Ten cuidado, los cambios afectarán a tus registros de contabilidad.'
+                    }
                 </AlertDescription>
             </Alert>
           )}
@@ -434,5 +492,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
+
+    
 
     
