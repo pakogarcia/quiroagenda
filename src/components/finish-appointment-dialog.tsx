@@ -48,11 +48,11 @@ type FinishAppointmentDialogProps = {
 export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointmentFinished }: FinishAppointmentDialogProps) {
   const { clients, setClients, profile } = useAppData();
   const [step, setStep] = React.useState<'selectAction' | 'paymentForm' | 'voucherUpdateMessage'>('selectAction');
-  const [client, setClient] = React.useState<Client | null>(null);
   const [voucherPayingClient, setVoucherPayingClient] = React.useState<Client | null>(null);
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [isGeneratingMessage, setIsGeneratingMessage] = React.useState(false);
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
+  const [finalizedAppointment, setFinalizedAppointment] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
 
   const form = useForm<PaymentFormValues>({
@@ -64,19 +64,23 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   });
 
+  const resetState = () => {
+    setStep('selectAction');
+    const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
+    setVoucherPayingClient(null);
+    setGeneratedMessage('');
+    setIsGeneratingMessage(false);
+    setFinalizedAppointment(null);
+    form.reset({ 
+        amount: undefined, 
+        paymentMethod: 'cash',
+        voucherPayerId: currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined,
+    });
+  }
+
   React.useEffect(() => {
     if (appointment) {
-      setStep('selectAction');
-      const currentClient = clients.find(c => c.phone === appointment.clientPhone);
-      setClient(currentClient || null);
-      setVoucherPayingClient(null);
-      setGeneratedMessage('');
-      
-      form.reset({ 
-          amount: undefined, 
-          paymentMethod: 'cash',
-          voucherPayerId: currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined,
-      });
+      resetState();
     }
   }, [appointment, form, clients]);
   
@@ -97,7 +101,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     });
     
     return Array.from(clientSet);
-}, [clients, appointment]);
+  }, [clients, appointment]);
 
 
   const handleNoShow = () => {
@@ -124,30 +128,57 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     if (!appointment) return;
 
     if (data.paymentMethod === 'voucher') {
-        const payerClient = clients.find(c => c.id === data.voucherPayerId);
-        if (!payerClient || !payerClient.voucher) {
-            toast({ title: 'Error', description: 'El cliente seleccionado para pagar con bono no es válido.', variant: 'destructive' });
-            return;
-        }
-
-        // 1. Update client's voucher
-        const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
-        const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
-        setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
-        
-        // 2. Mark appointment as completed with voucher payment
-        const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
-        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-        onAppointmentFinished(updatedAppointment);
-
-        toast({
-            title: 'Bono actualizado',
-            description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
+      const payerClient = clients.find(c => c.id === data.voucherPayerId);
+      if (!payerClient || !payerClient.voucher || payerClient.voucher.sessions <= 0) {
+          toast({ title: 'Error', description: 'El cliente seleccionado no tiene un bono válido o no tiene sesiones.', variant: 'destructive' });
+          return;
+      }
+      
+      setIsGeneratingMessage(true);
+      setStep('voucherUpdateMessage');
+      
+      let message = '';
+      try {
+        const result = await generateVoucherUpdateWhatsapp({
+            clientName: payerClient.name.split(' ')[0],
+            remainingSessions: payerClient.voucher.sessions - 1,
+            businessName: profile?.name,
+            website: socials.website ? profile?.website : undefined,
+            instagram: socials.instagram ? profile?.instagram : undefined,
+            facebook: socials.facebook ? profile?.facebook : undefined,
+            tiktok: socials.tiktok ? profile?.tiktok : undefined,
+            youtube: socials.youtube ? profile?.youtube : undefined,
         });
+        message = result.whatsappMessage;
+      } catch (e) {
+          console.error("Failed to generate voucher update message", e);
+          toast({
+              variant: "destructive",
+              title: "Error",
+              description: "No se pudo generar el mensaje de actualización del bono."
+          });
+          setIsGeneratingMessage(false);
+          setStep('paymentForm'); // Go back to payment form on error
+          return;
+      }
 
-        // 3. Generate and show message
-        setVoucherPayingClient(updatedPayerClient);
-        await generateAndShowVoucherMessage(updatedPayerClient);
+      // Now that the message is generated, update all data
+      const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
+      const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
+      setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
+      
+      const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
+      const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
+      
+      setVoucherPayingClient(updatedPayerClient);
+      setGeneratedMessage(message);
+      setFinalizedAppointment(updatedAppointment); // Store the finalized appointment
+      setIsGeneratingMessage(false);
+      
+      toast({
+          title: 'Bono actualizado',
+          description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
+      });
 
     } else {
         const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
@@ -159,37 +190,13 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         });
     }
   };
-
-  const generateAndShowVoucherMessage = async (payerClient: Client) => {
-    setStep('voucherUpdateMessage');
-    setIsGeneratingMessage(true);
-    if (!payerClient.voucher) return;
-    try {
-        const result = await generateVoucherUpdateWhatsapp({
-            clientName: payerClient.name.split(' ')[0],
-            remainingSessions: payerClient.voucher.sessions,
-            businessName: profile?.name,
-            website: socials.website ? profile?.website : undefined,
-            instagram: socials.instagram ? profile?.instagram : undefined,
-            facebook: socials.facebook ? profile?.facebook : undefined,
-            tiktok: socials.tiktok ? profile?.tiktok : undefined,
-            youtube: socials.youtube ? profile?.youtube : undefined,
-        });
-        setGeneratedMessage(result.whatsappMessage);
-    } catch(e) {
-        console.error("Failed to generate voucher update message", e);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "No se pudo generar el mensaje de actualización del bono."
-        });
-        handleClose();
-    } finally {
-        setIsGeneratingMessage(false);
-    }
-  };
   
   const handleClose = () => {
+    // If an appointment was finalized (e.g., voucher payment), update it now.
+    if (finalizedAppointment) {
+      onAppointmentFinished(finalizedAppointment);
+    }
+    // This will trigger the useEffect in the parent to nullify the appointment prop, closing the dialog.
     onOpenChange(false);
   }
   
@@ -327,7 +334,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         return (
           <>
             <Button variant="ghost" onClick={() => setStep('selectAction')}>Volver</Button>
-            <Button type="submit" form="payment-form">Confirmar</Button>
+            <Button type="submit" form="payment-form" disabled={isGeneratingMessage}>Confirmar</Button>
           </>
         );
       case 'voucherUpdateMessage':
@@ -404,5 +411,3 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
-
-    
