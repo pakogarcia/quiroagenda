@@ -188,15 +188,26 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
             </>
         )}
         
-        <DialogFooter className="pt-4">
-          <Button variant="outline" onClick={handleClose}>Cerrar</Button>
-          {generatedMessage && !isGenerating && clientPhoneNumber && (
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
-                  <Button>
-                      <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
-                  </Button>
-              </a>
-          )}
+        <DialogFooter className="pt-4 flex-col sm:flex-row gap-2">
+            <div className="flex-grow">
+                 {generatedMessage && (
+                    <Button variant="ghost" onClick={generateMessage} disabled={isGenerating} className="w-full sm:w-auto justify-start">
+                        Regenerar Mensaje
+                    </Button>
+                )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button variant="outline" onClick={handleClose} className="w-full">
+                    Cerrar
+                </Button>
+                {generatedMessage && !isGenerating && clientPhoneNumber && (
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose} className="w-full">
+                        <Button className="w-full">
+                            <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
+                        </Button>
+                    </a>
+                )}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
