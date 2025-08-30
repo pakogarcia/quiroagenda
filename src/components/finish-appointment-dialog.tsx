@@ -11,15 +11,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { type Appointment, type Client, type BusinessProfile, Payment, Voucher } from '@/lib/types';
-import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Instagram, Facebook, Youtube, Link as LinkIcon, Globe, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
-import { Separator } from './ui/separator';
 import { useAppData } from '@/context/app-data-context';
-import { Skeleton } from './ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { NewAppointmentConfirmationDialog } from './new-appointment-confirmation-dialog';
 
 const paymentSchema = z.object({
   paymentMethod: z.enum(['cash', 'bizum', 'voucher', 'paypal']),
@@ -49,13 +47,9 @@ type FinishAppointmentDialogProps = {
 };
 
 export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointmentFinished, isEditing = false }: FinishAppointmentDialogProps) {
-  const { clients, setClients, profile } = useAppData();
-  const [step, setStep] = React.useState<'selectAction' | 'paymentForm' | 'voucherUpdateMessage'>('selectAction');
-  const [voucherPayingClient, setVoucherPayingClient] = React.useState<Client | null>(null);
-  const [generatedMessage, setGeneratedMessage] = React.useState('');
-  const [isGeneratingMessage, setIsGeneratingMessage] = React.useState(false);
-  const [finalAppointmentState, setFinalAppointmentState] = React.useState<Appointment | null>(null);
-  const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
+  const { clients, setClients } = useAppData();
+  const [step, setStep] = React.useState<'selectAction' | 'paymentForm'>('selectAction');
+  const [confirmationData, setConfirmationData] = React.useState<{client: Client, remainingSessions: number} | null>(null);
   const { toast } = useToast();
 
   const form = useForm<PaymentFormValues>({
@@ -71,10 +65,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const resetState = React.useCallback(() => {
     const initialStep = isEditing ? 'paymentForm' : 'selectAction';
     setStep(initialStep);
-    setVoucherPayingClient(null);
-    setGeneratedMessage('');
-    setIsGeneratingMessage(false);
-    setFinalAppointmentState(null);
+    setConfirmationData(null);
 
     const defaultPayment = appointment?.payment;
     const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
@@ -136,13 +127,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     onOpenChange(false);
   };
 
-  const handleCloseDialog = () => {
-    if (finalAppointmentState) {
-        onAppointmentFinished(finalAppointmentState);
-    }
-    onOpenChange(false);
-  };
-
   const handlePaymentSubmit = async (data: PaymentFormValues) => {
     if (!appointment) return;
 
@@ -175,40 +159,17 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         
-        setFinalAppointmentState(updatedAppointment);
-        setVoucherPayingClient(updatedPayerClient);
-
+        onAppointmentFinished(updatedAppointment);
+        
         toast({
             title: 'Bono actualizado',
             description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
         });
 
-        setStep('voucherUpdateMessage');
-        setIsGeneratingMessage(true);
-        
-        try {
-            const result = await generateVoucherUpdateWhatsapp({
-                clientName: updatedPayerClient.name.split(' ')[0],
-                remainingSessions: updatedVoucher.sessions,
-                businessName: profile?.name,
-                website: socials.website ? profile?.website : undefined,
-                instagram: socials.instagram ? profile?.instagram : undefined,
-                facebook: socials.facebook ? profile?.facebook : undefined,
-                tiktok: socials.tiktok ? profile?.tiktok : undefined,
-                youtube: socials.youtube ? profile?.youtube : undefined,
-            });
-            setGeneratedMessage(result.whatsappMessage);
-        } catch (e) {
-            console.error("Failed to generate voucher update message", e);
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "No se pudo generar el mensaje de actualización del bono."
-            });
-            handleCloseDialog();
-        } finally {
-            setIsGeneratingMessage(false);
-        }
+        // Set data for the confirmation dialog and close the current one
+        setConfirmationData({ client: updatedPayerClient, remainingSessions: updatedVoucher.sessions });
+        onOpenChange(false);
+
     } else {
         const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
         const updatedAppointment = { ...appointment, status: 'completed', payment };
@@ -340,33 +301,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             </form>
           </Form>
         );
-      case 'voucherUpdateMessage':
-        if (!voucherPayingClient) return null;
-        const whatsappLink = `https://wa.me/${voucherPayingClient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}`;
-        return (
-            <div>
-                <DialogDescription>
-                    Se ha actualizado el bono de **{voucherPayingClient.name}**. Puedes enviarle el siguiente mensaje.
-                </DialogDescription>
-                <div className="my-4 p-4 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap min-h-[100px]">
-                    {isGeneratingMessage ? (
-                         <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground animate-pulse">Generando mensaje...</p>
-                            <Skeleton className="h-4 w-2/3" />
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-4/5" />
-                        </div>
-                    ) : (
-                        generatedMessage
-                    )}
-                </div>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleCloseDialog}>
-                    <Button disabled={isGeneratingMessage || !generatedMessage} className="w-full">
-                        <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp y Cerrar
-                    </Button>
-                </a>
-            </div>
-        );
       case 'selectAction':
       default:
         return (
@@ -390,100 +324,57 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
             <Button type="submit" form="payment-form" disabled={form.formState.isSubmitting}>Confirmar</Button>
           </>
         );
-      case 'voucherUpdateMessage':
-        return <Button variant="secondary" onClick={handleCloseDialog}>Cerrar sin enviar</Button>;
       case 'selectAction':
       default:
         return <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button>;
     }
   }
 
-  if (!appointment) return null;
-
-  const showSocials = step === 'paymentForm' && form.getValues('paymentMethod') === 'voucher' && profile && (profile.website || profile.instagram || profile.facebook || profile.tiktok || profile.youtube);
+  if (!appointment && !confirmationData) return null;
 
   return (
-    <Dialog open={!!appointment} onOpenChange={onOpenChange}>
-      <DialogContent onEscapeKeyDown={(e) => {
-        if (step === 'voucherUpdateMessage') e.preventDefault();
-      }} onPointerDownOutside={(e) => {
-        if (step === 'voucherUpdateMessage') e.preventDefault();
-      }}>
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Pago' : 'Finalizar Cita'}: {appointment?.clientName}</DialogTitle>
-          {step === 'selectAction' && (
-            <DialogDescription>Elige una acción para esta cita.</DialogDescription>
-          )}
-           {step === 'paymentForm' && (
-            <DialogDescription>
-              {isEditing ? 'Modifica los detalles del pago.' : 'Registra el pago de la cita.'}
-            </DialogDescription>
-          )}
-          {step === 'paymentForm' && isEditing && (
-            <Alert variant="destructive" className="mt-2">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>
-                    {wasPaidWithVoucher ? "Editando Pago de Bono" : "Editando un Pago Registrado"}
-                </AlertTitle>
-                <AlertDescription>
-                    {wasPaidWithVoucher
-                        ? 'Si cambias el método, puedes optar por devolver la sesión al bono original.'
-                        : 'Ten cuidado, los cambios afectarán a tus registros de contabilidad.'
-                    }
-                </AlertDescription>
-            </Alert>
-          )}
-        </DialogHeader>
-        <div className="py-4">
-          {renderContent()}
-        </div>
-        
-        {showSocials && (
-            <>
-                <Separator />
-                <div className="pt-4 space-y-4">
-                     <h4 className="font-medium text-sm">Incluir Redes Sociales en el mensaje de WhatsApp</h4>
-                     <div className="flex flex-wrap items-center gap-4">
-                        {profile?.website && (
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="web" checked={socials.website} onCheckedChange={(checked) => setSocials(s => ({...s, website: !!checked}))} />
-                                <label htmlFor="web" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Globe /> Web</label>
-                            </div>
-                        )}
-                        {profile?.instagram && (
-                             <div className="flex items-center space-x-2">
-                                <Checkbox id="ig" checked={socials.instagram} onCheckedChange={(checked) => setSocials(s => ({...s, instagram: !!checked}))} />
-                                <label htmlFor="ig" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Instagram /> Instagram</label>
-                             </div>
-                        )}
-                         {profile?.facebook && (
-                             <div className="flex items-center space-x-2">
-                                <Checkbox id="fb" checked={socials.facebook} onCheckedChange={(checked) => setSocials(s => ({...s, facebook: !!checked}))} />
-                                <label htmlFor="fb" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Facebook /> Facebook</label>
-                             </div>
-                        )}
-                         {profile?.tiktok && (
-                             <div className="flex items-center space-x-2">
-                                <Checkbox id="tt" checked={socials.tiktok} onCheckedChange={(checked) => setSocials(s => ({...s, tiktok: !!checked}))} />
-                                <label htmlFor="tt" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><LinkIcon /> TikTok</label>
-                             </div>
-                        )}
-                         {profile?.youtube && (
-                             <div className="flex items-center space-x-2">
-                                <Checkbox id="yt" checked={socials.youtube} onCheckedChange={(checked) => setSocials(s => ({...s, youtube: !!checked}))} />
-                                <label htmlFor="yt" className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"><Youtube /> YouTube</label>
-                             </div>
-                        )}
-                     </div>
-                </div>
-            </>
-        )}
+    <>
+        <Dialog open={!!appointment} onOpenChange={onOpenChange}>
+        <DialogContent>
+            <DialogHeader>
+            <DialogTitle>{isEditing ? 'Editar Pago' : 'Finalizar Cita'}: {appointment?.clientName}</DialogTitle>
+            {step === 'selectAction' && (
+                <DialogDescription>Elige una acción para esta cita.</DialogDescription>
+            )}
+            {step === 'paymentForm' && (
+                <DialogDescription>
+                {isEditing ? 'Modifica los detalles del pago.' : 'Registra el pago de la cita.'}
+                </DialogDescription>
+            )}
+            {step === 'paymentForm' && isEditing && (
+                <Alert variant="destructive" className="mt-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>
+                        {wasPaidWithVoucher ? "Editando Pago de Bono" : "Editando un Pago Registrado"}
+                    </AlertTitle>
+                    <AlertDescription>
+                        {wasPaidWithVoucher
+                            ? 'Si cambias el método, puedes optar por devolver la sesión al bono original.'
+                            : 'Ten cuidado, los cambios afectarán a tus registros de contabilidad.'
+                        }
+                    </AlertDescription>
+                </Alert>
+            )}
+            </DialogHeader>
+            <div className="py-4">
+            {renderContent()}
+            </div>
+            
+            <DialogFooter className="gap-2 sm:justify-end pt-4">
+                {renderFooter()}
+            </DialogFooter>
+        </DialogContent>
+        </Dialog>
 
-        <DialogFooter className="gap-2 sm:justify-end pt-4">
-            {renderFooter()}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <NewAppointmentConfirmationDialog
+            voucherUpdateData={confirmationData}
+            onOpenChange={() => setConfirmationData(null)}
+        />
+    </>
   );
 }
-
