@@ -137,6 +137,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const handlePaymentSubmit = async (data: PaymentFormValues) => {
     if (!appointment) return;
 
+    // Logic for when editing a payment and switching from voucher to another method
     if (isEditing && appointment.payment?.method === 'voucher' && data.paymentMethod !== 'voucher') {
         if (data.refundVoucher) {
             const originalPayer = clients.find(c => c.id === appointment.payment?.payerClientId);
@@ -173,7 +174,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         
         onAppointmentFinished(updatedAppointment);
-
+        
         toast({
             title: 'Bono actualizado',
             description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
@@ -181,7 +182,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
         setStep('voucherUpdateMessage');
         setIsGeneratingMessage(true);
-        setVoucherPayingClient(updatedPayerClient);
+        setVoucherPayingClient(updatedPayerClient); // This line is crucial
 
         try {
             const result = await generateVoucherUpdateWhatsapp({
