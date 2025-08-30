@@ -107,7 +107,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   if (!mode) return null;
   
   const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
-  const whatsappLink = `https://wa.me/${clientData?.phone.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}`;
+  const whatsappLink = `https://wa.me/${clientData?.phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(generatedMessage)}`;
 
   const handleClose = () => {
     onOpenChange(false);
@@ -207,7 +207,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
 
         <DialogFooter className="gap-2 sm:justify-end pt-4">
            <Button variant="outline" onClick={handleClose}>Cerrar</Button>
-           {generatedMessage && !isGenerating && (
+           {generatedMessage && !isGenerating && clientData?.phone && (
             <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
                 <Button>
                     <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
