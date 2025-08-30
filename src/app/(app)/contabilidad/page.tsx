@@ -30,6 +30,7 @@ export default function ContabilidadPage() {
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
     const [isVoucherSaleDialogOpen, setIsVoucherSaleDialogOpen] = React.useState(false);
     const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
+    const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
     
     const filteredAppointments = React.useMemo(() => {
         if (!dateRange?.from || !dateRange?.to) {
@@ -192,6 +193,13 @@ export default function ContabilidadPage() {
         }
     };
 
+    const handleDateSelect = (range: DateRange | undefined) => {
+        setDateRange(range);
+        if (range?.from && range?.to) {
+            setIsCalendarOpen(false);
+        }
+    }
+
 
     if (isLoading) {
         return <SplashScreen />;
@@ -227,7 +235,7 @@ export default function ContabilidadPage() {
                             <CardTitle>Seleccionar Rango de Fechas</CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                            <Popover>
+                            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                 <PopoverTrigger asChild>
                                     <Button
                                         id="date"
@@ -258,7 +266,7 @@ export default function ContabilidadPage() {
                                         mode="range"
                                         defaultMonth={dateRange?.from}
                                         selected={dateRange}
-                                        onSelect={setDateRange}
+                                        onSelect={handleDateSelect}
                                         numberOfMonths={2}
                                         locale={es}
                                     />
@@ -466,5 +474,3 @@ export default function ContabilidadPage() {
         </>
     );
 }
-
-    
