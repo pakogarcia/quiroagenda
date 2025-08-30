@@ -93,7 +93,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   
   const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
   const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : voucherUpdateData?.client.phone;
-  const whatsappLink = `https://wa.me/${clientPhoneNumber?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(generatedMessage)}`;
+  const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}` : '';
 
   const handleClose = () => {
     onOpenChange(false);
@@ -188,20 +188,15 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
             </>
         )}
         
-        <DialogFooter className="pt-4 flex w-full justify-between items-center">
-            <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
-                Regenerar Mensaje
-            </Button>
-            <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleClose}>Cerrar</Button>
-                {generatedMessage && !isGenerating && clientPhoneNumber && (
-                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
-                        <Button>
-                            <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
-                        </Button>
-                    </a>
-                )}
-            </div>
+        <DialogFooter className="pt-4">
+          <Button variant="outline" onClick={handleClose}>Cerrar</Button>
+          {generatedMessage && !isGenerating && clientPhoneNumber && (
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
+                  <Button>
+                      <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
+                  </Button>
+              </a>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
