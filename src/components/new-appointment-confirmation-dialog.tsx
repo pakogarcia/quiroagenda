@@ -64,12 +64,12 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
             const result = await generateVoucherUpdateWhatsapp({
                 clientName: voucherUpdateData.client.name.split(' ')[0],
                 remainingSessions: voucherUpdateData.remainingSessions,
-                businessName: businessProfile?.name,
-                website: socials.website ? businessProfile?.website : undefined,
-                instagram: socials.instagram ? businessProfile?.instagram : undefined,
-                facebook: socials.facebook ? businessProfile?.facebook : undefined,
-                tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
-                youtube: socials.youtube ? businessProfile?.youtube : undefined,
+                businessName: businessProfile.name,
+                website: socials.website ? businessProfile.website : undefined,
+                instagram: socials.instagram ? businessProfile.instagram : undefined,
+                facebook: socials.facebook ? businessProfile.facebook : undefined,
+                tiktok: socials.tiktok ? businessProfile.tiktok : undefined,
+                youtube: socials.youtube ? businessProfile.youtube : undefined,
             });
             setGeneratedMessage(result.whatsappMessage);
         }
@@ -92,7 +92,8 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   if (!mode) return null;
   
   const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
-  const whatsappLink = `https://wa.me/${clientData?.phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(generatedMessage)}`;
+  const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : voucherUpdateData?.client.phone;
+  const whatsappLink = `https://wa.me/${clientPhoneNumber?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(generatedMessage)}`;
 
   const handleClose = () => {
     onOpenChange(false);
@@ -140,7 +141,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
           )}
           {generatedMessage && !isGenerating && (
             <div className="p-4 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap">
-              <p className='font-semibold text-primary flex items-center gap-2 mb-2'><Smartphone className="w-4 h-4"/>{clientData?.name}</p>
+              <p className='font-semibold text-primary flex items-center gap-2 mb-2'><Smartphone className="w-4 h-4"/>{clientData?.clientName || clientData?.name}</p>
               <p>{generatedMessage}</p>
             </div>
           )}
@@ -188,19 +189,19 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
         )}
         
         <DialogFooter className="pt-4 flex w-full justify-between items-center">
-          <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
-              Regenerar Mensaje
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose}>Cerrar</Button>
-            {generatedMessage && !isGenerating && clientData?.phone && (
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
-                    <Button>
-                        <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
-                    </Button>
-                </a>
-            )}
-          </div>
+            <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
+                Regenerar Mensaje
+            </Button>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleClose}>Cerrar</Button>
+                {generatedMessage && !isGenerating && clientPhoneNumber && (
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
+                        <Button>
+                            <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
+                        </Button>
+                    </a>
+                )}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
