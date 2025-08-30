@@ -14,8 +14,6 @@ import { Client } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAppData } from '@/context/app-data-context';
 
-const VOUCHER_SALES_STORAGE_KEY = 'quiroagenda_voucher_sales';
-
 const voucherSaleSchema = z.object({
   clientId: z.string({ required_error: 'Debes seleccionar un cliente.' }),
   sessions: z.coerce.number().min(1, 'El bono debe tener al menos 1 sesión.'),
@@ -31,7 +29,7 @@ type VoucherSaleFormProps = {
 };
 
 export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormProps) {
-  const { clients, setClients } = useAppData();
+  const { clients, setClients, voucherSales, setVoucherSales } = useAppData();
   const { toast } = useToast();
 
   const form = useForm<VoucherSaleFormValues>({
@@ -39,7 +37,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
     defaultValues: {
       clientId: '',
       sessions: 5,
-      amount: undefined, // Let's keep it undefined and handle the value in the input
+      amount: undefined,
       paymentMethod: 'cash',
     },
   });
@@ -51,20 +49,18 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
       return;
     }
 
-    // 1. Create the new voucher for the client
-    const newVoucher = {
-      sessions: values.sessions,
-      totalSessions: values.sessions,
-      price: values.amount,
+    // 1. Create or update the client's voucher
+    const existingVoucher = selectedClient.voucher;
+    const updatedVoucher = {
+        sessions: (existingVoucher?.sessions || 0) + values.sessions,
+        totalSessions: (existingVoucher?.totalSessions || 0) + values.sessions,
+        price: values.amount,
     };
     
-    // For now, we will replace the old voucher. A more complex system could allow multiple vouchers.
-    const updatedClient: Client = { ...selectedClient, voucher: newVoucher };
+    const updatedClient: Client = { ...selectedClient, voucher: updatedVoucher };
+    setClients(prevClients => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
 
-    // 2. Save the updated client list
-    setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
-    
-    // 3. Create and save the voucher sale transaction
+    // 2. Create and save the voucher sale transaction
     const newSale = {
         id: crypto.randomUUID(),
         clientId: values.clientId,
@@ -75,8 +71,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
         paymentMethod: values.paymentMethod,
     };
 
-    const existingSales = JSON.parse(localStorage.getItem(VOUCHER_SALES_STORAGE_KEY) || '[]');
-    localStorage.setItem(VOUCHER_SALES_STORAGE_KEY, JSON.stringify([...existingSales, newSale]));
+    setVoucherSales([...voucherSales, newSale]);
 
     toast({
         title: 'Bono Vendido',
@@ -106,6 +101,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
                   {clients.map(client => (
                     <SelectItem key={client.id} value={client.id}>
                       {`${client.name} ${client.lastName}`}
+                      {client.voucher && ` (Bono actual: ${client.voucher.sessions} ses.)`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -121,7 +117,7 @@ export function VoucherSaleForm({ onVoucherSold, closeDialog }: VoucherSaleFormP
             name="sessions"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Nº de Sesiones</FormLabel>
+                <FormLabel>Nº de Sesiones a Añadir</FormLabel>
                 <FormControl>
                     <Input type="number" placeholder="p. ej., 5" {...field} value={field.value ?? ''} />
                 </FormControl>
