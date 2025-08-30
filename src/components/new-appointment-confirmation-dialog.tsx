@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { type Appointment, type BusinessProfile, type Client } from '@/lib/types';
+import { type Appointment, type Client } from '@/lib/types';
 import { Send, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
 import { generateNewAppointmentWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
@@ -187,22 +187,20 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
             </>
         )}
         
-        <DialogFooter className="pt-4">
-            <div className="flex justify-between w-full items-center">
-                <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
-                    Regenerar Mensaje
-                </Button>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleClose}>Cerrar</Button>
-                    {generatedMessage && !isGenerating && clientData?.phone && (
-                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
-                            <Button>
-                                <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
-                            </Button>
-                        </a>
-                    )}
-                </div>
-            </div>
+        <DialogFooter className="pt-4 flex w-full justify-between items-center">
+          <Button type="button" variant="ghost" onClick={generateMessage} disabled={isGenerating}>
+              Regenerar Mensaje
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose}>Cerrar</Button>
+            {generatedMessage && !isGenerating && clientData?.phone && (
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose}>
+                    <Button>
+                        <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
+                    </Button>
+                </a>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
