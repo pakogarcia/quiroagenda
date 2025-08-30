@@ -79,6 +79,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
       notes: values.notes || '',
       serviceId: values.serviceId,
       serviceName: selectedService?.name,
+      servicePrice: selectedService?.price,
     });
   };
 

@@ -70,11 +70,16 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     const defaultPayment = appointment?.payment;
     const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
     
-    form.reset({ 
-        amount: defaultPayment?.method !== 'voucher' ? defaultPayment?.amount : undefined, 
+    // Set default amount from service price if available and not editing a voucher payment
+    const defaultAmount = defaultPayment?.method !== 'voucher'
+        ? defaultPayment?.amount
+        : (appointment?.servicePrice || undefined);
+
+    form.reset({
+        amount: defaultAmount,
         paymentMethod: defaultPayment?.method || 'cash',
-        voucherPayerId: defaultPayment?.method === 'voucher' 
-            ? defaultPayment.payerClientId 
+        voucherPayerId: defaultPayment?.method === 'voucher'
+            ? defaultPayment.payerClientId
             : (currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined),
         refundVoucher: true,
     });

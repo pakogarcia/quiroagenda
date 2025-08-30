@@ -18,6 +18,7 @@ export type Appointment = {
   payment?: Payment;
   serviceId?: string;
   serviceName?: string;
+  servicePrice?: number;
 };
 
 export type Voucher = {
