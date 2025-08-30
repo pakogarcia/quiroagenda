@@ -64,12 +64,12 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
             const result = await generateVoucherUpdateWhatsapp({
                 clientName: voucherUpdateData.client.name.split(' ')[0],
                 remainingSessions: voucherUpdateData.remainingSessions,
-                businessName: profile?.name,
-                website: socials.website ? profile?.website : undefined,
-                instagram: socials.instagram ? profile?.instagram : undefined,
-                facebook: socials.facebook ? profile?.facebook : undefined,
-                tiktok: socials.tiktok ? profile?.tiktok : undefined,
-                youtube: socials.youtube ? profile?.youtube : undefined,
+                businessName: businessProfile?.name,
+                website: socials.website ? businessProfile?.website : undefined,
+                instagram: socials.instagram ? businessProfile?.instagram : undefined,
+                facebook: socials.facebook ? businessProfile?.facebook : undefined,
+                tiktok: socials.tiktok ? businessProfile?.tiktok : undefined,
+                youtube: socials.youtube ? businessProfile?.youtube : undefined,
             });
             setGeneratedMessage(result.whatsappMessage);
         }
@@ -99,10 +99,10 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   }, [mode]);
   
   React.useEffect(() => {
-    if (businessProfile) {
+    if (businessProfile && (appointment || voucherUpdateData)) {
         generateMessage();
     }
-  }, [businessProfile, generateMessage]);
+  }, [businessProfile, generateMessage, appointment, voucherUpdateData]);
   
   if (!mode) return null;
   
