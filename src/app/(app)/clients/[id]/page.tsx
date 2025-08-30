@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { useAppData } from '@/context/app-data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EditVoucherSaleDialog } from '@/components/edit-voucher-sale-dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type HistoryItem = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
 
@@ -107,6 +108,18 @@ export default function ClientDetailPage() {
 
         return stats;
     }, [clientHistory, voucherSales, clientId]);
+    
+    const groupedHistory = React.useMemo(() => {
+        return clientHistory.reduce((acc, item) => {
+            const date = item.type === 'appointment' ? item.dateTime : item.date;
+            const monthKey = format(new Date(date), 'MMMM yyyy', { locale: es });
+            if (!acc[monthKey]) {
+                acc[monthKey] = [];
+            }
+            acc[monthKey].push(item);
+            return acc;
+        }, {} as Record<string, HistoryItem[]>);
+    }, [clientHistory]);
 
     const serviceStats = React.useMemo(() => {
         const stats: { [key: string]: number } = {};
@@ -278,88 +291,97 @@ export default function ClientDetailPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-xl flex items-center gap-2"><History className="w-5 h-5"/> Historial de Citas</CardTitle>
+                        <CardTitle className="text-xl flex items-center gap-2"><History className="w-5 h-5"/> Historial</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead>Concepto</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Pago</TableHead>
-                                    <TableHead className="text-right">Importe</TableHead>
-                                    <TableHead className="w-[50px]"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {clientHistory.length > 0 ? clientHistory.map(item => (
-                                    <TableRow key={item.id}>
-                                    {item.type === 'appointment' ? (
-                                        <>
-                                            <TableCell>{format(new Date(item.dateTime), "P p", { locale: es })}</TableCell>
-                                            <TableCell className="flex items-center gap-2">
-                                                <CreditCard className="w-4 h-4 text-muted-foreground"/>
-                                                {item.serviceName || 'Cita'}
-                                            </TableCell>
-                                            <TableCell>{getStatusBadge(item)}</TableCell>
-                                            <TableCell>{getPaymentMethodName(item.payment?.method)}</TableCell>
-                                            <TableCell className="text-right">
-                                                {item.payment && item.payment.method !== 'voucher' ? `${item.payment.amount.toFixed(2)}€` : (item.status === 'completed' && !item.payment ? 'Pendiente' : '')}
-                                            </TableCell>
-                                            <TableCell>
-                                                {item.status === 'completed' && item.payment && (
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="icon" onClick={() => setEditingAppointment(item)}>
-                                                                    <Edit className="w-4 h-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>Editar Pago</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                )}
-                                            </TableCell>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <TableCell>{format(new Date(item.date), "P", { locale: es })}</TableCell>
-                                            <TableCell className="flex items-center gap-2">
-                                                <ShoppingCart className="w-4 h-4 text-muted-foreground"/>
-                                                Compra de Bono ({item.sessions} sesiones)
-                                            </TableCell>
-                                            <TableCell><Badge variant="secondary">Completada</Badge></TableCell>
-                                            <TableCell>{getPaymentMethodName(item.paymentMethod)}</TableCell>
-                                            <TableCell className="text-right">{item.amount.toFixed(2)}€</TableCell>
-                                            <TableCell>
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Button variant="ghost" size="icon" onClick={() => setEditingVoucherSale(item)}>
-                                                                <Edit className="w-4 h-4" />
-                                                            </Button>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>Editar Venta de Bono</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            </TableCell>
-                                        </>
-                                    )}
-                                </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="text-center h-24">
-                                            Este cliente no tiene citas registradas.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                       {clientHistory.length > 0 ? (
+                            <Accordion type="single" collapsible className="w-full" defaultValue={Object.keys(groupedHistory)[0]}>
+                                {Object.entries(groupedHistory).map(([month, items]) => (
+                                    <AccordionItem value={month} key={month}>
+                                        <AccordionTrigger className="capitalize text-lg">{month}</AccordionTrigger>
+                                        <AccordionContent>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Fecha</TableHead>
+                                                        <TableHead>Concepto</TableHead>
+                                                        <TableHead>Estado</TableHead>
+                                                        <TableHead>Pago</TableHead>
+                                                        <TableHead className="text-right">Importe</TableHead>
+                                                        <TableHead className="w-[50px]"></TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {items.map(item => (
+                                                        <TableRow key={item.id}>
+                                                        {item.type === 'appointment' ? (
+                                                            <>
+                                                                <TableCell>{format(new Date(item.dateTime), "P p", { locale: es })}</TableCell>
+                                                                <TableCell className="flex items-center gap-2">
+                                                                    <CreditCard className="w-4 h-4 text-muted-foreground"/>
+                                                                    {item.serviceName || 'Cita'}
+                                                                </TableCell>
+                                                                <TableCell>{getStatusBadge(item)}</TableCell>
+                                                                <TableCell>{getPaymentMethodName(item.payment?.method)}</TableCell>
+                                                                <TableCell className="text-right">
+                                                                    {item.payment && item.payment.method !== 'voucher' ? `${item.payment.amount.toFixed(2)}€` : (item.status === 'completed' && !item.payment ? 'Pendiente' : '')}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {item.status === 'completed' && item.payment && (
+                                                                        <TooltipProvider>
+                                                                            <Tooltip>
+                                                                                <TooltipTrigger asChild>
+                                                                                    <Button variant="ghost" size="icon" onClick={() => setEditingAppointment(item)}>
+                                                                                        <Edit className="w-4 h-4" />
+                                                                                    </Button>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent>
+                                                                                    <p>Editar Pago</p>
+                                                                                </TooltipContent>
+                                                                            </Tooltip>
+                                                                        </TooltipProvider>
+                                                                    )}
+                                                                </TableCell>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <TableCell>{format(new Date(item.date), "P", { locale: es })}</TableCell>
+                                                                <TableCell className="flex items-center gap-2">
+                                                                    <ShoppingCart className="w-4 h-4 text-muted-foreground"/>
+                                                                    Compra de Bono ({item.sessions} sesiones)
+                                                                </TableCell>
+                                                                <TableCell><Badge variant="secondary">Completada</Badge></TableCell>
+                                                                <TableCell>{getPaymentMethodName(item.paymentMethod)}</TableCell>
+                                                                <TableCell className="text-right">{item.amount.toFixed(2)}€</TableCell>
+                                                                <TableCell>
+                                                                    <TooltipProvider>
+                                                                        <Tooltip>
+                                                                            <TooltipTrigger asChild>
+                                                                                <Button variant="ghost" size="icon" onClick={() => setEditingVoucherSale(item)}>
+                                                                                    <Edit className="w-4 h-4" />
+                                                                                </Button>
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent>
+                                                                                <p>Editar Venta de Bono</p>
+                                                                            </TooltipContent>
+                                                                        </Tooltip>
+                                                                    </TooltipProvider>
+                                                                </TableCell>
+                                                            </>
+                                                        )}
+                                                    </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                       ) : (
+                           <div className="text-center h-24 flex items-center justify-center">
+                                Este cliente no tiene citas registradas.
+                           </div>
+                       )}
                     </CardContent>
                 </Card>
             </main>

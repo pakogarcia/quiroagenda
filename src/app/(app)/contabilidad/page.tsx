@@ -21,6 +21,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
 import { OfferDialog } from '@/components/offer-dialog';
 import { useAppData } from '@/context/app-data-context';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type Transaction = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
 
@@ -64,6 +65,18 @@ export default function ContabilidadPage() {
             });
             
     }, [filteredAppointments, voucherSales, dateRange]);
+    
+     const groupedTransactions = React.useMemo(() => {
+        return filteredTransactions.reduce((acc, transaction) => {
+            const date = transaction.type === 'appointment' ? transaction.dateTime : transaction.date;
+            const monthKey = format(new Date(date), 'MMMM yyyy', { locale: es });
+            if (!acc[monthKey]) {
+                acc[monthKey] = [];
+            }
+            acc[monthKey].push(transaction);
+            return acc;
+        }, {} as Record<string, Transaction[]>);
+    }, [filteredTransactions]);
 
     const financialSummary = React.useMemo(() => {
         const summary = {
@@ -310,45 +323,52 @@ export default function ContabilidadPage() {
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="overflow-x-auto">
-                                                <Table className="min-w-[600px]">
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Fecha</TableHead>
-                                                            <TableHead>Cliente</TableHead>
-                                                            <TableHead>Concepto</TableHead>
-                                                            <TableHead>Método Pago</TableHead>
-                                                            <TableHead className="text-right">Importe</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {filteredTransactions.length > 0 ? (
-                                                            filteredTransactions.map(item => (
-                                                                <TableRow key={item.id}>
-                                                                    <TableCell className="font-medium">{format(new Date(item.type === 'appointment' ? item.dateTime : item.date), "P", { locale: es })}</TableCell>
-                                                                    <TableCell>{item.clientName}</TableCell>
-                                                                    <TableCell className='flex items-center gap-2'>
-                                                                        {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
-                                                                        {item.type === 'appointment' ? (item.serviceName || 'Cita') : `Bono ${item.sessions} sesiones`}
-                                                                    </TableCell>
-                                                                    <TableCell className="capitalize">{getPaymentMethodName(item.type === 'appointment' ? item.payment?.method : item.paymentMethod)}</TableCell>
-                                                                    <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
-                                                                </TableRow>
-                                                            ))
-                                                        ) : (
-                                                            <TableRow>
-                                                                <TableCell colSpan={5} className="h-24 text-center">No se encontraron movimientos en este período.</TableCell>
-                                                            </TableRow>
-                                                        )}
-                                                    </TableBody>
-                                                    <TableFooter>
-                                                        <TableRow>
-                                                            <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
-                                                            <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
-                                                        </TableRow>
-                                                    </TableFooter>
-                                                </Table>
-                                            </div>
+                                            {filteredTransactions.length > 0 ? (
+                                                <Accordion type="single" collapsible className="w-full" defaultValue={Object.keys(groupedTransactions)[0]}>
+                                                    {Object.entries(groupedTransactions).map(([month, transactions]) => (
+                                                        <AccordionItem value={month} key={month}>
+                                                            <AccordionTrigger className="capitalize text-lg">{month}</AccordionTrigger>
+                                                            <AccordionContent>
+                                                                <Table>
+                                                                    <TableHeader>
+                                                                        <TableRow>
+                                                                            <TableHead>Fecha</TableHead>
+                                                                            <TableHead>Cliente</TableHead>
+                                                                            <TableHead>Concepto</TableHead>
+                                                                            <TableHead>Método Pago</TableHead>
+                                                                            <TableHead className="text-right">Importe</TableHead>
+                                                                        </TableRow>
+                                                                    </TableHeader>
+                                                                    <TableBody>
+                                                                        {transactions.map(item => (
+                                                                            <TableRow key={item.id}>
+                                                                                <TableCell className="font-medium">{format(new Date(item.type === 'appointment' ? item.dateTime : item.date), "P", { locale: es })}</TableCell>
+                                                                                <TableCell>{item.clientName}</TableCell>
+                                                                                <TableCell className='flex items-center gap-2'>
+                                                                                    {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
+                                                                                    {item.type === 'appointment' ? (item.serviceName || 'Cita') : `Bono ${item.sessions} sesiones`}
+                                                                                </TableCell>
+                                                                                <TableCell className="capitalize">{getPaymentMethodName(item.type === 'appointment' ? item.payment?.method : item.paymentMethod)}</TableCell>
+                                                                                <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
+                                                                            </TableRow>
+                                                                        ))}
+                                                                    </TableBody>
+                                                                </Table>
+                                                            </AccordionContent>
+                                                        </AccordionItem>
+                                                    ))}
+                                                </Accordion>
+                                            ) : (
+                                                <div className="h-24 text-center flex items-center justify-center">No se encontraron movimientos en este período.</div>
+                                            )}
+                                             <Table>
+                                                <TableFooter>
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
+                                                        <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
+                                                    </TableRow>
+                                                </TableFooter>
+                                            </Table>
                                         </CardContent>
                                     </Card>
                                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6 no-print">
