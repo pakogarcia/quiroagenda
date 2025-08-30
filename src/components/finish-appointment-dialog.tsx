@@ -71,11 +71,10 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const resetState = React.useCallback(() => {
     const initialStep = isEditing ? 'paymentForm' : 'selectAction';
     setStep(initialStep);
-    
+    setFinalAppointmentState(null);
     setVoucherPayingClient(null);
     setGeneratedMessage('');
     setIsGeneratingMessage(false);
-    setFinalAppointmentState(null);
 
     const defaultPayment = appointment?.payment;
     const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
@@ -93,6 +92,10 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   React.useEffect(() => {
     if (appointment) {
       resetState();
+    } else {
+       // When dialog is closed (appointment is null), reset fully
+      setStep('selectAction');
+      setFinalAppointmentState(null);
     }
   }, [appointment, resetState]);
   
@@ -140,7 +143,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const handlePaymentSubmit = async (data: PaymentFormValues) => {
     if (!appointment) return;
 
-    // --- Bono a Efectivo/Bizum/Paypal ---
     if (isEditing && appointment.payment?.method === 'voucher' && data.paymentMethod !== 'voucher') {
         if (data.refundVoucher) {
             const originalPayer = clients.find(c => c.id === appointment.payment?.payerClientId);
@@ -162,7 +164,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         return;
     }
 
-
     if (data.paymentMethod === 'voucher') {
         const payerClient = clients.find(c => c.id === data.voucherPayerId);
         if (!payerClient || !payerClient.voucher || payerClient.voucher.sessions <= 0) {
@@ -175,19 +176,18 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
         
         const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
-        const updatedAppointment = { ...appointment, status: 'completed', payment };
+        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         
         setFinalAppointmentState(updatedAppointment);
+        setVoucherPayingClient(updatedPayerClient);
 
         toast({
             title: 'Bono actualizado',
             description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
         });
 
-        // Now generate the message
         setStep('voucherUpdateMessage');
         setIsGeneratingMessage(true);
-        setVoucherPayingClient(updatedPayerClient);
 
         try {
             const result = await generateVoucherUpdateWhatsapp({
@@ -208,10 +208,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 title: "Error",
                 description: "No se pudo generar el mensaje de actualización del bono. La cita se ha guardado igualmente."
             });
-             if (finalAppointmentState) {
-                onAppointmentFinished(finalAppointmentState);
-            }
-            onOpenChange(false);
+            handleClose();
         } finally {
             setIsGeneratingMessage(false);
         }
