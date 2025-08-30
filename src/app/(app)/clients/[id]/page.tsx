@@ -24,6 +24,7 @@ import { useAppData } from '@/context/app-data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EditVoucherSaleDialog } from '@/components/edit-voucher-sale-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
 
 type HistoryItem = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
 
@@ -40,6 +41,8 @@ export default function ClientDetailPage() {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
     const [editingAppointment, setEditingAppointment] = React.useState<Appointment | null>(null);
     const [editingVoucherSale, setEditingVoucherSale] = React.useState<VoucherSale | null>(null);
+    const [notifyingVoucherClient, setNotifyingVoucherClient] = React.useState<Client | null>(null);
+
 
     React.useEffect(() => {
         if (!isLoading && clientId) {
@@ -199,6 +202,12 @@ export default function ClientDetailPage() {
                         </Link>
                     </Button>
                     <div className="flex gap-2">
+                         {client.voucher && client.voucher.sessions > 0 && (
+                            <Button variant="outline" onClick={() => setNotifyingVoucherClient(client)}>
+                                <Gift className="h-4 w-4 md:mr-2" />
+                                <span className="hidden md:inline">Notificar Bono</span>
+                            </Button>
+                        )}
                         <Button variant="outline" onClick={() => setIsFormOpen(true)}>
                             <Edit className="h-4 w-4 md:mr-2" />
                             <span className="hidden md:inline">Editar</span>
@@ -428,8 +437,15 @@ export default function ClientDetailPage() {
                 onOpenChange={() => setEditingVoucherSale(null)}
                 onVoucherSaleUpdated={handleVoucherSaleUpdated}
             />
+
+            <NewAppointmentConfirmationDialog
+                voucherUpdateData={notifyingVoucherClient ? { client: notifyingVoucherClient, remainingSessions: notifyingVoucherClient.voucher!.sessions } : null}
+                onOpenChange={() => setNotifyingVoucherClient(null)}
+            />
         </div>
     );
 }
+
+    
 
     
