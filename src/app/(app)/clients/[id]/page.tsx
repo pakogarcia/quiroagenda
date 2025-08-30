@@ -6,8 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag, MessageSquare } from 'lucide-react';
-import type { Client, Appointment, Payment, PaymentMethod } from '@/lib/types';
+import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag, MessageSquare, ShoppingCart, CreditCard } from 'lucide-react';
+import type { Client, Appointment, Payment, PaymentMethod, VoucherSale } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -22,14 +22,16 @@ import { cn } from '@/lib/utils';
 import { useAppData } from '@/context/app-data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+type HistoryItem = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
+
 export default function ClientDetailPage() {
-    const { clients, setClients, appointments, setAppointments, isLoading } = useAppData();
+    const { clients, setClients, appointments, setAppointments, voucherSales, isLoading } = useAppData();
     const router = useRouter();
     const params = useParams();
     const clientId = params.id as string;
 
     const [client, setClient] = React.useState<Client | null>(null);
-    const [clientAppointments, setClientAppointments] = React.useState<Appointment[]>([]);
+    const [clientHistory, setClientHistory] = React.useState<HistoryItem[]>([]);
     
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
@@ -41,16 +43,28 @@ export default function ClientDetailPage() {
             if (currentClient) {
                 setClient(currentClient);
 
-                const appointmentsForClient = appointments
+                const appointmentsForClient: HistoryItem[] = appointments
                     .filter(apt => apt.clientPhone === currentClient.phone)
-                    .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
+                    .map(apt => ({...apt, type: 'appointment'}));
                 
-                setClientAppointments(appointmentsForClient);
+                const voucherSalesForClient: HistoryItem[] = voucherSales
+                    .filter(sale => sale.clientId === currentClient.id)
+                    .map(sale => ({...sale, type: 'voucher_sale'}));
+
+                const combinedHistory = [...appointmentsForClient, ...voucherSalesForClient]
+                    .sort((a, b) => {
+                        const dateA = a.type === 'appointment' ? a.dateTime : a.date;
+                        const dateB = b.type === 'appointment' ? b.dateTime : b.date;
+                        return dateB.getTime() - dateA.getTime();
+                    });
+                
+                setClientHistory(combinedHistory);
+
             } else {
                 router.push('/clients');
             }
         }
-    }, [clientId, router, clients, appointments, isLoading]);
+    }, [clientId, router, clients, appointments, voucherSales, isLoading]);
 
     const handleUpdateClient = (id: string, data: Omit<Client, 'id'>) => {
         const updatedClient = { ...client, ...data } as Client;
@@ -69,6 +83,9 @@ export default function ClientDetailPage() {
             completedAppointments: 0,
             noShows: 0,
         };
+
+        const clientAppointments = clientHistory.filter(h => h.type === 'appointment') as (Appointment & {type: 'appointment'})[];
+        
         clientAppointments.forEach(apt => {
             if (apt.status === 'completed') {
                 stats.completedAppointments++;
@@ -79,11 +96,19 @@ export default function ClientDetailPage() {
                 stats.noShows++;
             }
         });
+        
+        const clientVoucherSales = voucherSales.filter(sale => sale.clientId === clientId);
+        clientVoucherSales.forEach(sale => {
+            stats.totalRevenue += sale.amount;
+        });
+
         return stats;
-    }, [clientAppointments]);
+    }, [clientHistory, voucherSales, clientId]);
 
     const serviceStats = React.useMemo(() => {
         const stats: { [key: string]: number } = {};
+        const clientAppointments = clientHistory.filter(h => h.type === 'appointment') as (Appointment & {type: 'appointment'})[];
+        
         clientAppointments.forEach(apt => {
             if (apt.status === 'completed' && apt.serviceName) {
                 stats[apt.serviceName] = (stats[apt.serviceName] || 0) + 1;
@@ -92,7 +117,7 @@ export default function ClientDetailPage() {
         return Object.entries(stats)
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count);
-    }, [clientAppointments]);
+    }, [clientHistory]);
 
      const handleAppointmentFinished = (updatedAppointment: Appointment) => {
         setAppointments(prev => prev.map(apt => 
@@ -122,7 +147,7 @@ export default function ClientDetailPage() {
         }
     };
     
-    const getPaymentMethodName = (method?: PaymentMethod) => {
+    const getPaymentMethodName = (method?: PaymentMethod | 'cash' | 'bizum' | 'paypal') => {
         if (!method) return '';
         switch (method) {
             case 'cash': return 'Efectivo';
@@ -250,7 +275,7 @@ export default function ClientDetailPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Fecha</TableHead>
-                                    <TableHead>Servicio</TableHead>
+                                    <TableHead>Concepto</TableHead>
                                     <TableHead>Estado</TableHead>
                                     <TableHead>Pago</TableHead>
                                     <TableHead className="text-right">Importe</TableHead>
@@ -258,32 +283,51 @@ export default function ClientDetailPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {clientAppointments.length > 0 ? clientAppointments.map(apt => (
-                                    <TableRow key={apt.id}>
-                                        <TableCell>{format(apt.dateTime, "P p", { locale: es })}</TableCell>
-                                        <TableCell>{apt.serviceName || 'N/A'}</TableCell>
-                                        <TableCell>{getStatusBadge(apt)}</TableCell>
-                                        <TableCell>{getPaymentMethodName(apt.payment?.method)}</TableCell>
-                                        <TableCell className="text-right">
-                                            {apt.payment && apt.payment.method !== 'voucher' ? `${apt.payment.amount.toFixed(2)}€` : (apt.status === 'completed' && !apt.payment ? 'Pendiente' : '')}
-                                        </TableCell>
-                                        <TableCell>
-                                            {apt.status === 'completed' && apt.payment && (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Button variant="ghost" size="icon" onClick={() => setEditingAppointment(apt)}>
-                                                                <Edit className="w-4 h-4" />
-                                                            </Button>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>Editar Pago</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
+                                {clientHistory.length > 0 ? clientHistory.map(item => (
+                                    <TableRow key={item.id}>
+                                    {item.type === 'appointment' ? (
+                                        <>
+                                            <TableCell>{format(item.dateTime, "P p", { locale: es })}</TableCell>
+                                            <TableCell className="flex items-center gap-2">
+                                                <CreditCard className="w-4 h-4 text-muted-foreground"/>
+                                                {item.serviceName || 'Cita'}
+                                            </TableCell>
+                                            <TableCell>{getStatusBadge(item)}</TableCell>
+                                            <TableCell>{getPaymentMethodName(item.payment?.method)}</TableCell>
+                                            <TableCell className="text-right">
+                                                {item.payment && item.payment.method !== 'voucher' ? `${item.payment.amount.toFixed(2)}€` : (item.status === 'completed' && !item.payment ? 'Pendiente' : '')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {item.status === 'completed' && item.payment && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="ghost" size="icon" onClick={() => setEditingAppointment(item)}>
+                                                                    <Edit className="w-4 h-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Editar Pago</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
+                                            </TableCell>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <TableCell>{format(item.date, "P", { locale: es })}</TableCell>
+                                            <TableCell className="flex items-center gap-2">
+                                                <ShoppingCart className="w-4 h-4 text-muted-foreground"/>
+                                                Compra de Bono ({item.sessions} sesiones)
+                                            </TableCell>
+                                            <TableCell><Badge variant="secondary">Completada</Badge></TableCell>
+                                            <TableCell>{getPaymentMethodName(item.paymentMethod)}</TableCell>
+                                            <TableCell className="text-right">{item.amount.toFixed(2)}€</TableCell>
+                                            <TableCell></TableCell>
+                                        </>
+                                    )}
+                                </TableRow>
                                 )) : (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center h-24">
