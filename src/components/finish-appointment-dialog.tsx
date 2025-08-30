@@ -93,7 +93,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     if (appointment) {
       resetState();
     } else {
-       // When dialog is closed (appointment is null), reset fully
       setStep('selectAction');
       setFinalAppointmentState(null);
     }
@@ -404,7 +403,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         return <Button variant="secondary" onClick={handleClose}>Cerrar sin enviar</Button>;
       case 'selectAction':
       default:
-        return <Button variant="secondary" onClick={handleClose}>Cancelar</Button>;
+        return <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button>;
     }
   }
 
@@ -487,3 +486,5 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
+
+    
