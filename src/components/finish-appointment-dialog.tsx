@@ -82,7 +82,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     if (appointment) {
       resetState();
     }
-  }, [appointment, form, clients]);
+  }, [appointment]);
   
   const clientsWithVouchers = React.useMemo(() => {
     if (!appointment) return [];
@@ -128,57 +128,57 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     if (!appointment) return;
 
     if (data.paymentMethod === 'voucher') {
-      const payerClient = clients.find(c => c.id === data.voucherPayerId);
-      if (!payerClient || !payerClient.voucher || payerClient.voucher.sessions <= 0) {
-          toast({ title: 'Error', description: 'El cliente seleccionado no tiene un bono válido o no tiene sesiones.', variant: 'destructive' });
-          return;
-      }
-      
-      setIsGeneratingMessage(true);
-      setStep('voucherUpdateMessage');
-      
-      let message = '';
-      try {
-        const result = await generateVoucherUpdateWhatsapp({
-            clientName: payerClient.name.split(' ')[0],
-            remainingSessions: payerClient.voucher.sessions - 1,
-            businessName: profile?.name,
-            website: socials.website ? profile?.website : undefined,
-            instagram: socials.instagram ? profile?.instagram : undefined,
-            facebook: socials.facebook ? profile?.facebook : undefined,
-            tiktok: socials.tiktok ? profile?.tiktok : undefined,
-            youtube: socials.youtube ? profile?.youtube : undefined,
-        });
-        message = result.whatsappMessage;
-      } catch (e) {
-          console.error("Failed to generate voucher update message", e);
-          toast({
-              variant: "destructive",
-              title: "Error",
-              description: "No se pudo generar el mensaje de actualización del bono."
-          });
-          setIsGeneratingMessage(false);
-          setStep('paymentForm'); // Go back to payment form on error
-          return;
-      }
+        const payerClient = clients.find(c => c.id === data.voucherPayerId);
+        if (!payerClient || !payerClient.voucher || payerClient.voucher.sessions <= 0) {
+            toast({ title: 'Error', description: 'El cliente seleccionado no tiene un bono válido o no tiene sesiones.', variant: 'destructive' });
+            return;
+        }
 
-      // Now that the message is generated, update all data
-      const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
-      const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
-      setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
-      
-      const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
-      const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-      
-      setVoucherPayingClient(updatedPayerClient);
-      setGeneratedMessage(message);
-      setFinalizedAppointment(updatedAppointment); // Store the finalized appointment
-      setIsGeneratingMessage(false);
-      
-      toast({
-          title: 'Bono actualizado',
-          description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
-      });
+        setIsGeneratingMessage(true);
+        setStep('voucherUpdateMessage');
+        setVoucherPayingClient(payerClient); // Ensure client is set here
+
+        let message = '';
+        try {
+            const result = await generateVoucherUpdateWhatsapp({
+                clientName: payerClient.name.split(' ')[0],
+                remainingSessions: payerClient.voucher.sessions - 1,
+                businessName: profile?.name,
+                website: socials.website ? profile?.website : undefined,
+                instagram: socials.instagram ? profile?.instagram : undefined,
+                facebook: socials.facebook ? profile?.facebook : undefined,
+                tiktok: socials.tiktok ? profile?.tiktok : undefined,
+                youtube: socials.youtube ? profile?.youtube : undefined,
+            });
+            message = result.whatsappMessage;
+        } catch (e) {
+            console.error("Failed to generate voucher update message", e);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudo generar el mensaje de actualización del bono."
+            });
+            setIsGeneratingMessage(false);
+            setStep('paymentForm'); // Go back to payment form on error
+            setVoucherPayingClient(null); // Reset client on error
+            return;
+        }
+
+        const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
+        const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
+        setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
+
+        const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
+        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
+        
+        setGeneratedMessage(message);
+        setFinalizedAppointment(updatedAppointment); // Store the finalized appointment
+        setIsGeneratingMessage(false);
+
+        toast({
+            title: 'Bono actualizado',
+            description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
+        });
 
     } else {
         const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
@@ -192,11 +192,9 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   };
   
   const handleClose = () => {
-    // If an appointment was finalized (e.g., voucher payment), update it now.
     if (finalizedAppointment) {
       onAppointmentFinished(finalizedAppointment);
     }
-    // This will trigger the useEffect in the parent to nullify the appointment prop, closing the dialog.
     onOpenChange(false);
   }
   
@@ -411,3 +409,5 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     </Dialog>
   );
 }
+
+    
