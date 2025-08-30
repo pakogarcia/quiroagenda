@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Client, Voucher, VoucherSale } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAppData } from '@/context/app-data-context';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 
 const voucherSaleSchema = z.object({
   clientId: z.string({ required_error: 'Debes seleccionar un cliente.' }),
@@ -44,16 +44,19 @@ export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
     },
   });
 
-  const performSale = (values: VoucherSaleFormValues) => {
+  const performSale = (values: VoucherSaleFormValues, combineSessions = false) => {
     const selectedClient = clients.find(c => c.id === values.clientId);
     if (!selectedClient) {
       toast({ variant: 'destructive', title: 'Error', description: 'Cliente no encontrado.' });
       return;
     }
+    
+    const existingSessions = (combineSessions && selectedClient.voucher) ? selectedClient.voucher.sessions : 0;
+    const newTotalSessions = values.sessions + existingSessions;
 
     const newVoucher: Voucher = {
-        sessions: values.sessions,
-        totalSessions: values.sessions,
+        sessions: newTotalSessions,
+        totalSessions: newTotalSessions,
         price: values.amount,
     };
     
@@ -90,9 +93,9 @@ export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
     }
   };
 
-  const handleConfirmOverwrite = () => {
+  const handleConfirm = (combine: boolean) => {
     if (pendingSale) {
-      performSale(pendingSale);
+      performSale(pendingSale, combine);
     }
     setIsConfirmOpen(false);
     setPendingSale(null);
@@ -203,20 +206,29 @@ export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
             </div>
         </form>
         </Form>
-        <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Sobrescribir Bono Existente</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Este cliente ya tiene un bono con {clientWithVoucher?.sessions} sesiones restantes. ¿Estás seguro de que quieres reemplazarlo por este nuevo bono? Las sesiones restantes del bono anterior se perderán.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setPendingSale(null)}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleConfirmOverwrite}>Sí, Reemplazar Bono</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Bono Existente Detectado</DialogTitle>
+                    <DialogDescription>
+                        Este cliente ya tiene un bono con <span className="font-bold">{clientWithVoucher?.sessions}</span> sesiones restantes. ¿Qué quieres hacer?
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex-col sm:flex-col sm:justify-center gap-2 pt-4">
+                    <Button onClick={() => handleConfirm(false)}>
+                        Reemplazar Bono (se perderán las {clientWithVoucher?.sessions} sesiones anteriores)
+                    </Button>
+                    <Button variant="outline" onClick={() => handleConfirm(true)}>
+                        Sumar Sesiones (tendrá un total de {(clientWithVoucher?.sessions || 0) + (pendingSale?.sessions || 0)} sesiones)
+                    </Button>
+                    <DialogClose asChild>
+                         <Button type="button" variant="ghost" onClick={() => setPendingSale(null)}>
+                            Cancelar
+                        </Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </>
   );
 }
