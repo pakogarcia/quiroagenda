@@ -55,6 +55,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [isGeneratingMessage, setIsGeneratingMessage] = React.useState(false);
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
+  const [finalAppointmentState, setFinalAppointmentState] = React.useState<Appointment | null>(null);
   const { toast } = useToast();
 
   const form = useForm<PaymentFormValues>({
@@ -74,6 +75,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     setVoucherPayingClient(null);
     setGeneratedMessage('');
     setIsGeneratingMessage(false);
+    setFinalAppointmentState(null);
 
     const defaultPayment = appointment?.payment;
     const currentClient = appointment ? clients.find(c => c.phone === appointment.clientPhone) : null;
@@ -175,7 +177,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
         const updatedAppointment = { ...appointment, status: 'completed', payment };
         
-        onAppointmentFinished(updatedAppointment);
+        setFinalAppointmentState(updatedAppointment);
 
         toast({
             title: 'Bono actualizado',
@@ -206,7 +208,9 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 title: "Error",
                 description: "No se pudo generar el mensaje de actualización del bono. La cita se ha guardado igualmente."
             });
-            // Still close the dialog if message generation fails
+             if (finalAppointmentState) {
+                onAppointmentFinished(finalAppointmentState);
+            }
             onOpenChange(false);
         } finally {
             setIsGeneratingMessage(false);
@@ -225,6 +229,9 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   };
   
   const handleClose = () => {
+    if (finalAppointmentState) {
+        onAppointmentFinished(finalAppointmentState);
+    }
     onOpenChange(false);
   }
   
