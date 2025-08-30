@@ -5,7 +5,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound, Edit } from 'lucide-react';
 
 
 export default function ManualPage() {
@@ -115,7 +115,8 @@ export default function ManualPage() {
                      <ul className="list-disc pl-5 space-y-1 mt-2">
                       <li><strong>Datos y Detalles:</strong> Su información de contacto y cualquier nota importante (alergias, preferencias, etc.).</li>
                       <li><strong>Resumen Financiero y de Servicios:</strong> Tarjetas con el total facturado, citas completadas, ausencias y sus servicios más frecuentes.</li>
-                      <li><strong>Historial Completo de Citas:</strong> Una tabla con todas sus citas (pasadas y futuras), el servicio realizado, su estado y los detalles de pago de cada una.</li>
+                      <li><strong>Historial Completo:</strong> Una tabla con todas sus citas y compras de bonos.</li>
+                      <li><strong>Edición de Pagos:</strong> ¿Te equivocaste al registrar un pago? Haz clic en el icono de editar (<Edit className="inline h-4 w-4" />) junto a una cita completada o una compra de bono para corregir el importe o el método de pago.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
