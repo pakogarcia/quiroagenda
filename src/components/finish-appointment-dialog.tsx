@@ -146,7 +146,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   const handlePaymentSubmit = async (data: PaymentFormValues) => {
     if (!appointment) return;
 
-    // Logic for when editing a payment and switching from voucher to another method
     if (isEditing && appointment.payment?.method === 'voucher' && data.paymentMethod !== 'voucher') {
         if (data.refundVoucher) {
             const originalPayer = clients.find(c => c.id === appointment.payment?.payerClientId);
@@ -160,12 +159,6 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 toast({ title: 'Sesión devuelta', description: `Se ha devuelto una sesión al bono de ${originalPayer.name}.` });
             }
         }
-        const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
-        const updatedAppointment = { ...appointment, status: 'completed', payment };
-        onAppointmentFinished(updatedAppointment);
-        toast({ title: 'Pago actualizado', description: 'El pago se ha actualizado correctamente.' });
-        onOpenChange(false);
-        return;
     }
 
     if (data.paymentMethod === 'voucher') {
@@ -178,12 +171,13 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         const updatedVoucher: Voucher = { ...payerClient.voucher, sessions: payerClient.voucher.sessions - 1 };
         const updatedPayerClient: Client = { ...payerClient, voucher: updatedVoucher };
         setClients(prevClients => prevClients.map(c => c.id === updatedPayerClient.id ? updatedPayerClient : c));
-        setVoucherPayingClient(updatedPayerClient);
         
         const payment: Payment = { method: 'voucher', amount: 0, payerClientId: data.voucherPayerId };
         const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
-        setFinalAppointmentState(updatedAppointment);
         
+        setFinalAppointmentState(updatedAppointment);
+        setVoucherPayingClient(updatedPayerClient);
+
         toast({
             title: 'Bono actualizado',
             description: `Se ha descontado una sesión del bono de ${updatedPayerClient.name}.`,
@@ -195,7 +189,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         try {
             const result = await generateVoucherUpdateWhatsapp({
                 clientName: updatedPayerClient.name.split(' ')[0],
-                remainingSessions: updatedPayerClient.voucher!.sessions,
+                remainingSessions: updatedVoucher.sessions,
                 businessName: profile?.name,
                 website: socials.website ? profile?.website : undefined,
                 instagram: socials.instagram ? profile?.instagram : undefined,
@@ -390,7 +384,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
       case 'paymentForm':
         return (
           <>
-            <Button variant="ghost" onClick={isEditing ? handleCloseDialog : () => setStep('selectAction')}>
+            <Button variant="ghost" onClick={isEditing ? () => onOpenChange(false) : () => setStep('selectAction')}>
               {isEditing ? 'Cancelar' : 'Volver'}
             </Button>
             <Button type="submit" form="payment-form" disabled={form.formState.isSubmitting}>Confirmar</Button>
@@ -410,13 +404,22 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
   return (
     <Dialog open={!!appointment} onOpenChange={onOpenChange}>
-      <DialogContent onEscapeKeyDown={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent onEscapeKeyDown={(e) => {
+        if (step === 'voucherUpdateMessage') e.preventDefault();
+      }} onPointerDownOutside={(e) => {
+        if (step === 'voucherUpdateMessage') e.preventDefault();
+      }}>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Pago' : 'Finalizar Cita'}: {appointment?.clientName}</DialogTitle>
           {step === 'selectAction' && (
             <DialogDescription>Elige una acción para esta cita.</DialogDescription>
           )}
-           {step === 'paymentForm' && isEditing && (
+           {step === 'paymentForm' && (
+            <DialogDescription>
+              {isEditing ? 'Modifica los detalles del pago.' : 'Registra el pago de la cita.'}
+            </DialogDescription>
+          )}
+          {step === 'paymentForm' && isEditing && (
             <Alert variant="destructive" className="mt-2">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>
@@ -484,4 +487,3 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
   );
 }
 
-    
