@@ -17,6 +17,8 @@ import { MessageSquare, Send, CheckCircle, Smartphone, Instagram, Facebook, Yout
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useAppData } from '@/context/app-data-context';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 type Reminder = {
   appointmentId: string;
@@ -39,6 +41,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'generate' | 'finished'>('select');
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
+  const [isConfirmSentOpen, setIsConfirmSentOpen] = React.useState(false);
 
 
   const appointmentsToRemind = appointments.filter(apt => !apt.reminderSent);
@@ -93,6 +96,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
 
   const handleMarkAsSent = () => {
     onRemindersSent(reminders.map(r => r.appointmentId));
+    setIsConfirmSentOpen(false);
     onOpenChange(false);
   };
   
@@ -209,7 +213,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
   const renderFooter = () => {
     if (step === 'finished') {
         return (
-             <Button variant="default" onClick={handleMarkAsSent}>
+             <Button variant="default" onClick={() => setIsConfirmSentOpen(true)}>
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Marcar como Enviados y Cerrar
             </Button>
@@ -227,6 +231,7 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
   }
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -281,6 +286,21 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={isConfirmSentOpen} onOpenChange={setIsConfirmSentOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>¿Marcar como enviados?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Esta acción marcará todos los recordatorios generados como "enviados" y no podrás volver a generarlos desde esta pantalla. ¿Estás seguro?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleMarkAsSent}>Confirmar</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
