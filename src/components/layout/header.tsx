@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Leaf, Users, Calculator, Info, BookOpen, Tag } from 'lucide-react';
+import { CalendarDays, Leaf, Users, Calculator, Info, BookOpen, Tag, Send } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { BusinessProfile } from '@/lib/types';
@@ -81,6 +81,12 @@ export function AppHeader({ className }: { className?: string }) {
           <Button variant="outline" size="sm">
             <Tag className="h-4 w-4 md:mr-2" />
             <span className="hidden md:inline">Servicios</span>
+          </Button>
+        </Link>
+        <Link href="/comunicaciones">
+           <Button variant="outline" size="sm">
+            <Send className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Comunicaciones</span>
           </Button>
         </Link>
         <Link href="/contabilidad">

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -7,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag, MessageSquare, ShoppingCart, CreditCard } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag, MessageSquare, ShoppingCart, CreditCard, Cake } from 'lucide-react';
 import type { Client, Appointment, Payment, PaymentMethod, VoucherSale } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -15,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ClientForm } from '@/components/client-form';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { FinishAppointmentDialog } from '@/components/finish-appointment-dialog';
@@ -223,11 +222,17 @@ export default function ClientDetailPage() {
                     <Card className="md:col-span-3">
                         <CardHeader>
                             <CardTitle className="text-2xl text-accent flex items-center gap-3"><User className="w-6 h-6"/>{`${client.name} ${client.lastName}`}</CardTitle>
-                            <CardDescription className="flex items-center gap-2 pt-2">
+                            <CardDescription className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2">
                                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                                     <MessageSquare className="w-4 h-4"/>
                                     <span>{client.phone}</span>
                                 </a>
+                                {client.birthDate && (
+                                    <span className="flex items-center gap-2 text-muted-foreground">
+                                        <Cake className="w-4 h-4" />
+                                        <span>{format(parseISO(client.birthDate), "d 'de' MMMM", { locale: es })}</span>
+                                    </span>
+                                )}
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
@@ -445,7 +450,3 @@ export default function ClientDetailPage() {
         </div>
     );
 }
-
-    
-
-    

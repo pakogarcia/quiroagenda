@@ -19,7 +19,6 @@ import { SplashScreen } from '@/components/layout/splash-screen';
 import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
-import { OfferDialog } from '@/components/offer-dialog';
 import { useAppData } from '@/context/app-data-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -29,7 +28,6 @@ export default function ContabilidadPage() {
     const { appointments, voucherSales, isLoading, loadData } = useAppData();
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
     const [isVoucherSaleDialogOpen, setIsVoucherSaleDialogOpen] = React.useState(false);
-    const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
     const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
     
     const filteredAppointments = React.useMemo(() => {
@@ -62,7 +60,7 @@ export default function ContabilidadPage() {
             .sort((a, b) => {
                 const dateA = new Date(a.type === 'appointment' ? a.dateTime : a.date);
                 const dateB = new Date(b.type === 'appointment' ? b.dateTime : b.date);
-                return dateB.getTime() - dateA.getTime();
+                return dateB.getTime() - new Date(dateA).getTime();
             });
             
     }, [filteredAppointments, voucherSales, dateRange]);
@@ -216,10 +214,6 @@ export default function ContabilidadPage() {
                             <Button variant="outline" onClick={() => setIsVoucherSaleDialogOpen(true)}>
                                 <ShoppingCart className="h-4 w-4 md:mr-2" />
                                 <span className="hidden md:inline">Vender Bono</span>
-                            </Button>
-                            <Button variant="outline" onClick={() => setIsOfferDialogOpen(true)}>
-                                <Gift className="h-4 w-4 md:mr-2" />
-                                <span className="hidden md:inline">Crear Oferta</span>
                             </Button>
                             {dateRange?.from && dateRange.to && (
                                 <Button variant="outline" onClick={handlePrint}>
@@ -466,10 +460,6 @@ export default function ContabilidadPage() {
             <VoucherSaleDialog
                 isOpen={isVoucherSaleDialogOpen}
                 onOpenChange={setIsVoucherSaleDialogOpen}
-            />
-            <OfferDialog
-                isOpen={isOfferDialogOpen}
-                onOpenChange={setIsOfferDialogOpen}
             />
         </>
     );

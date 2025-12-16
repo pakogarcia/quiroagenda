@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import type { Client, Voucher } from '@/lib/types';
 import { Separator } from './ui/separator';
-import { Gift, Trash2, FileText } from 'lucide-react';
+import { Gift, Trash2, FileText, Cake } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from './ui/textarea';
 import { useAppData } from '@/context/app-data-context';
@@ -21,6 +21,7 @@ const createClientSchema = (allClients: Client[], editingClientId?: string) =>
     name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
     lastName: z.string().min(2, { message: 'El apellido debe tener al menos 2 caracteres.' }),
     phone: z.string().min(9, { message: 'Por favor, introduce un número de teléfono válido.' }),
+    birthDate: z.string().optional(),
     details: z.string().optional(),
     voucherSessions: z.coerce.number().optional(),
     voucherPrice: z.coerce.number().optional(),
@@ -57,6 +58,7 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
       name: client?.name || '',
       lastName: client?.lastName || '',
       phone: client?.phone || '+34 ',
+      birthDate: client?.birthDate || '',
       details: client?.details || '',
       voucherSessions: client?.voucher?.totalSessions || undefined,
       voucherPrice: client?.voucher?.price || undefined,
@@ -67,10 +69,8 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
     let voucher: Voucher | undefined;
     
     if (client?.voucher && client.voucher.sessions > 0) {
-        // If an active voucher exists, don't change it from this form.
         voucher = client.voucher;
     } else if (values.voucherSessions && values.voucherSessions > 0) {
-        // Create a new voucher only if one doesn't exist or is depleted
         voucher = {
             sessions: values.voucherSessions,
             totalSessions: values.voucherSessions,
@@ -84,6 +84,7 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
       name: values.name,
       lastName: values.lastName,
       phone: values.phone,
+      birthDate: values.birthDate,
       details: values.details,
       voucher: voucher,
     });
@@ -101,6 +102,7 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
       name: form.getValues('name'),
       lastName: form.getValues('lastName'),
       phone: form.getValues('phone'),
+      birthDate: form.getValues('birthDate'),
       details: form.getValues('details'),
       voucher: undefined,
     });
@@ -145,19 +147,34 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
                 </FormItem>
             )}
             />
-            <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Teléfono del Cliente</FormLabel>
-                <FormControl>
-                    <Input placeholder="+34 123 456 789" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Teléfono del Cliente</FormLabel>
+                    <FormControl>
+                        <Input placeholder="+34 123 456 789" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="birthDate"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Cake className="w-4 h-4"/> Fecha de Nacimiento</FormLabel>
+                    <FormControl>
+                        <Input type="date" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
             <FormField
             control={form.control}
             name="details"

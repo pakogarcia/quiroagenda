@@ -32,6 +32,7 @@ export type Client = {
   name: string;
   lastName: string;
   phone: string;
+  birthDate?: string; // Stored as 'yyyy-MM-dd' string
   details?: string;
   voucher?: Voucher;
 };
