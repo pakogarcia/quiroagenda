@@ -15,6 +15,7 @@ import {z} from 'genkit';
 const GeneratePendingPaymentWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the client with a pending payment.'),
   businessName: z.string().optional().describe('The name of the business sending the message.'),
+  customMessage: z.string().optional().describe('An optional custom message to add to the reminder.'),
 });
 
 export type GeneratePendingPaymentWhatsappInput = z.infer<typeof GeneratePendingPaymentWhatsappInputSchema>;
@@ -38,7 +39,7 @@ const generatePendingPaymentWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp amable y conciso para recordarle a un cliente que tiene un pago pendiente de una cita pasada.
 
   Plantilla:
-  "¡Hola {{clientName}}! 👋 Te escribimos de parte de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} para recordarte amablemente que quedó un pago pendiente de una de tus últimas visitas. Puedes realizar el pago en tu próxima cita o contactarnos si lo prefieres. ¡Muchas gracias! 😊"
+  "¡Hola {{clientName}}! 👋 Te escribimos de parte de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} para recordarte amablemente que quedó un pago pendiente de una de tus últimas visitas.{{#if customMessage}} {{customMessage}}.{{/if}} Puedes realizar el pago en tu próxima cita o contactarnos si lo prefieres. ¡Muchas gracias! 😊"
   `,
 });
 

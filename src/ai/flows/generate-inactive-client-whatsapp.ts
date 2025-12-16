@@ -16,6 +16,7 @@ const GenerateInactiveClientWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the inactive client.'),
   inactiveDays: z.number().describe('The number of days since the client last visited.'),
   businessName: z.string().optional().describe('The name of the business sending the message.'),
+  customMessage: z.string().optional().describe('An optional custom message to add to the message.'),
 });
 
 export type GenerateInactiveClientWhatsappInput = z.infer<typeof GenerateInactiveClientWhatsappInputSchema>;
@@ -39,7 +40,7 @@ const generateInactiveClientWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp cercano y amigable para un cliente inactivo.
 
   Plantilla:
-  "¡Hola {{clientName}}! 👋 Te echamos de menos en {{#if businessName}}_{{businessName}}_{{else}}el centro{{/if}}. Hace ya un tiempo desde tu última visita y queríamos saber si todo va bien. ¿Te apetece volver a cuidarte? ¡Nos encantaría verte de nuevo! ✨"
+  "¡Hola {{clientName}}! 👋 Te echamos de menos en {{#if businessName}}_{{businessName}}_{{else}}el centro{{/if}}. Hace ya un tiempo desde tu última visita y queríamos saber si todo va bien.{{#if customMessage}} {{customMessage}}.{{/if}} ¿Te apetece volver a cuidarte? ¡Nos encantaría verte de nuevo! ✨"
   `,
 });
 

@@ -15,6 +15,7 @@ import {z} from 'genkit';
 const GenerateBirthdayWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the client celebrating their birthday.'),
   businessName: z.string().optional().describe('The name of the business sending the message.'),
+  customMessage: z.string().optional().describe('An optional custom message to add to the message.'),
 });
 
 export type GenerateBirthdayWhatsappInput = z.infer<typeof GenerateBirthdayWhatsappInputSchema>;
@@ -38,7 +39,7 @@ const generateBirthdayWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp corto y alegre para felicitar a un cliente por su cumpleaños.
 
   Plantilla:
-  "¡Feliz cumpleaños, {{clientName}}! 🎂 De parte de todo el equipo de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}}, te deseamos un día maravilloso lleno de alegría. ¡Un abrazo grande! ✨"
+  "¡Feliz cumpleaños, {{clientName}}! 🎂 De parte de todo el equipo de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}}, te deseamos un día maravilloso lleno de alegría.{{#if customMessage}} {{customMessage}}.{{/if}} ¡Un abrazo grande! ✨"
   `,
 });
 

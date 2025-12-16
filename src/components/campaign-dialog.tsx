@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -39,6 +38,7 @@ type GeneratedMessage = {
   clientPhone: string;
   message: string;
   appointmentId?: string;
+  customNote: string;
 };
 
 type CampaignDialogProps = {
@@ -107,29 +107,29 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     .filter(c => !!c.birthDate)
                     .map(c => {
                         const birthDate = parseISO(c.birthDate!);
-                        // Set year to current year to normalize for comparison
                         birthDate.setFullYear(today.getFullYear());
                         let birthDayOfYear = getDayOfYear(birthDate);
 
-                        // Adjust for leap years if necessary
-                        if (isLeapYear && birthDayOfYear > 59) birthDayOfYear++; // After Feb 28
-                        if (!isLeapYear && getMonth(parseISO(c.birthDate!)) > 1) birthDayOfYear--;
+                        if (isLeapYear && birthDayOfYear > 59) birthDayOfYear++;
+                        if (!isLeapYear && getMonth(parseISO(c.birthDate!)) > 1 && getMonth(parseISO(c.birthDate!)) === 2 && getDate(parseISO(c.birthDate!)) === 29) {
+                           // Approx for Feb 29 on non-leap year
+                        } else if (!isLeapYear && getMonth(parseISO(c.birthDate!)) > 1) {
+                           birthDayOfYear--;
+                        }
                         
                         const diff = birthDayOfYear - todayDayOfYear;
                         
-                        // Handle year wrap-around for birthdays in early January when checking in late December
                         let proximity = diff;
-                        if (diff < -180) { // e.g., today is Dec 30, birthday is Jan 2
-                            proximity = diff + 365;
+                        if (diff < -180) { 
+                            proximity = diff + (isLeapYear ? 366 : 365);
                         }
-                        // Handle year wrap-around for birthdays in late December when checking in early January
-                        if (diff > 180) { // e.g., today is Jan 2, birthday is Dec 30
-                            proximity = diff - 365;
+                        if (diff > 180) {
+                            proximity = diff - (isLeapYear ? 366 : 365);
                         }
 
                         return { ...c, proximity };
                     })
-                    .filter(c => c.proximity >= -7 && c.proximity <= 14) // Past 7 days, next 14 days
+                    .filter(c => c.proximity >= -7 && c.proximity <= 14)
                     .sort((a, b) => a.proximity - b.proximity);
             }
         case 'inactiveClients': {
@@ -223,7 +223,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             clientName: client.name, 
                             clientPhone: client.phone, 
                             message,
-                            appointmentId: nextAppointment.id
+                            appointmentId: nextAppointment.id,
+                            customNote: '',
                         });
                     }
                     break;
@@ -231,13 +232,13 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 case 'pendingPayments': {
                     const result = await generatePendingPaymentWhatsapp({ clientName: client.name, businessName: profile?.name });
                     message = result.whatsappMessage;
-                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     break;
                 }
                 case 'birthdays': {
                     const result = await generateBirthdayWhatsapp({ clientName: client.name, businessName: profile?.name });
                     message = result.whatsappMessage;
-                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     break;
                 }
                  case 'inactiveClients': {
@@ -248,7 +249,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                         const days = differenceInDays(new Date(), lastAppointment.dateTime);
                         const result = await generateInactiveClientWhatsapp({ clientName: client.name, inactiveDays: days, businessName: profile?.name });
                         message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     }
                     break;
                  }
@@ -260,7 +261,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                         businessName: profile?.name,
                     });
                     message = result.whatsappMessage;
-                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     break;
                 }
                 case 'voucherStatus': {
@@ -272,7 +273,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             businessName: profile?.name,
                         });
                         message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     }
                     break;
                 }
@@ -286,7 +287,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(generated);
     setIsLoading(false);
     setStep('finished');
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services, onOpenChange]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -297,6 +298,12 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
     setIsConfirmSentOpen(false);
     onOpenChange(false);
+  };
+
+  const handleCustomNoteChange = (clientId: string, note: string) => {
+    setGeneratedMessages(prev => prev.map(msg => 
+        msg.clientId === clientId ? { ...msg, customNote: note } : msg
+    ));
   };
   
   const handleSelectAll = (checked: boolean) => {
@@ -381,7 +388,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
                         >
-                            <MessageCard message={msg} />
+                            <MessageCard 
+                                message={msg} 
+                                onCustomNoteChange={handleCustomNoteChange}
+                            />
                         </motion.div>
                     ))}
                     </AnimatePresence>
@@ -448,11 +458,13 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     )
   }
 
-  const handleDialogClose = () => {
-    if (welcomeMessage) {
-        setWelcomeMessage(null);
+  const handleDialogClose = (isOpen: boolean) => {
+    if (!isOpen) {
+        if (welcomeMessage) {
+            setWelcomeMessage(null);
+        }
+        onOpenChange(false);
     }
-    onOpenChange(false);
   }
 
   const renderFooter = () => {
@@ -465,7 +477,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 </Button>
             );
         }
-        return <Button variant="outline" onClick={handleDialogClose}>Cerrar</Button>;
+        return <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>;
     }
     if (step === 'select') {
         let disabled = isLoading;
@@ -493,7 +505,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   return (
     <>
-      <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={onOpenChange}>
+      <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
@@ -529,7 +541,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
           onOpenChange={(isOpen) => {
               if (!isOpen) {
                   setWelcomeMessage(null);
-                  onOpenChange(false); 
+                  onOpenChange(false);
               }
           }}
         />
@@ -537,8 +549,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   );
 }
 
-function MessageCard({ message }: { message: GeneratedMessage }) {
-    const whatsappLink = `https://wa.me/${message.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message.message)}`;
+function MessageCard({ message, onCustomNoteChange }: { message: GeneratedMessage; onCustomNoteChange: (clientId: string, note: string) => void; }) {
+    const fullMessage = `${message.message}${message.customNote ? `\n\n${message.customNote}` : ''}`;
+    const whatsappLink = `https://wa.me/${message.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(fullMessage)}`;
+
     return (
         <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
@@ -551,6 +565,16 @@ function MessageCard({ message }: { message: GeneratedMessage }) {
             </div>
             <Separator className="my-2" />
             <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">"{message.message}"</p>
+             <div className="mt-3">
+                <Label htmlFor={`custom-note-${message.clientId}`} className="text-xs font-semibold">Nota Adicional (opcional)</Label>
+                <Textarea
+                    id={`custom-note-${message.clientId}`}
+                    className="mt-1 text-sm"
+                    placeholder="Escribe aquí un texto personal..."
+                    value={message.customNote}
+                    onChange={(e) => onCustomNoteChange(message.clientId, e.target.value)}
+                />
+            </div>
         </div>
     )
 }
