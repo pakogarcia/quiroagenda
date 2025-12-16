@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle } from 'lucide-react';
+import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX } from 'lucide-react';
 import { CampaignDialog, CampaignType } from '@/components/campaign-dialog';
 
 const campaignOptions = [
@@ -19,6 +19,12 @@ const campaignOptions = [
     title: 'Notificar Pagos Pendientes',
     description: 'Contacta a clientes con citas completadas pero no abonadas.',
     icon: AlertCircle,
+  },
+    {
+    type: 'noShow',
+    title: 'Contactar por Ausencia (No Show)',
+    description: 'Envía un mensaje a clientes que no se presentaron a su cita.',
+    icon: UserX,
   },
   {
     type: 'voucherStatus',

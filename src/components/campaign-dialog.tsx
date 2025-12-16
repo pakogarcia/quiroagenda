@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
 import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check } from 'lucide-react';
+import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check, UserX } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { type DateRange } from 'react-day-picker';
@@ -29,9 +29,10 @@ import { generateWelcomeWhatsapp } from '@/ai/flows/generate-new-appointment-wha
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { NewAppointmentConfirmationDialog } from './new-appointment-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { generateNoShowWhatsapp } from '@/ai/flows/generate-no-show-whatsapp';
 
 
-export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus';
+export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus' | 'noShow';
 
 type GeneratedMessage = {
   clientId: string;
@@ -54,7 +55,8 @@ const campaignDetails = {
     inactiveClients: { title: 'Clientes Inactivos', icon: Clock },
     newClients: { title: 'Bienvenida a Nuevos Clientes', icon: Users },
     offer: { title: 'Campaña de Oferta', icon: Gift },
-    voucherStatus: { title: 'Notificar Sesiones de Bono', icon: Gift }
+    voucherStatus: { title: 'Notificar Sesiones de Bono', icon: Gift },
+    noShow: { title: 'Contactar por Ausencia (No Show)', icon: UserX },
 };
 
 export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogProps) {
@@ -99,6 +101,14 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     .map(apt => apt.clientPhone)
             );
             return clients.filter(c => pendingPaymentPhones.has(c.phone));
+        }
+        case 'noShow': {
+            const noShowPhones = new Set(
+                appointments
+                    .filter(apt => apt.status === 'no-show')
+                    .map(apt => apt.clientPhone)
+            );
+            return clients.filter(c => noShowPhones.has(c.phone));
         }
         case 'birthdays': {
                 const todayDayOfYear = getDayOfYear(today);
@@ -177,10 +187,11 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
   }, [campaignType]);
 
-  const handleGenerateMessages = useCallback(async () => {
+  const handleGenerateMessages = useCallback(async (customNotes: Record<string, string>) => {
     if (!campaignType) return;
     
     if (campaignType === 'newClients') {
+        if (!newClientName || !newClientPhone) return;
         const fakeAppointment: Appointment = {
             id: 'new-client-welcome',
             clientName: newClientName,
@@ -191,6 +202,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             status: 'scheduled'
         }
         setWelcomeMessage(fakeAppointment);
+        onOpenChange(false);
         return;
     }
 
@@ -204,6 +216,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
     for (const client of selectedClients) {
         let message = '';
+        const customNote = customNotes[client.id] || '';
         try {
             switch(campaignType) {
                 case 'reminders': {
@@ -217,6 +230,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             appointmentDateTime: format(nextAppointment.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
                             clientPhoneNumber: client.phone,
                             businessName: profile?.name,
+                            customMessage: customNote,
                         });
                         message = result.whatsappMessage;
                         generated.push({ 
@@ -231,13 +245,29 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     break;
                 }
                 case 'pendingPayments': {
-                    const result = await generatePendingPaymentWhatsapp({ clientName: client.name, businessName: profile?.name });
+                    const result = await generatePendingPaymentWhatsapp({ clientName: client.name, businessName: profile?.name, customMessage: customNote });
                     message = result.whatsappMessage;
                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     break;
                 }
+                case 'noShow': {
+                    const lastNoShow = appointments
+                        .filter(a => a.clientPhone === client.phone && a.status === 'no-show')
+                        .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())[0];
+                    if (lastNoShow) {
+                         const result = await generateNoShowWhatsapp({
+                            clientName: client.name,
+                            businessName: profile?.name,
+                            appointmentDateTime: format(lastNoShow.dateTime, "d 'de' MMMM", { locale: es }),
+                            customMessage: customNote,
+                        });
+                        message = result.whatsappMessage;
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                    }
+                    break;
+                }
                 case 'birthdays': {
-                    const result = await generateBirthdayWhatsapp({ clientName: client.name, businessName: profile?.name });
+                    const result = await generateBirthdayWhatsapp({ clientName: client.name, businessName: profile?.name, customMessage: customNote });
                     message = result.whatsappMessage;
                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     break;
@@ -248,7 +278,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                         .sort((a,b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())[0];
                     if (lastAppointment) {
                         const days = differenceInDays(new Date(), lastAppointment.dateTime);
-                        const result = await generateInactiveClientWhatsapp({ clientName: client.name, inactiveDays: days, businessName: profile?.name });
+                        const result = await generateInactiveClientWhatsapp({ clientName: client.name, inactiveDays: days, businessName: profile?.name, customMessage: customNote });
                         message = result.whatsappMessage;
                         generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
                     }
@@ -288,7 +318,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(generated);
     setIsLoading(false);
     setStep('finished');
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services, onOpenChange]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -300,18 +330,13 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setIsConfirmSentOpen(false);
     onOpenChange(false);
   };
-
-  const handleCustomNoteChange = (clientId: string, note: string) => {
-    setGeneratedMessages(prev => prev.map(msg => 
-        msg.clientId === clientId ? { ...msg, customNote: note } : msg
-    ));
-  };
   
   const handleSelectAll = (checked: boolean) => {
     setSelectedClientIds(checked ? targetClients.map(c => c.id) : []);
   };
   
   const details = campaignType ? campaignDetails[campaignType] : null;
+  const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
 
   const renderConfiguration = () => {
       if (campaignType === 'offer') {
@@ -390,8 +415,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             exit={{ opacity: 0 }}
                         >
                             <MessageCard 
-                                message={msg} 
-                                onCustomNoteChange={handleCustomNoteChange}
+                                message={msg}
                             />
                         </motion.div>
                     ))}
@@ -432,23 +456,36 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 <ScrollArea className="h-[350px] pr-4">
                     <div className="space-y-3">
                         {targetClients.map(c => (
-                            <div key={c.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted">
-                                <Checkbox
-                                    id={c.id}
-                                    onCheckedChange={(checked) => {
-                                        setSelectedClientIds(prev => 
-                                            checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
-                                        );
-                                    }}
-                                    checked={selectedClientIds.includes(c.id)}
-                                />
-                                <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
-                                    <span className="font-semibold">{c.name} {c.lastName}</span>
-                                    <span className="text-sm text-muted-foreground">{c.phone}</span>
-                                     {campaignType === 'birthdays' && c.birthDate && (
-                                        <span className="text-xs text-primary">{format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es })}</span>
-                                    )}
-                                </Label>
+                            <div key={c.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
+                                <div className="flex items-center space-x-3">
+                                    <Checkbox
+                                        id={c.id}
+                                        onCheckedChange={(checked) => {
+                                            setSelectedClientIds(prev => 
+                                                checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                                            );
+                                        }}
+                                        checked={selectedClientIds.includes(c.id)}
+                                    />
+                                    <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
+                                        <span className="font-semibold">{c.name} {c.lastName}</span>
+                                        <span className="text-sm text-muted-foreground">{c.phone}</span>
+                                        {campaignType === 'birthdays' && c.birthDate && (
+                                            <span className="text-xs text-primary">{format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es })}</span>
+                                        )}
+                                    </Label>
+                                </div>
+                                 {selectedClientIds.includes(c.id) && (
+                                    <div className="pl-6 pt-2">
+                                       <Textarea
+                                            id={`custom-note-${c.id}`}
+                                            className="mt-1 text-sm h-16"
+                                            placeholder="Añadir nota personal (opcional)..."
+                                            value={customNotes[c.id] || ''}
+                                            onChange={(e) => setCustomNotes(prev => ({...prev, [c.id]: e.target.value}))}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -493,7 +530,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             : `Generar ${selectedClientIds.length} Mensaje(s)`;
 
         return (
-            <Button onClick={handleGenerateMessages} disabled={disabled}>
+            <Button onClick={() => handleGenerateMessages(customNotes)} disabled={disabled}>
                 <Send className="mr-2 h-4 w-4" />
                 {isLoading ? 'Generando...' : buttonText}
             </Button>
@@ -542,7 +579,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
           onOpenChange={(isOpen) => {
               if (!isOpen) {
                   setWelcomeMessage(null);
-                  handleDialogClose(false);
               }
           }}
         />
@@ -550,10 +586,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   );
 }
 
-function MessageCard({ message, onCustomNoteChange }: { message: GeneratedMessage; onCustomNoteChange: (clientId: string, note: string) => void; }) {
+function MessageCard({ message }: { message: GeneratedMessage; }) {
     const { toast } = useToast();
     const [isCopied, setIsCopied] = useState(false);
-    const fullMessage = `${message.message}${message.customNote ? `\n\n${message.customNote}` : ''}`;
+    const fullMessage = message.message;
     const whatsappLink = `https://wa.me/${message.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(fullMessage)}`;
 
     const handleCopy = () => {
@@ -584,18 +620,6 @@ function MessageCard({ message, onCustomNoteChange }: { message: GeneratedMessag
             </div>
             <Separator className="my-2" />
             <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">"{message.message}"</p>
-             <div className="mt-3">
-                <Label htmlFor={`custom-note-${message.clientId}`} className="text-xs font-semibold">Nota Adicional (opcional)</Label>
-                <Textarea
-                    id={`custom-note-${message.clientId}`}
-                    className="mt-1 text-sm"
-                    placeholder="Escribe aquí un texto personal..."
-                    value={message.customNote}
-                    onChange={(e) => onCustomNoteChange(message.clientId, e.target.value)}
-                />
-            </div>
         </div>
     )
 }
-
-    
