@@ -12,10 +12,16 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+const ServiceSchema = z.object({
+  name: z.string(),
+  price: z.number(),
+});
+
 const GenerateWelcomeWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the client.'),
   businessAddress: z.string().describe('The address of the business.'),
   businessName: z.string().optional().describe('The name of the business sending the confirmation.'),
+  services: z.array(ServiceSchema).optional().describe('A list of services offered by the business.'),
   website: z.string().url().or(z.literal('')).optional(),
   instagram: z.string().url().or(z.literal('')).optional(),
   facebook: z.string().url().or(z.literal('')).optional(),
@@ -41,10 +47,16 @@ const generateWelcomeWhatsappPrompt = ai.definePrompt({
   output: {schema: GenerateWelcomeWhatsappOutputSchema},
   prompt: `Eres un asistente virtual para un gabinete de masajes y estética. Tu tono es amigable y profesional.
 
-  Crea un mensaje de WhatsApp para dar la bienvenida a un nuevo cliente potencial que ha pedido información. El objetivo es presentarte y proporcionar la información de contacto. Usa la siguiente plantilla.
+  Crea un mensaje de WhatsApp para dar la bienvenida a un nuevo cliente potencial que ha pedido información. El objetivo es presentarte, proporcionar la lista de servicios con sus precios y los datos de contacto. Usa la siguiente plantilla.
 
   Plantilla:
-  "¡Hola {{clientName}}! Soy de {{businessName}}. Gracias por tu interés. Nos puedes encontrar en {{businessAddress}}. Para cualquier consulta, no dudes en contactarnos. ¡Te esperamos! ✨{{#if website}}\n\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! Soy de {{businessName}}. Gracias por tu interés. Nos puedes encontrar en {{businessAddress}}.
+{{#if services}}
+Estos son nuestros servicios principales:
+{{#each services}}- {{name}}: {{price}}€
+{{/each}}
+{{/if}}
+Para cualquier consulta, no dudes en contactarnos. ¡Te esperamos! ✨{{#if website}}\n\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   `,
 });
 

@@ -31,7 +31,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   const [error, setError] = React.useState('');
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
   const [isGenerating, setIsGenerating] = React.useState(false);
-  const { profile: businessProfile } = useAppData();
+  const { profile: businessProfile, services } = useAppData();
 
   const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : null;
   
@@ -50,9 +50,9 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
             }
              const result = await generateNewAppointmentWhatsapp({
                 clientName: appointment.clientName.split(' ')[0],
-                appointmentDateTime: format(appointment.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
                 businessAddress: businessProfile.address,
                 businessName: businessProfile.name,
+                services: services.map(s => ({ name: s.name, price: s.price })),
                 website: socials.website ? businessProfile.website : undefined,
                 instagram: socials.instagram ? businessProfile.instagram : undefined,
                 facebook: socials.facebook ? businessProfile.facebook : undefined,
@@ -81,7 +81,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
     } finally {
       setIsGenerating(false);
     }
-  }, [appointment, voucherUpdateData, businessProfile, socials, mode]);
+  }, [appointment, voucherUpdateData, businessProfile, socials, mode, services]);
 
 
   React.useEffect(() => {
@@ -108,12 +108,12 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
 
   const getDialogTitle = () => {
     if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Notificar Sesiones Restantes" : "Bono Actualizado";
-    return "Cita Confirmada";
+    return mode === 'newAppointment' && (clientData as Appointment)?.id ? "Cita Confirmada" : "Mensaje de Bienvenida";
   }
   
   const getDialogDescription = () => {
       if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Envía un mensaje a tu cliente para informarle de las sesiones que le quedan." : "Se ha descontado una sesión del bono. Puedes enviar una notificación por WhatsApp.";
-      return "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp.";
+      return mode === 'newAppointment' && (clientData as Appointment)?.id ? "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp." : "Envía un mensaje de presentación con tus servicios y datos de contacto a este nuevo cliente potencial.";
   }
 
   return (
@@ -185,6 +185,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
                              </div>
                         )}
                      </div>
+                     <Button variant="secondary" size="sm" onClick={generateMessage} disabled={isGenerating}>Regenerar Mensaje</Button>
                 </div>
             </>
         )}

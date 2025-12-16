@@ -28,6 +28,7 @@ import { generateInactiveClientWhatsapp } from '@/ai/flows/generate-inactive-cli
 import { generatePendingPaymentWhatsapp } from '@/ai/flows/generate-pending-payment-whatsapp';
 import { generateWelcomeWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
+import { NewAppointmentConfirmationDialog } from './new-appointment-confirmation-dialog';
 
 
 export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus';
@@ -56,7 +57,7 @@ const campaignDetails = {
 };
 
 export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogProps) {
-  const { clients, profile, appointments, setAppointments } = useAppData();
+  const { clients, profile, appointments, setAppointments, services } = useAppData();
   
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([]);
@@ -70,6 +71,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [inactiveDays, setInactiveDays] = useState<number>(90);
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
+  const [welcomeMessage, setWelcomeMessage] = React.useState<Appointment | null>(null);
 
   const targetClients = useMemo(() => {
     if (!campaignType) return [];
@@ -162,22 +164,33 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       setInactiveDays(90);
       setNewClientName('');
       setNewClientPhone('');
+      setWelcomeMessage(null);
     }
   }, [campaignType]);
 
   const handleGenerateMessages = useCallback(async () => {
     if (!campaignType) return;
     
+    if (campaignType === 'newClients') {
+        const fakeAppointment: Appointment = {
+            id: 'new-client-welcome',
+            clientName: newClientName,
+            clientPhone: newClientPhone,
+            dateTime: new Date(),
+            notes: '',
+            reminderSent: false,
+            status: 'scheduled'
+        }
+        setWelcomeMessage(fakeAppointment);
+        onOpenChange(false);
+        return;
+    }
+
     setIsLoading(true);
     setStep('generate');
     setGeneratedMessages([]);
 
-    let selectedClients;
-    if (campaignType === 'newClients') {
-        selectedClients = [{id: 'new', name: newClientName, phone: newClientPhone, lastName: ''}];
-    } else {
-        selectedClients = targetClients.filter(c => selectedClientIds.includes(c.id));
-    }
+    const selectedClients = targetClients.filter(c => selectedClientIds.includes(c.id));
     
     let generated: GeneratedMessage[] = [];
 
@@ -186,12 +199,11 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         try {
             switch(campaignType) {
                 case 'reminders': {
-                    const clientAppointments = appointments
+                     const nextAppointment = appointments
                         .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent && !isBefore(a.dateTime, startOfToday()))
-                        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+                        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
 
-                    if (clientAppointments.length > 0) {
-                        const nextAppointment = clientAppointments[0];
+                    if (nextAppointment) {
                         const result = await generateWhatsappReminder({
                             clientName: client.name.split(' ')[0],
                             appointmentDateTime: format(nextAppointment.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
@@ -257,25 +269,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     }
                     break;
                 }
-                 case 'newClients': {
-                    try {
-                        const result = await generateWelcomeWhatsapp({ 
-                            clientName: newClientName.split(' ')[0], 
-                            businessAddress: profile?.address || '',
-                            businessName: profile?.name,
-                            website: profile?.website,
-                            instagram: profile?.instagram,
-                            facebook: profile?.facebook,
-                            tiktok: profile?.tiktok,
-                            youtube: profile?.youtube,
-                        });
-
-                        generated.push({ clientId: 'new', clientName: newClientName, clientPhone: newClientPhone, message: result.whatsappMessage });
-                    } catch (error) {
-                        console.error('Failed to generate welcome message', error);
-                    }
-                    break;
-                }
             }
            
         } catch (error) {
@@ -286,7 +279,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(generated);
     setIsLoading(false);
     setStep('finished');
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services, onOpenChange]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -486,7 +479,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   return (
     <>
-    <Dialog open={!!campaignType} onOpenChange={onOpenChange}>
+    <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
@@ -517,6 +510,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
+     <NewAppointmentConfirmationDialog
+        appointment={welcomeMessage}
+        onOpenChange={() => setWelcomeMessage(null)}
+      />
     </>
   );
 }
@@ -538,5 +535,3 @@ function MessageCard({ message }: { message: GeneratedMessage }) {
         </div>
     )
 }
-
-    
