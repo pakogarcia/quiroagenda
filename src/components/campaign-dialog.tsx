@@ -19,22 +19,12 @@ import { type DateRange } from 'react-day-picker';
 import { Checkbox } from './ui/checkbox';
 import { useAppData } from '@/context/app-data-context';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { generateWhatsappReminder } from '@/ai/flows/generate-whatsapp-reminder';
-import { generateOfferWhatsapp } from '@/ai/flows/generate-offer-whatsapp';
 import { Input } from './ui/input';
-import { generateBirthdayWhatsapp } from '@/ai/flows/generate-birthday-whatsapp';
-import { generateInactiveClientWhatsapp } from '@/ai/flows/generate-inactive-client-whatsapp';
-import { generatePendingPaymentWhatsapp } from '@/ai/flows/generate-pending-payment-whatsapp';
-import { generateWelcomeWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
-import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { NewAppointmentConfirmationDialog } from './new-appointment-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { generateNoShowWhatsapp } from '@/ai/flows/generate-no-show-whatsapp';
-import { generateCancellationWhatsapp } from '@/ai/flows/generate-cancellation-whatsapp';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { cn } from '@/lib/utils';
-import { generateGeneralMessageWhatsapp } from '@/ai/flows/generate-general-message-whatsapp';
 
 
 export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus' | 'noShow' | 'cancellation' | 'generalMessage';
@@ -219,147 +209,23 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
     setIsLoading(true);
     setStep('generate');
-    setGeneratedMessages([]);
 
-    const selectedClients = targetClients.filter(c => selectedClientIds.includes(c.id));
-    
-    let generated: GeneratedMessage[] = [];
-
-    for (const client of selectedClients) {
-        let message = '';
-        const customNote = customNotes[client.id] || '';
-        try {
-            switch(campaignType) {
-                case 'reminders': {
-                     const nextAppointment = appointments
-                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent && isFuture(a.dateTime))
-                        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
-
-                    if (nextAppointment) {
-                        const result = await generateWhatsappReminder({
-                            clientName: client.name.split(' ')[0],
-                            appointmentDateTime: format(nextAppointment.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
-                            clientPhoneNumber: client.phone,
-                            businessName: profile?.name,
-                            customMessage: customNote,
-                        });
-                        message = result.whatsappMessage;
-                        generated.push({ 
-                            clientId: client.id, 
-                            clientName: client.name, 
-                            clientPhone: client.phone, 
-                            message,
-                            appointmentId: nextAppointment.id,
-                            customNote,
-                        });
-                    }
-                    break;
-                }
-                case 'pendingPayments': {
-                    const result = await generatePendingPaymentWhatsapp({ clientName: client.name, businessName: profile?.name, customMessage: customNote });
-                    message = result.whatsappMessage;
-                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    break;
-                }
-                case 'noShow': {
-                    const lastNoShow = appointments
-                        .filter(a => a.clientPhone === client.phone && a.status === 'no-show')
-                        .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())[0];
-                    if (lastNoShow) {
-                         const result = await generateNoShowWhatsapp({
-                            clientName: client.name,
-                            businessName: profile?.name,
-                            appointmentDateTime: format(lastNoShow.dateTime, "d 'de' MMMM", { locale: es }),
-                            customMessage: customNote,
-                        });
-                        message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    }
-                    break;
-                }
-                case 'cancellation': {
-                    const nextAppointment = appointments
-                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && isFuture(a.dateTime))
-                        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
-                    
-                    if (nextAppointment && cancellationDate) {
-                        const [hours, minutes] = cancellationTime.split(':').map(Number);
-                        const newProposedDateTime = set(cancellationDate, { hours, minutes });
-
-                        const result = await generateCancellationWhatsapp({
-                            clientName: client.name,
-                            businessName: profile?.name,
-                            originalAppointmentDateTime: format(nextAppointment.dateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es }),
-                            newProposedDateTime: format(newProposedDateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es }),
-                            customMessage: customNote,
-                        });
-                        message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    }
-                    break;
-                }
-                case 'birthdays': {
-                    const result = await generateBirthdayWhatsapp({ clientName: client.name, businessName: profile?.name, customMessage: customNote });
-                    message = result.whatsappMessage;
-                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    break;
-                }
-                 case 'inactiveClients': {
-                    const lastAppointment = appointments
-                        .filter(a => a.clientPhone === client.phone && a.status === 'completed')
-                        .sort((a,b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())[0];
-                    if (lastAppointment) {
-                        const days = differenceInDays(new Date(), lastAppointment.dateTime);
-                        const result = await generateInactiveClientWhatsapp({ clientName: client.name, inactiveDays: days, businessName: profile?.name, customMessage: customNote });
-                        message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    }
-                    break;
-                 }
-                case 'offer': {
-                     const result = await generateOfferWhatsapp({
-                        clientName: client.name,
-                        offerMessage,
-                        dateRange: 'por tiempo limitado', // Simplified
-                        businessName: profile?.name,
-                    });
-                    message = result.whatsappMessage;
-                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    break;
-                }
-                case 'voucherStatus': {
-                    if (client.voucher && client.voucher.sessions > 0) {
-                        const result = await generateVoucherUpdateWhatsapp({
-                            clientName: client.name,
-                            remainingSessions: client.voucher.sessions,
-                            informativeOnly: true,
-                            businessName: profile?.name,
-                        });
-                        message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    }
-                    break;
-                }
-                case 'generalMessage': {
-                     const result = await generateGeneralMessageWhatsapp({
-                        clientName: client.name,
-                        customMessage: generalMessage,
-                        businessName: profile?.name,
-                    });
-                    message = result.whatsappMessage;
-                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
-                    break;
-                }
+    // Simulate AI generation
+    setTimeout(() => {
+        setGeneratedMessages(selectedClientIds.map(id => {
+            const client = targetClients.find(c => c.id === id);
+            return {
+                clientId: id,
+                clientName: client?.name || 'Cliente',
+                clientPhone: client?.phone || '',
+                message: `[Mensaje de IA para ${client?.name} sobre ${campaignDetails[campaignType].title}]`,
+                customNote: customNotes[id] || '',
             }
-           
-        } catch (error) {
-            console.error('Failed to generate message for', client.name, error);
-        }
-    }
+        }));
+        setIsLoading(false);
+        setStep('finished');
+    }, 1000);
 
-    setGeneratedMessages(generated);
-    setIsLoading(false);
-    setStep('finished');
   }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, services, cancellationDate, cancellationTime, generalMessage]);
 
   const handleMarkAsSent = () => {
@@ -723,5 +589,3 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
         </div>
     )
 }
-
-    

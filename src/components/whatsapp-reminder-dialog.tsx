@@ -12,7 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
-import { generateWhatsappReminder } from '@/ai/flows/generate-whatsapp-reminder';
 import { useAppData } from '@/context/app-data-context';
 import { ScrollArea } from './ui/scroll-area';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -69,30 +68,20 @@ export function WhatsappReminderDialog({ isOpen, onOpenChange, appointments, onR
     const selectedAppointments = futureAppointments.filter(apt => selectedAppointmentIds.includes(apt.id));
     const messages: GeneratedMessage[] = [];
 
-    try {
+    // Simulate AI generation
+    setTimeout(() => {
       for (const apt of selectedAppointments) {
-        const result = await generateWhatsappReminder({
-          clientName: apt.clientName.split(' ')[0],
-          appointmentDateTime: format(apt.dateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es }),
-          clientPhoneNumber: apt.clientPhone,
-          businessName: businessProfile.name,
-        });
-        messages.push({
+          messages.push({
           appointmentId: apt.id,
           clientName: apt.clientName,
           clientPhone: apt.clientPhone,
-          message: result.whatsappMessage,
+          message: `Hola ${apt.clientName.split(' ')[0]}, te recordamos tu cita el ${format(apt.dateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es })}. ¡Te esperamos en ${businessProfile.name}!`,
         });
       }
       setGeneratedMessages(messages);
       setStep('finished');
-    } catch (e) {
-      console.error("Failed to generate reminder message.", e);
-      setError('No se pudieron generar los recordatorios. Inténtalo de nuevo.');
-      setStep('select'); // Go back to selection on error
-    } finally {
       setIsGenerating(false);
-    }
+    }, 1000);
   };
 
   const handleMarkAsSent = () => {

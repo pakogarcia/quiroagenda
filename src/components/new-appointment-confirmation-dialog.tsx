@@ -7,8 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { type Appointment, type Client } from '@/lib/types';
 import { Send, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
-import { generateWelcomeWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
-import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -43,45 +41,30 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
     setGeneratedMessage('');
     setError('');
 
-    try {
+    // Simulate AI generation
+    setTimeout(() => {
+        let message = `Hola! Este es un mensaje de prueba para la confirmación.`;
         if (mode === 'newAppointment' && appointment) {
-             if (!businessProfile.address && appointment.id !== 'new-client-welcome') {
-                setError('No se ha configurado la dirección del negocio en la sección "Quién eres". Por favor, completa tu perfil.');
-                return;
-            }
-             const result = await generateWelcomeWhatsapp({
-                clientName: appointment.clientName.split(' ')[0],
-                businessAddress: businessProfile.address,
-                businessName: businessProfile.name,
-                services: services.map(s => ({ name: s.name, price: s.price })),
-                website: socials.website ? businessProfile.website : undefined,
-                instagram: socials.instagram ? businessProfile.instagram : undefined,
-                facebook: socials.facebook ? businessProfile.facebook : undefined,
-                tiktok: socials.tiktok ? businessProfile.tiktok : undefined,
-                youtube: socials.youtube ? businessProfile.youtube : undefined,
-            });
-            setGeneratedMessage(result.whatsappMessage);
+            message = `Hola ${appointment.clientName}, te confirmamos tu cita para el ${format(appointment.dateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es })}. ¡Te esperamos en ${businessProfile.name}!`;
         } else if (mode === 'voucherUpdate' && voucherUpdateData) {
-            const result = await generateVoucherUpdateWhatsapp({
-                clientName: voucherUpdateData.client.name.split(' ')[0],
-                remainingSessions: voucherUpdateData.remainingSessions,
-                informativeOnly: voucherUpdateData.informativeOnly,
-                businessName: businessProfile.name,
-                website: socials.website ? businessProfile.website : undefined,
-                instagram: socials.instagram ? businessProfile.instagram : undefined,
-                facebook: socials.facebook ? businessProfile.facebook : undefined,
-                tiktok: socials.tiktok ? businessProfile.tiktok : undefined,
-                youtube: socials.youtube ? businessProfile.youtube : undefined,
-            });
-            setGeneratedMessage(result.whatsappMessage);
+            message = `Hola ${voucherUpdateData.client.name}, te informamos que te quedan ${voucherUpdateData.remainingSessions} sesiones en tu bono.`;
         }
 
-    } catch (e) {
-      console.error("Failed to generate confirmation message.", e);
-      setError('No se pudo generar el mensaje de confirmación.');
-    } finally {
-      setIsGenerating(false);
-    }
+        let socialLinks = [];
+        if (socials.website && businessProfile.website) socialLinks.push(`Web: ${businessProfile.website}`);
+        if (socials.instagram && businessProfile.instagram) socialLinks.push(`Instagram: ${businessProfile.instagram}`);
+        if (socials.facebook && businessProfile.facebook) socialLinks.push(`Facebook: ${businessProfile.facebook}`);
+        if (socials.tiktok && businessProfile.tiktok) socialLinks.push(`TikTok: ${businessProfile.tiktok}`);
+        if (socials.youtube && businessProfile.youtube) socialLinks.push(`YouTube: ${businessProfile.youtube}`);
+
+        if (socialLinks.length > 0) {
+            message += `\n\nSíguenos en nuestras redes:\n${socialLinks.join('\n')}`;
+        }
+
+        setGeneratedMessage(message);
+        setIsGenerating(false);
+    }, 500);
+
   }, [appointment, voucherUpdateData, businessProfile, socials, mode, services]);
 
 
