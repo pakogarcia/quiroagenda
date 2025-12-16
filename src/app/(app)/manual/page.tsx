@@ -5,7 +5,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound, Edit } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound, Edit, UserX, CalendarOff, Megaphone, Clock, Cake, Bell } from 'lucide-react';
 
 
 export default function ManualPage() {
@@ -42,7 +42,7 @@ export default function ManualPage() {
                             <AccordionTrigger><div className='flex items-center gap-2'><ImageIcon className="w-4 h-4" />Logotipo y Redes Sociales</div></AccordionTrigger>
                             <AccordionContent className="space-y-2">
                                 <p><strong>Sube tu logotipo:</strong> Añade tu logotipo en formato JPG. Se mostrará en la cabecera de la aplicación, reemplazando el icono por defecto para una personalización completa.</p>
-                                <p><strong>Conecta tus redes:</strong> Introduce los enlaces a tus perfiles de Instagram, Facebook, TikTok y YouTube. Aunque por ahora solo se almacenan, en el futuro nos permitirán crear campañas de marketing más potentes y automatizadas.</p>
+                                <p><strong>Conecta tus redes:</strong> Introduce los enlaces a tus perfiles de Instagram, Facebook, TikTok y YouTube. Estos enlaces se podrán añadir opcionalmente en tus comunicaciones por WhatsApp.</p>
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
@@ -94,7 +94,7 @@ export default function ManualPage() {
                 <AccordionItem value="item-5">
                   <AccordionTrigger><div className='flex items-center gap-2'><MessageSquare className="w-4 h-4" />Confirmación por WhatsApp</div></AccordionTrigger>
                   <AccordionContent>
-                    Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Incluye todos los detalles: nombre del cliente, fecha, hora y la dirección de tu negocio.
+                    Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Puedes elegir qué redes sociales adjuntar al mensaje para una personalización completa.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -113,9 +113,9 @@ export default function ManualPage() {
                   <AccordionContent>
                     <p>Haz clic en la tarjeta de cualquier cliente para acceder a su ficha completa. Aquí encontrarás:</p>
                      <ul className="list-disc pl-5 space-y-1 mt-2">
-                      <li><strong>Datos y Detalles:</strong> Su información de contacto y cualquier nota importante (alergias, preferencias, etc.).</li>
+                      <li><strong>Datos y Detalles:</strong> Su información de contacto, fecha de nacimiento y cualquier nota importante (alergias, preferencias, etc.).</li>
                       <li><strong>Resumen Financiero y de Servicios:</strong> Tarjetas con el total facturado, citas completadas, ausencias y sus servicios más frecuentes.</li>
-                      <li><strong>Historial Completo:</strong> Una tabla con todas sus citas y compras de bonos.</li>
+                      <li><strong>Historial Completo:</strong> Una tabla con todas sus citas y compras de bonos, agrupadas por mes.</li>
                       <li><strong>Edición de Pagos:</strong> ¿Te equivocaste al registrar un pago? Haz clic en el icono de editar (<Edit className="inline h-4 w-4" />) junto a una cita completada o una compra de bono para corregir el importe o el método de pago.</li>
                     </ul>
                   </AccordionContent>
@@ -167,21 +167,75 @@ export default function ManualPage() {
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Gift /> Marketing y Comunicación</CardTitle>
-              <CardDescription>Fideliza a tus clientes y aumenta tus ingresos.</CardDescription>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Send /> Centro de Comunicaciones</CardTitle>
+              <CardDescription>Fideliza a tus clientes y aumenta tus ingresos con campañas de mensajería inteligentes.</CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Send className="w-4 h-4" /> Recordatorios de Citas Flexibles</div></AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Bell className="w-4 h-4" /> Recordatorios de Citas</div></AccordionTrigger>
                   <AccordionContent>
-                    Reduce las ausencias enviando recordatorios por WhatsApp. Puedes seleccionar cualquier cita futura pendiente de la lista y generar sus recordatorios.
+                    Reduce las ausencias enviando recordatorios por WhatsApp. La IA solo te mostrará los clientes con una cita próxima para evitar duplicados.
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4" /> Campañas de Ofertas</div></AccordionTrigger>
+                 <AccordionItem value="item-2">
+                  <AccordionTrigger><div className='flex items-center gap-2'><AlertCircle className="w-4 h-4" /> Pagos Pendientes</div></AccordionTrigger>
                   <AccordionContent>
-                    Crea ofertas especiales para un período determinado. La IA redactará un mensaje persuasivo y personalizado para cada cliente, listo para enviar por WhatsApp.
+                    Envía un amable recordatorio a los clientes que tienen citas completadas pero cuyo pago aún no has registrado.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-3">
+                  <AccordionTrigger><div className='flex items-center gap-2'><UserX className="w-4 h-4" /> Contactar por Ausencia (No Show)</div></AccordionTrigger>
+                  <AccordionContent>
+                    Comunícate con los clientes que no se presentaron a su última cita para entender el motivo y recordarles la política de cancelación si es necesario.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-4">
+                  <AccordionTrigger><div className='flex items-center gap-2'><CalendarOff className="w-4 h-4" /> Anulación/Modificación de Cita</div></AccordionTrigger>
+                  <AccordionContent>
+                    Si te surge un imprevisto, informa rápidamente a los clientes afectados. Podrás proponer una nueva fecha y hora directamente en el mensaje.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-5">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4" /> Notificar Sesiones de Bono</div></AccordionTrigger>
+                  <AccordionContent>
+                    Mantén informados a tus clientes sobre cuántas sesiones les quedan en su bono. Perfecto para cuando acaban de usar una o simplemente para que no se olviden de volver.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-6">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Cake className="w-4 h-4" /> Felicitaciones de Cumpleaños</div></AccordionTrigger>
+                  <AccordionContent>
+                    ¡Fideliza con un detalle! La aplicación te mostrará los clientes cuyos cumpleaños fueron en la última semana o serán en las próximas dos, para que no se te pase ninguno.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-7">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Clock className="w-4 h-4" /> Clientes Inactivos</div></AccordionTrigger>
+                  <AccordionContent>
+                    Recupera a esos clientes que hace tiempo que no te visitan. Puedes configurar el número de días de inactividad para que la IA te sugiera a quién contactar con un mensaje cercano.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-8">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Users className="w-4 h-4" /> Bienvenida a Nuevos Clientes</div></AccordionTrigger>
+                  <AccordionContent>
+                    ¿Alguien pide información? Envíale un mensaje de bienvenida profesional con tus datos de contacto, dirección y, lo más importante, tu lista de servicios con precios.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-9">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4" /> Campaña de Oferta</div></AccordionTrigger>
+                  <AccordionContent>
+                    Crea ofertas especiales y promociónalas entre los clientes que elijas. La IA redactará un mensaje persuasivo y personalizado para cada uno.
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-10">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Megaphone className="w-4 h-4" /> Comunicado General</div></AccordionTrigger>
+                  <AccordionContent>
+                    La herramienta definitiva para la flexibilidad. Anuncia vacaciones, cambios de horario o cualquier otra noticia. Escribe un mensaje totalmente libre y envíalo a los clientes que selecciones.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-11">
+                  <AccordionTrigger><div className='flex items-center gap-2 text-primary'><Edit className="w-4 h-4" /> Nota Personalizada</div></AccordionTrigger>
+                  <AccordionContent>
+                    En la mayoría de las campañas, al seleccionar un cliente, aparecerá un campo de texto para que añadas una nota opcional (ej. "¡Espero que te recuperes pronto!" o "Recuerda que la puntualidad es importante"). Este texto se integrará de forma natural en el mensaje final, dándote el poder de personalizar la comunicación masiva.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
