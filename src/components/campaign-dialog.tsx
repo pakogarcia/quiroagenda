@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -79,7 +80,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [inactiveDays, setInactiveDays] = useState<number>(90);
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
-  const [welcomeMessage, setWelcomeMessage] = React.useState<Appointment | null>(null);
   const [cancellationDate, setCancellationDate] = React.useState<Date | undefined>(addDays(new Date(), 1));
   const [cancellationTime, setCancellationTime] = React.useState('10:00');
 
@@ -134,26 +134,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     .filter(c => !!c.birthDate)
                     .map(c => {
                         const birthDate = parseISO(c.birthDate!);
-                        birthDate.setFullYear(today.getFullYear());
-                        let birthDayOfYear = getDayOfYear(birthDate);
+                        const currentYearBirthDate = set(birthDate, { year: today.getFullYear() });
+                        
+                        let diff = differenceInDays(currentYearBirthDate, today);
 
-                        if (isLeapYear && getMonth(parseISO(c.birthDate!)) === 1 && getDate(parseISO(c.birthDate!)) === 29) {
-                           // Special handling for Feb 29 on leap years can be complex
-                        } else if (isLeapYear && getMonth(parseISO(c.birthDate!)) > 1) {
-                           birthDayOfYear++;
-                        }
-                        
-                        let proximity = birthDayOfYear - todayDayOfYear;
-                        
                         const yearDays = isLeapYear ? 366 : 365;
+
                         if (diff < -yearDays / 2) { 
-                            proximity += yearDays;
+                            diff += yearDays;
                         }
                         if (diff > yearDays / 2) {
-                            proximity -= yearDays;
+                            diff -= yearDays;
                         }
 
-                        return { ...c, proximity };
+                        return { ...c, proximity: diff };
                     })
                     .filter(c => c.proximity >= -7 && c.proximity <= 14)
                     .sort((a, b) => a.proximity - b.proximity);
@@ -198,7 +192,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       setInactiveDays(90);
       setNewClientName('');
       setNewClientPhone('+34 ');
-      setWelcomeMessage(null);
     }
   }, [campaignType]);
 
@@ -206,18 +199,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     if (!campaignType) return;
     
     if (campaignType === 'newClients') {
-        if (!newClientName || !newClientPhone) return;
-        const fakeAppointment: Appointment = {
-            id: 'new-client-welcome',
-            clientName: newClientName,
-            clientPhone: newClientPhone,
-            dateTime: new Date(),
-            notes: '',
-            reminderSent: false,
-            status: 'scheduled'
-        }
-        setWelcomeMessage(fakeAppointment);
-        // onOpenChange(false); // This was causing the dialog to close
+        // This is handled in the renderContent and renderFooter
         return;
     }
 
@@ -254,7 +236,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             clientPhone: client.phone, 
                             message,
                             appointmentId: nextAppointment.id,
-                            customNote: '',
+                            customNote,
                         });
                     }
                     break;
@@ -262,7 +244,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 case 'pendingPayments': {
                     const result = await generatePendingPaymentWhatsapp({ clientName: client.name, businessName: profile?.name, customMessage: customNote });
                     message = result.whatsappMessage;
-                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
                     break;
                 }
                 case 'noShow': {
@@ -277,7 +259,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             customMessage: customNote,
                         });
                         message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
                     }
                     break;
                 }
@@ -298,14 +280,14 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             customMessage: customNote,
                         });
                         message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
                     }
                     break;
                 }
                 case 'birthdays': {
                     const result = await generateBirthdayWhatsapp({ clientName: client.name, businessName: profile?.name, customMessage: customNote });
                     message = result.whatsappMessage;
-                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
                     break;
                 }
                  case 'inactiveClients': {
@@ -316,7 +298,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                         const days = differenceInDays(new Date(), lastAppointment.dateTime);
                         const result = await generateInactiveClientWhatsapp({ clientName: client.name, inactiveDays: days, businessName: profile?.name, customMessage: customNote });
                         message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
                     }
                     break;
                  }
@@ -328,7 +310,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                         businessName: profile?.name,
                     });
                     message = result.whatsappMessage;
-                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
                     break;
                 }
                 case 'voucherStatus': {
@@ -340,7 +322,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             businessName: profile?.name,
                         });
                         message = result.whatsappMessage;
-                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
                     }
                     break;
                 }
@@ -354,7 +336,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(generated);
     setIsLoading(false);
     setStep('finished');
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services, cancellationDate, cancellationTime]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, services, cancellationDate, cancellationTime]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -373,6 +355,35 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   
   const details = campaignType ? campaignDetails[campaignType] : null;
   const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
+
+  const handleNewClientSubmit = async () => {
+    if (campaignType !== 'newClients' || !newClientName || !newClientPhone) return;
+
+    setIsLoading(true);
+    setStep('generate');
+    setGeneratedMessages([]);
+
+    try {
+      const result = await generateWelcomeWhatsapp({
+        clientName: newClientName.split(' ')[0],
+        businessAddress: profile?.address || '',
+        businessName: profile?.name,
+        services: services.map(s => ({ name: s.name, price: s.price })),
+      });
+      setGeneratedMessages([{
+        clientId: 'new-client',
+        clientName: newClientName,
+        clientPhone: newClientPhone,
+        message: result.whatsappMessage,
+        customNote: '',
+      }]);
+    } catch (error) {
+      console.error("Failed to generate welcome message", error);
+    }
+
+    setIsLoading(false);
+    setStep('finished');
+  };
 
   const renderConfiguration = () => {
       if (campaignType === 'offer') {
@@ -523,7 +534,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     <div className="space-y-3">
                         {targetClients.map(c => {
                             const nextAppointment = (campaignType === 'reminders' || campaignType === 'cancellation')
-                                ? appointments.find(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime))
+                                ? appointments.filter(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime)).sort((d1, d2) => d1.dateTime.getTime() - d2.dateTime.getTime())[0]
                                 : null;
 
                             return (
@@ -570,18 +581,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     )
   }
 
-  const handleDialogClose = (isOpen: boolean) => {
-    if (!isOpen) {
-        if (welcomeMessage) {
-            setWelcomeMessage(null);
-        }
-        onOpenChange(false);
-    }
-  }
-
   const renderFooter = () => {
     if (step === 'finished') {
-        if (generatedMessages.length > 0 && campaignType !== 'newClients') {
+        if (generatedMessages.length > 0) {
             return (
                 <Button variant="default" onClick={() => setIsConfirmSentOpen(true)}>
                     <CheckCircle className="mr-2 h-4 w-4" />
@@ -601,12 +603,14 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             disabled = isLoading || selectedClientIds.length === 0 || (campaignType === 'offer' && !offerMessage);
         }
         
+        const buttonAction = campaignType === 'newClients' ? handleNewClientSubmit : () => handleGenerateMessages(customNotes);
+
         const buttonText = campaignType === 'newClients'
             ? 'Generar Mensaje'
             : `Generar ${selectedClientIds.length} Mensaje(s)`;
 
         return (
-            <Button onClick={() => handleGenerateMessages(customNotes)} disabled={disabled}>
+            <Button onClick={buttonAction} disabled={disabled}>
                 <Send className="mr-2 h-4 w-4" />
                 {isLoading ? 'Generando...' : buttonText}
             </Button>
@@ -619,7 +623,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   return (
     <>
-      <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={handleDialogClose}>
+      <Dialog open={!!campaignType} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
@@ -650,14 +654,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
-       <NewAppointmentConfirmationDialog
-          appointment={welcomeMessage}
-          onOpenChange={(isOpen) => {
-              if (!isOpen) {
-                  setWelcomeMessage(null);
-              }
-          }}
-        />
     </>
   );
 }
@@ -700,3 +696,6 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
         </div>
     )
 }
+
+
+    
