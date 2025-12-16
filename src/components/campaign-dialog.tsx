@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
-import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isBefore } from 'date-fns';
+import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -79,8 +79,16 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
     switch (campaignType) {
         case 'reminders': {
-            const scheduledAppointments = appointments.filter(apt => apt.status === 'scheduled' && !apt.reminderSent && !isBefore(apt.dateTime, today));
-            const clientPhones = new Set(scheduledAppointments.map(apt => apt.clientPhone));
+            const scheduledAppointments = appointments.filter(apt => apt.status === 'scheduled' && !apt.reminderSent);
+            const nextAppointmentByClient: { [phone: string]: Appointment } = {};
+
+            scheduledAppointments.forEach(apt => {
+                if (!nextAppointmentByClient[apt.clientPhone] || apt.dateTime < nextAppointmentByClient[apt.clientPhone].dateTime) {
+                    nextAppointmentByClient[apt.clientPhone] = apt;
+                }
+            });
+
+            const clientPhones = new Set(Object.keys(nextAppointmentByClient));
             return clients.filter(c => clientPhones.has(c.phone));
         }
         case 'pendingPayments': {
@@ -182,7 +190,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             status: 'scheduled'
         }
         setWelcomeMessage(fakeAppointment);
-        onOpenChange(false);
         return;
     }
 
@@ -200,7 +207,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             switch(campaignType) {
                 case 'reminders': {
                      const nextAppointment = appointments
-                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent && !isBefore(a.dateTime, startOfToday()))
+                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent)
                         .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
 
                     if (nextAppointment) {
@@ -441,6 +448,13 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     )
   }
 
+  const handleDialogClose = () => {
+    if (welcomeMessage) {
+        setWelcomeMessage(null);
+    }
+    onOpenChange(false);
+  }
+
   const renderFooter = () => {
     if (step === 'finished') {
         if (generatedMessages.length > 0 && campaignType !== 'newClients') {
@@ -451,7 +465,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 </Button>
             );
         }
-        return <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>;
+        return <Button variant="outline" onClick={handleDialogClose}>Cerrar</Button>;
     }
     if (step === 'select') {
         let disabled = isLoading;
@@ -479,41 +493,46 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   return (
     <>
-    <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <details.icon className="h-6 w-6 text-primary"/>
-            {details.title}
-          </DialogTitle>
-          <DialogDescription>
-            {campaignType === 'newClients' ? 'Introduce los datos del nuevo cliente para generar un mensaje de bienvenida.' : 'Selecciona los destinatarios y configura las opciones para esta campaña.'}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">{renderContent()}</div>
-        <DialogFooter className="sm:justify-end gap-2 pt-4">
-            {renderFooter()}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-    <AlertDialog open={isConfirmSentOpen} onOpenChange={setIsConfirmSentOpen}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>¿Marcar como enviados?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Esta acción marcará los mensajes como enviados (si aplica) y no podrás volver a generarlos desde esta pantalla. ¿Estás seguro?
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleMarkAsSent}>Confirmar</AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-    </AlertDialog>
-     <NewAppointmentConfirmationDialog
-        appointment={welcomeMessage}
-        onOpenChange={() => setWelcomeMessage(null)}
-      />
+      <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <details.icon className="h-6 w-6 text-primary"/>
+              {details.title}
+            </DialogTitle>
+            <DialogDescription>
+              {campaignType === 'newClients' ? 'Introduce los datos del nuevo cliente para generar un mensaje de bienvenida.' : 'Selecciona los destinatarios y configura las opciones para esta campaña.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">{renderContent()}</div>
+          <DialogFooter className="sm:justify-end gap-2 pt-4">
+              {renderFooter()}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={isConfirmSentOpen} onOpenChange={setIsConfirmSentOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>¿Marcar como enviados?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      Esta acción marcará los mensajes como enviados (si aplica) y no podrás volver a generarlos desde esta pantalla. ¿Estás seguro?
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleMarkAsSent}>Confirmar</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
+       <NewAppointmentConfirmationDialog
+          appointment={welcomeMessage}
+          onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                  setWelcomeMessage(null);
+                  onOpenChange(false); 
+              }
+          }}
+        />
     </>
   );
 }

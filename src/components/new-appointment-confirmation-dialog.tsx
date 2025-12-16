@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -44,7 +45,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
 
     try {
         if (mode === 'newAppointment' && appointment) {
-             if (!businessProfile.address) {
+             if (!businessProfile.address && appointment.id !== 'new-client-welcome') {
                 setError('No se ha configurado la dirección del negocio en la sección "Quién eres". Por favor, completa tu perfil.');
                 return;
             }
@@ -108,12 +109,12 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
 
   const getDialogTitle = () => {
     if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Notificar Sesiones Restantes" : "Bono Actualizado";
-    return mode === 'newAppointment' && (clientData as Appointment)?.id ? "Cita Confirmada" : "Mensaje de Bienvenida";
+    return appointment?.id === 'new-client-welcome' ? "Mensaje de Bienvenida" : "Cita Confirmada";
   }
   
   const getDialogDescription = () => {
       if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Envía un mensaje a tu cliente para informarle de las sesiones que le quedan." : "Se ha descontado una sesión del bono. Puedes enviar una notificación por WhatsApp.";
-      return mode === 'newAppointment' && (clientData as Appointment)?.id ? "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp." : "Envía un mensaje de presentación con tus servicios y datos de contacto a este nuevo cliente potencial.";
+      return appointment?.id === 'new-client-welcome' ? "Envía un mensaje de presentación con tus servicios y datos de contacto a este nuevo cliente potencial." : "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp.";
   }
 
   return (
