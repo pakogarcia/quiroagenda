@@ -17,11 +17,11 @@ const GenerateNewAppointmentWhatsappInputSchema = z.object({
   appointmentDateTime: z.string().describe('The date and time of the appointment, pre-formatted for display.'),
   businessAddress: z.string().describe('The address of the business.'),
   businessName: z.string().optional().describe('The name of the business sending the confirmation.'),
-  website: z.string().url().optional().describe('The website URL of the business.'),
-  instagram: z.string().url().optional().describe('The Instagram profile URL of the business.'),
-  facebook: z.string().url().optional().describe('The Facebook profile URL of the business.'),
-  tiktok: z.string().url().optional().describe('The TikTok profile URL of the business.'),
-  youtube: z.string().url().optional().describe('The YouTube profile URL of the business.'),
+  website: z.string().url().or(z.literal('')).optional(),
+  instagram: z.string().url().or(z.literal('')).optional(),
+  facebook: z.string().url().or(z.literal('')).optional(),
+  tiktok: z.string().url().or(z.literal('')).optional(),
+  youtube: z.string().url().or(z.literal('')).optional(),
 });
 
 export type GenerateNewAppointmentWhatsappInput = z.infer<typeof GenerateNewAppointmentWhatsappInputSchema>;

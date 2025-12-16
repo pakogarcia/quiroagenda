@@ -64,6 +64,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   // Specific state for different campaigns
   const [offerMessage, setOfferMessage] = useState('');
   const [inactiveDays, setInactiveDays] = useState<number>(90);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
 
   const targetClients = useMemo(() => {
     if (!campaignType) return [];
@@ -113,17 +115,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 return differenceInDays(today, lastVisit) >= inactiveDays;
             });
         }
-        case 'newClients': {
-            const clientAppointmentCounts = new Map<string, number>();
-             clients.forEach(c => clientAppointmentCounts.set(c.id, 0));
-             appointments.forEach(apt => {
-                 const client = clients.find(c => c.phone === apt.clientPhone);
-                 if (client) {
-                     clientAppointmentCounts.set(client.id, (clientAppointmentCounts.get(client.id) || 0) + 1);
-                 }
-             });
-            return clients.filter(c => (clientAppointmentCounts.get(c.id) || 0) === 0);
-        }
+        case 'newClients':
+            return []; // Will be handled by a special form
         case 'offer':
             return clients;
         default:
@@ -138,6 +131,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       setSelectedClientIds([]);
       setOfferMessage('');
       setInactiveDays(90);
+      setNewClientName('');
+      setNewClientPhone('');
     }
   }, [campaignType]);
 
@@ -193,18 +188,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     }
                     break;
                  }
-                case 'newClients': {
-                    const result = await generateNewAppointmentWhatsapp({ 
-                        clientName: client.name, 
-                        appointmentDateTime: 'PRÓXIMAMENTE', // Placeholder
-                        businessAddress: profile?.address || '',
-                        businessName: profile?.name,
-                    });
-                    // Replace placeholder for a more generic welcome message
-                    message = result.whatsappMessage.replace(/Te confirmo tu nueva cita para el \*PRÓXIMAMENTE\*\. Nos vemos en nuestra consulta en .*?\./, `¡Te damos la bienvenida a ${profile?.name || 'nuestro centro'}! Estamos encantados de tenerte. Reserva tu primera cita cuando quieras.`);
-                    generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
-                    break;
-                }
                 case 'offer': {
                      const result = await generateOfferWhatsapp({
                         clientName: client.name,
@@ -223,10 +206,29 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         }
     }
     
+    if (campaignType === 'newClients' && newClientName && newClientPhone) {
+        try {
+            const result = await generateNewAppointmentWhatsapp({ 
+                clientName: newClientName, 
+                appointmentDateTime: '', // Not needed for welcome
+                businessAddress: profile?.address || '',
+                businessName: profile?.name,
+            });
+            const welcomeMessage = result.whatsappMessage
+                .replace(/Te confirmo tu nueva cita.*$/, `¡Bienvenido/a a ${profile?.name || 'nuestro centro'}! Estamos encantados de tenerte. No dudes en contactarnos para reservar tu primera cita. ¡Te esperamos!`)
+                .trim();
+
+            generated.push({ clientId: 'new', clientName: newClientName, clientPhone: newClientPhone, message: welcomeMessage });
+        } catch (error) {
+            console.error('Failed to generate welcome message', error);
+        }
+    }
+
+
     setGeneratedMessages(generated);
     setIsLoading(false);
     setStep('finished');
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -278,6 +280,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
               </div>
           )
       }
+      if (campaignType === 'newClients') {
+        return (
+            <div className="space-y-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="newClientName">Nombre del Cliente</Label>
+                    <Input id="newClientName" value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Nombre del nuevo cliente"/>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="newClientPhone">Teléfono del Cliente</Label>
+                    <Input id="newClientPhone" value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} placeholder="+34 ..."/>
+                </div>
+            </div>
+        )
+      }
       return null;
   }
 
@@ -323,7 +339,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
 
     // Step 'select'
-    if (targetClients.length === 0) {
+    if (campaignType !== 'newClients' && targetClients.length === 0) {
         return (
             <Alert>
                 <CheckCircle className="h-4 w-4" />
@@ -338,44 +354,48 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     return (
         <div className="space-y-4">
             {renderConfiguration()}
-            <div className="flex items-center space-x-2 border-b pb-4">
-                <Checkbox 
-                    id="select-all" 
-                    onCheckedChange={handleSelectAll}
-                    checked={selectedClientIds.length === targetClients.length && targetClients.length > 0}
-                />
-                <Label htmlFor="select-all" className="font-bold text-base">
-                    Seleccionar Todo ({targetClients.length})
-                </Label>
-            </div>
-            <ScrollArea className="h-[350px] pr-4">
-                <div className="space-y-3">
-                    {targetClients.map(c => (
-                        <div key={c.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted">
-                            <Checkbox
-                                id={c.id}
-                                onCheckedChange={(checked) => {
-                                    setSelectedClientIds(prev => 
-                                        checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
-                                    );
-                                }}
-                                checked={selectedClientIds.includes(c.id)}
-                            />
-                            <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
-                                <span className="font-semibold">{c.name} {c.lastName}</span>
-                                <span className="text-sm text-muted-foreground">{c.phone}</span>
-                            </Label>
-                        </div>
-                    ))}
+            {campaignType !== 'newClients' && (
+                <>
+                <div className="flex items-center space-x-2 border-b pb-4">
+                    <Checkbox 
+                        id="select-all" 
+                        onCheckedChange={handleSelectAll}
+                        checked={selectedClientIds.length === targetClients.length && targetClients.length > 0}
+                    />
+                    <Label htmlFor="select-all" className="font-bold text-base">
+                        Seleccionar Todo ({targetClients.length})
+                    </Label>
                 </div>
-            </ScrollArea>
+                <ScrollArea className="h-[350px] pr-4">
+                    <div className="space-y-3">
+                        {targetClients.map(c => (
+                            <div key={c.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted">
+                                <Checkbox
+                                    id={c.id}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedClientIds(prev => 
+                                            checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                                        );
+                                    }}
+                                    checked={selectedClientIds.includes(c.id)}
+                                />
+                                <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
+                                    <span className="font-semibold">{c.name} {c.lastName}</span>
+                                    <span className="text-sm text-muted-foreground">{c.phone}</span>
+                                </Label>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+                </>
+            )}
         </div>
     )
   }
 
   const renderFooter = () => {
     if (step === 'finished') {
-        if (generatedMessages.length > 0) {
+        if (generatedMessages.length > 0 && campaignType !== 'newClients') {
             return (
                 <Button variant="default" onClick={() => setIsConfirmSentOpen(true)}>
                     <CheckCircle className="mr-2 h-4 w-4" />
@@ -386,11 +406,21 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         return <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>;
     }
     if (step === 'select') {
-        const disabled = isLoading || selectedClientIds.length === 0 || (campaignType === 'offer' && !offerMessage);
+        let disabled = isLoading;
+        if (campaignType === 'newClients') {
+            disabled = isLoading || !newClientName || !newClientPhone;
+        } else {
+            disabled = isLoading || selectedClientIds.length === 0 || (campaignType === 'offer' && !offerMessage);
+        }
+        
+        const buttonText = campaignType === 'newClients'
+            ? 'Generar Mensaje'
+            : `Generar ${selectedClientIds.length} Mensaje(s)`;
+
         return (
             <Button onClick={handleGenerateMessages} disabled={disabled}>
                 <Send className="mr-2 h-4 w-4" />
-                {isLoading ? 'Generando...' : `Generar ${selectedClientIds.length} Mensaje(s)`}
+                {isLoading ? 'Generando...' : buttonText}
             </Button>
         )
     }
@@ -409,7 +439,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             {details.title}
           </DialogTitle>
           <DialogDescription>
-            Selecciona los destinatarios y configura las opciones para esta campaña.
+            {campaignType === 'newClients' ? 'Introduce los datos del nuevo cliente para generar un mensaje de bienvenida.' : 'Selecciona los destinatarios y configura las opciones para esta campaña.'}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">{renderContent()}</div>
