@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -10,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
-import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, isBefore } from 'date-fns';
+import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -89,16 +90,38 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             return clients.filter(c => pendingPaymentPhones.has(c.phone));
         }
         case 'birthdays': {
-            const nextWeek = Array.from({ length: 7 }, (_, i) => {
-                const day = addDays(today, i);
-                return { month: getMonth(day), day: getDate(day) };
-            });
-            return clients.filter(c => {
-                if (!c.birthDate) return false;
-                const birthDate = parseISO(c.birthDate);
-                return nextWeek.some(d => getMonth(birthDate) === d.month && getDate(birthDate) === d.day);
-            });
-        }
+                const todayDayOfYear = getDayOfYear(today);
+                const isLeapYear = (new Date(today.getFullYear(), 1, 29).getDate() === 29);
+
+                return clients
+                    .filter(c => !!c.birthDate)
+                    .map(c => {
+                        const birthDate = parseISO(c.birthDate!);
+                        // Set year to current year to normalize for comparison
+                        birthDate.setFullYear(today.getFullYear());
+                        let birthDayOfYear = getDayOfYear(birthDate);
+
+                        // Adjust for leap years if necessary
+                        if (isLeapYear && birthDayOfYear > 59) birthDayOfYear++; // After Feb 28
+                        if (!isLeapYear && getMonth(parseISO(c.birthDate!)) > 1) birthDayOfYear--;
+                        
+                        const diff = birthDayOfYear - todayDayOfYear;
+                        
+                        // Handle year wrap-around for birthdays in early January when checking in late December
+                        let proximity = diff;
+                        if (diff < -180) { // e.g., today is Dec 30, birthday is Jan 2
+                            proximity = diff + 365;
+                        }
+                        // Handle year wrap-around for birthdays in late December when checking in early January
+                        if (diff > 180) { // e.g., today is Jan 2, birthday is Dec 30
+                            proximity = diff - 365;
+                        }
+
+                        return { ...c, proximity };
+                    })
+                    .filter(c => c.proximity >= -7 && c.proximity <= 14) // Past 7 days, next 14 days
+                    .sort((a, b) => a.proximity - b.proximity);
+            }
         case 'inactiveClients': {
              const clientLastVisit = new Map<string, Date>();
              appointments.forEach(apt => {
@@ -149,7 +172,13 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setStep('generate');
     setGeneratedMessages([]);
 
-    const selectedClients = targetClients.filter(c => selectedClientIds.includes(c.id));
+    let selectedClients;
+    if (campaignType === 'newClients') {
+        selectedClients = [{id: 'new', name: newClientName, phone: newClientPhone, lastName: ''}];
+    } else {
+        selectedClients = targetClients.filter(c => selectedClientIds.includes(c.id));
+    }
+    
     let generated: GeneratedMessage[] = [];
 
     for (const client of selectedClients) {
@@ -228,31 +257,30 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     }
                     break;
                 }
+                 case 'newClients': {
+                    try {
+                        const result = await generateNewAppointmentWhatsapp({ 
+                            clientName: newClientName, 
+                            appointmentDateTime: '', // Not needed for welcome
+                            businessAddress: profile?.address || '',
+                            businessName: profile?.name,
+                        });
+                        const welcomeMessage = result.whatsappMessage
+                            .replace(/Te confirmo tu nueva cita.*$/, `¡Bienvenido/a a ${profile?.name || 'nuestro centro'}! Estamos encantados de tenerte. No dudes en contactarnos para reservar tu primera cita. ¡Te esperamos!`)
+                            .trim();
+
+                        generated.push({ clientId: 'new', clientName: newClientName, clientPhone: newClientPhone, message: welcomeMessage });
+                    } catch (error) {
+                        console.error('Failed to generate welcome message', error);
+                    }
+                    break;
+                }
             }
            
         } catch (error) {
             console.error('Failed to generate message for', client.name, error);
         }
     }
-    
-    if (campaignType === 'newClients' && newClientName && newClientPhone) {
-        try {
-            const result = await generateNewAppointmentWhatsapp({ 
-                clientName: newClientName, 
-                appointmentDateTime: '', // Not needed for welcome
-                businessAddress: profile?.address || '',
-                businessName: profile?.name,
-            });
-            const welcomeMessage = result.whatsappMessage
-                .replace(/Te confirmo tu nueva cita.*$/, `¡Bienvenido/a a ${profile?.name || 'nuestro centro'}! Estamos encantados de tenerte. No dudes en contactarnos para reservar tu primera cita. ¡Te esperamos!`)
-                .trim();
-
-            generated.push({ clientId: 'new', clientName: newClientName, clientPhone: newClientPhone, message: welcomeMessage });
-        } catch (error) {
-            console.error('Failed to generate welcome message', error);
-        }
-    }
-
 
     setGeneratedMessages(generated);
     setIsLoading(false);
@@ -405,6 +433,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                                 <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
                                     <span className="font-semibold">{c.name} {c.lastName}</span>
                                     <span className="text-sm text-muted-foreground">{c.phone}</span>
+                                     {campaignType === 'birthdays' && c.birthDate && (
+                                        <span className="text-xs text-primary">{format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es })}</span>
+                                    )}
                                 </Label>
                             </div>
                         ))}
@@ -506,3 +537,5 @@ function MessageCard({ message }: { message: GeneratedMessage }) {
         </div>
     )
 }
+
+    
