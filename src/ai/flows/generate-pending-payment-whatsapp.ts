@@ -39,7 +39,7 @@ const generatePendingPaymentWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp amable y conciso para recordarle a un cliente que tiene un pago pendiente de una cita pasada.
 
   Plantilla:
-  "¡Hola {{clientName}}! 👋 Te escribimos de parte de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} para recordarte amablemente que quedó un pago pendiente de una de tus últimas visitas.{{#if customMessage}} {{customMessage}}.{{/if}} Puedes realizar el pago en tu próxima cita o contactarnos si lo prefieres. ¡Muchas gracias! 😊"
+  "¡Hola {{clientName}}! 👋 Te escribimos de parte de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} para recordarte amablemente que quedó un pago pendiente de una de tus últimas visitas.{{#if customMessage}}\n\n{{customMessage}}{{/if}}\n\nPuedes realizar el pago en tu próxima cita o contactarnos si lo prefieres. ¡Muchas gracias! 😊"
   `,
 });
 

@@ -46,7 +46,7 @@ const generateWhatsappReminderPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp amigable y profesional para recordarle a {{clientName}} sobre su próxima cita.
 
   El mensaje debe seguir este formato exacto, incluyendo los emojis y el formato de negrita (asteriscos):
-  '¡Hola {{clientName}}! 👋 Te escribimos de parte de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} para recordarte tu cita del *{{appointmentDateTime}}*. Por favor, si no puedes acudir, avísanos con la mayor antelación posible.{{#if customMessage}} {{customMessage}}.{{/if}} ¡Te esperamos! ✨{{#if website}}\n\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}'
+  '¡Hola {{clientName}}! 👋\n\nTe escribimos de parte de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} para recordarte tu cita del *{{appointmentDateTime}}*.\n\nPor favor, si no puedes acudir, avísanos con la mayor antelación posible.{{#if customMessage}}\n\n{{customMessage}}{{/if}}\n\n¡Te esperamos! ✨{{#if website}}\n\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}'
   `,
 });
 

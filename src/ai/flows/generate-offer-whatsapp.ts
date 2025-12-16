@@ -45,7 +45,7 @@ const generateOfferWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp personalizado para informar a un cliente sobre una oferta especial, utilizando la siguiente plantilla y rellenando los datos proporcionados. No añadas ningún saludo o texto adicional.
 
   Plantilla:
-  "¡Hola {{clientName}}! 🥳 Queremos cuidarte y por eso te traemos una oferta especial. {{{offerMessage}}}. Esta promoción es válida {{dateRange}}. ¡No te la pierdas y reserva tu cita! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! 🥳 Queremos cuidarte y por eso te traemos una oferta especial.\n\n{{{offerMessage}}}.\n\nEsta promoción es válida {{dateRange}}. ¡No te la pierdas y reserva tu cita! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   `,
 });
 

@@ -39,7 +39,7 @@ const generateBirthdayWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp corto y alegre para felicitar a un cliente por su cumpleaños.
 
   Plantilla:
-  "¡Feliz cumpleaños, {{clientName}}! 🎂 De parte de todo el equipo de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}}, te deseamos un día maravilloso lleno de alegría.{{#if customMessage}} {{customMessage}}.{{/if}} ¡Un abrazo grande! ✨"
+  "¡Feliz cumpleaños, {{clientName}}! 🎂\n\nDe parte de todo el equipo de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}}, te deseamos un día maravilloso lleno de alegría.{{#if customMessage}}\n\n{{customMessage}}{{/if}}\n\n¡Un abrazo grande! ✨"
   `,
 });
 

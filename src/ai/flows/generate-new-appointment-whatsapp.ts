@@ -50,13 +50,13 @@ const generateWelcomeWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp para dar la bienvenida a un nuevo cliente potencial que ha pedido información. El objetivo es presentarte, proporcionar la lista de servicios con sus precios y los datos de contacto. Usa la siguiente plantilla.
 
   Plantilla:
-  "¡Hola {{clientName}}! Soy de {{#if businessName}}{{businessName}}{{else}}nuestro centro{{/if}}. Gracias por tu interés. {{#if businessAddress}}Nos puedes encontrar en {{businessAddress}}.{{/if}}
+  "¡Hola {{clientName}}! Soy de {{#if businessName}}{{businessName}}{{else}}nuestro centro{{/if}}. Gracias por tu interés.
+{{#if businessAddress}}\nNos puedes encontrar en {{businessAddress}}.{{/if}}
 {{#if services}}
-Estos son nuestros servicios principales:
-{{#each services}}- {{name}}: {{price}}€
-{{/each}}
+\nEstos son nuestros servicios principales:
+{{#each services}}\n- {{name}}: {{price}}€{{/each}}
 {{/if}}
-Para cualquier consulta, no dudes en contactarnos. ¡Te esperamos! ✨{{#if website}}\n\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+\nPara cualquier consulta, no dudes en contactarnos. ¡Te esperamos! ✨{{#if website}}\n\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   `,
 });
 

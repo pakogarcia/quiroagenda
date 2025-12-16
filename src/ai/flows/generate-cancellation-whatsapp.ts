@@ -41,11 +41,7 @@ const generateCancellationWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp para informar a un cliente que su próxima cita ha tenido que ser modificada por un imprevisto. Discúlpate y ofrece una nueva fecha y hora.
 
   Plantilla:
-  "¡Hola {{clientName}}! Te escribo de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}}. Con mucha pena, te informo de que por un imprevisto personal me veo en la obligación de modificar nuestra cita del *{{originalAppointmentDateTime}}*. Mil disculpas por las molestias.
-
-Te propongo una nueva fecha: el *{{newProposedDateTime}}*. Si te viene bien, genial. Si no, por favor, dime qué te vendría mejor o si prefieres cancelar la cita.{{#if customMessage}} {{customMessage}}.{{/if}}
-
-Gracias por tu comprensión. Un saludo."
+  "¡Hola {{clientName}}! Te escribo de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}}.\n\nCon mucha pena, te informo de que por un imprevisto personal me veo en la obligación de modificar nuestra cita del *{{originalAppointmentDateTime}}*. Mil disculpas por las molestias.\n\nTe propongo una nueva fecha: el *{{newProposedDateTime}}*. Si te viene bien, genial. Si no, por favor, dime qué te vendría mejor o si prefieres cancelar la cita.{{#if customMessage}}\n\n{{customMessage}}{{/if}}\n\nGracias por tu comprensión. Un saludo."
   `,
 });
 

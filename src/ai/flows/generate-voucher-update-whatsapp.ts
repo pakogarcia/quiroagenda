@@ -46,14 +46,14 @@ const generateVoucherUpdateWhatsappPrompt = ai.definePrompt({
 
   {{#if informativeOnly}}
   Plantilla para consulta informativa:
-  "¡Hola {{clientName}}! 👋 Te informamos que actualmente te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! 👋\n\nTe informamos que actualmente te quedan *{{remainingSessions}} sesiones* en tu bono.\n\n¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   {{else}}
     {{#if remainingSessions}}
     Plantilla para sesiones restantes (tras usar una):
-    "¡Hola {{clientName}}! 👋 Hemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono. ¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+    "¡Hola {{clientName}}! 👋\n\nHemos registrado tu última sesión. Aún te quedan *{{remainingSessions}} sesiones* en tu bono.\n\n¡Esperamos verte pronto para que sigas disfrutando de tus masajes! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
     {{else}}
     Plantilla para 0 sesiones restantes:
-    "¡Hola {{clientName}}! 🎉 ¡Felicidades por completar tu bono! Ha sido tu última sesión, pero nos encantaría seguir cuidándote. Puedes adquirir un nuevo bono cuando quieras para no perder el ritmo. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+    "¡Hola {{clientName}}! 🎉 ¡Felicidades por completar tu bono!\n\nHa sido tu última sesión, pero nos encantaría seguir cuidándote. Puedes adquirir un nuevo bono cuando quieras para no perder el ritmo.\n\n¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
     {{/if}}
   {{/if}}
   `,

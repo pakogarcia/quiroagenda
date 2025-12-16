@@ -40,7 +40,7 @@ const generateNoShowWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp corto y amable para un cliente que no se presentó a su cita. El objetivo es informarle y recordarle la importancia de cancelar con antelación.
 
   Plantilla:
-  "¡Hola {{clientName}}! 👋 Te escribimos de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} en referencia a tu cita del {{appointmentDateTime}}. Hemos registrado que no pudiste asistir. Entendemos que surgen imprevistos, pero te agradeceríamos que la próxima vez nos avises para poder reorganizar la agenda.{{#if customMessage}} {{customMessage}}.{{/if}} ¡Esperamos verte pronto! 😊"
+  "¡Hola {{clientName}}! 👋 Te escribimos de {{#if businessName}}_{{businessName}}_{{else}}nuestro centro{{/if}} en referencia a tu cita del {{appointmentDateTime}}.\n\nHemos registrado que no pudiste asistir. Entendemos que surgen imprevistos, pero te agradeceríamos que la próxima vez nos avises para poder reorganizar la agenda.{{#if customMessage}}\n\n{{customMessage}}{{/if}}\n\n¡Esperamos verte pronto! 😊"
   `,
 });
 

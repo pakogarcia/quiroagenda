@@ -40,7 +40,7 @@ const generateInactiveClientWhatsappPrompt = ai.definePrompt({
   Crea un mensaje de WhatsApp cercano y amigable para un cliente inactivo.
 
   Plantilla:
-  "¡Hola {{clientName}}! 👋 Te echamos de menos en {{#if businessName}}_{{businessName}}_{{else}}el centro{{/if}}. Hace ya un tiempo desde tu última visita y queríamos saber si todo va bien.{{#if customMessage}} {{customMessage}}.{{/if}} ¿Te apetece volver a cuidarte? ¡Nos encantaría verte de nuevo! ✨"
+  "¡Hola {{clientName}}! 👋 Te echamos de menos en {{#if businessName}}_{{businessName}}_{{else}}el centro{{/if}}.\n\nHace ya un tiempo desde tu última visita y queríamos saber si todo va bien.{{#if customMessage}}\n\n{{customMessage}}{{/if}}\n\n¿Te apetece volver a cuidarte? ¡Nos encantaría verte de nuevo! ✨"
   `,
 });
 
