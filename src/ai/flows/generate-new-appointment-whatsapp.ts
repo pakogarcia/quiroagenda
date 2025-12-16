@@ -2,19 +2,18 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating personalized WhatsApp confirmation messages for new appointments.
+ * @fileOverview This file defines a Genkit flow for generating personalized WhatsApp welcome messages for new or potential clients.
  *
- * - generateNewAppointmentWhatsapp - A function that generates a WhatsApp confirmation message.
- * - GenerateNewAppointmentWhatsappInput - The input type for the function.
- * - GenerateNewAppointmentWhatsappOutput - The return type for the function.
+ * - generateWelcomeWhatsapp - A function that generates a WhatsApp welcome message.
+ * - GenerateWelcomeWhatsappInput - The input type for the function.
+ * - GenerateWelcomeWhatsappOutput - The return type for the function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateNewAppointmentWhatsappInputSchema = z.object({
+const GenerateWelcomeWhatsappInputSchema = z.object({
   clientName: z.string().describe('The name of the client.'),
-  appointmentDateTime: z.string().describe('The date and time of the appointment, pre-formatted for display.'),
   businessAddress: z.string().describe('The address of the business.'),
   businessName: z.string().optional().describe('The name of the business sending the confirmation.'),
   website: z.string().url().or(z.literal('')).optional(),
@@ -24,39 +23,39 @@ const GenerateNewAppointmentWhatsappInputSchema = z.object({
   youtube: z.string().url().or(z.literal('')).optional(),
 });
 
-export type GenerateNewAppointmentWhatsappInput = z.infer<typeof GenerateNewAppointmentWhatsappInputSchema>;
+export type GenerateWelcomeWhatsappInput = z.infer<typeof GenerateWelcomeWhatsappInputSchema>;
 
-const GenerateNewAppointmentWhatsappOutputSchema = z.object({
-  whatsappMessage: z.string().describe('The personalized WhatsApp confirmation message.'),
+const GenerateWelcomeWhatsappOutputSchema = z.object({
+  whatsappMessage: z.string().describe('The personalized WhatsApp welcome message.'),
 });
 
-export type GenerateNewAppointmentWhatsappOutput = z.infer<typeof GenerateNewAppointmentWhatsappOutputSchema>;
+export type GenerateWelcomeWhatsappOutput = z.infer<typeof GenerateWelcomeWhatsappOutputSchema>;
 
-export async function generateNewAppointmentWhatsapp(input: GenerateNewAppointmentWhatsappInput): Promise<GenerateNewAppointmentWhatsappOutput> {
-  return generateNewAppointmentWhatsappFlow(input);
+export async function generateWelcomeWhatsapp(input: GenerateWelcomeWhatsappInput): Promise<GenerateWelcomeWhatsappOutput> {
+  return generateWelcomeWhatsappFlow(input);
 }
 
-const generateNewAppointmentWhatsappPrompt = ai.definePrompt({
-  name: 'generateNewAppointmentWhatsappPrompt',
-  input: {schema: GenerateNewAppointmentWhatsappInputSchema},
-  output: {schema: GenerateNewAppointmentWhatsappOutputSchema},
+const generateWelcomeWhatsappPrompt = ai.definePrompt({
+  name: 'generateWelcomeWhatsappPrompt',
+  input: {schema: GenerateWelcomeWhatsappInputSchema},
+  output: {schema: GenerateWelcomeWhatsappOutputSchema},
   prompt: `Eres un asistente virtual para un gabinete de masajes y estética. Tu tono es amigable y profesional.
 
-  Crea un mensaje de WhatsApp para confirmar una nueva cita, usando la siguiente plantilla y rellenando los datos proporcionados. No añadas ningún saludo o texto adicional que no esté en la plantilla.
+  Crea un mensaje de WhatsApp para dar la bienvenida a un nuevo cliente potencial que ha pedido información. El objetivo es presentarte y proporcionar la información de contacto. Usa la siguiente plantilla.
 
   Plantilla:
-  "¡Hola {{clientName}}! Te confirmo tu nueva cita para el *{{appointmentDateTime}}*. Nos vemos en nuestra consulta en {{businessAddress}}. ¡Gracias por tu confianza! ✨{{#if businessName}}\n\n_{{businessName}}_{{/if}}{{#if website}}\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
+  "¡Hola {{clientName}}! Soy de {{businessName}}. Gracias por tu interés. Nos puedes encontrar en {{businessAddress}}. Para cualquier consulta, no dudes en contactarnos. ¡Te esperamos! ✨{{#if website}}\n\nWeb: {{website}}{{/if}}{{#if instagram}}\nInstagram: {{instagram}}{{/if}}{{#if facebook}}\nFacebook: {{facebook}}{{/if}}{{#if tiktok}}\nTikTok: {{tiktok}}{{/if}}{{#if youtube}}\nYouTube: {{youtube}}{{/if}}"
   `,
 });
 
-const generateNewAppointmentWhatsappFlow = ai.defineFlow(
+const generateWelcomeWhatsappFlow = ai.defineFlow(
   {
-    name: 'generateNewAppointmentWhatsappFlow',
-    inputSchema: GenerateNewAppointmentWhatsappInputSchema,
-    outputSchema: GenerateNewAppointmentWhatsappOutputSchema,
+    name: 'generateWelcomeWhatsappFlow',
+    inputSchema: GenerateWelcomeWhatsappInputSchema,
+    outputSchema: GenerateWelcomeWhatsappOutputSchema,
   },
   async input => {
-    const {output} = await generateNewAppointmentWhatsappPrompt(input);
+    const {output} = await generateWelcomeWhatsappPrompt(input);
     return output!;
   }
 );

@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
-import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear } from 'date-fns';
+import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +26,7 @@ import { Input } from './ui/input';
 import { generateBirthdayWhatsapp } from '@/ai/flows/generate-birthday-whatsapp';
 import { generateInactiveClientWhatsapp } from '@/ai/flows/generate-inactive-client-whatsapp';
 import { generatePendingPaymentWhatsapp } from '@/ai/flows/generate-pending-payment-whatsapp';
-import { generateNewAppointmentWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
+import { generateWelcomeWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 
 
@@ -259,17 +259,18 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 }
                  case 'newClients': {
                     try {
-                        const result = await generateNewAppointmentWhatsapp({ 
-                            clientName: newClientName, 
-                            appointmentDateTime: '', // Not needed for welcome
+                        const result = await generateWelcomeWhatsapp({ 
+                            clientName: newClientName.split(' ')[0], 
                             businessAddress: profile?.address || '',
                             businessName: profile?.name,
+                            website: profile?.website,
+                            instagram: profile?.instagram,
+                            facebook: profile?.facebook,
+                            tiktok: profile?.tiktok,
+                            youtube: profile?.youtube,
                         });
-                        const welcomeMessage = result.whatsappMessage
-                            .replace(/Te confirmo tu nueva cita.*$/, `¡Bienvenido/a a ${profile?.name || 'nuestro centro'}! Estamos encantados de tenerte. No dudes en contactarnos para reservar tu primera cita. ¡Te esperamos!`)
-                            .trim();
 
-                        generated.push({ clientId: 'new', clientName: newClientName, clientPhone: newClientPhone, message: welcomeMessage });
+                        generated.push({ clientId: 'new', clientName: newClientName, clientPhone: newClientPhone, message: result.whatsappMessage });
                     } catch (error) {
                         console.error('Failed to generate welcome message', error);
                     }
