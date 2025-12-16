@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
 import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle } from 'lucide-react';
+import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { type DateRange } from 'react-day-picker';
@@ -28,6 +28,7 @@ import { generatePendingPaymentWhatsapp } from '@/ai/flows/generate-pending-paym
 import { generateWelcomeWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { NewAppointmentConfirmationDialog } from './new-appointment-confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 
 export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus';
@@ -541,7 +542,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
           onOpenChange={(isOpen) => {
               if (!isOpen) {
                   setWelcomeMessage(null);
-                  onOpenChange(false);
+                  handleDialogClose(false);
               }
           }}
         />
@@ -550,18 +551,36 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 }
 
 function MessageCard({ message, onCustomNoteChange }: { message: GeneratedMessage; onCustomNoteChange: (clientId: string, note: string) => void; }) {
+    const { toast } = useToast();
+    const [isCopied, setIsCopied] = useState(false);
     const fullMessage = `${message.message}${message.customNote ? `\n\n${message.customNote}` : ''}`;
     const whatsappLink = `https://wa.me/${message.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(fullMessage)}`;
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(fullMessage);
+        toast({
+            title: "Copiado",
+            description: "Mensaje copiado al portapapeles."
+        });
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
 
     return (
         <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
                 <div className="font-semibold text-primary flex items-center gap-2"><Smartphone className="w-4 h-4"/>{message.clientName}</div>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="sm">
-                        <Send className="mr-2 h-4 w-4" /> Enviar
+                <div className="flex items-center">
+                    <Button variant="ghost" size="sm" onClick={handleCopy}>
+                        {isCopied ? <Check className="mr-2 h-4 w-4 text-green-500" /> : <Copy className="mr-2 h-4 w-4" />}
+                        {isCopied ? 'Copiado' : 'Copiar'}
                     </Button>
-                </a>
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                        <Button variant="ghost" size="sm">
+                            <Send className="mr-2 h-4 w-4" /> Enviar
+                        </Button>
+                    </a>
+                </div>
             </div>
             <Separator className="my-2" />
             <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">"{message.message}"</p>
@@ -578,3 +597,5 @@ function MessageCard({ message, onCustomNoteChange }: { message: GeneratedMessag
         </div>
     )
 }
+
+    
