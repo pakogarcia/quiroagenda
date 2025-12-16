@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { type Appointment, type Client } from '@/lib/types';
 import { Send, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
-import { generateNewAppointmentWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
+import { generateWelcomeWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
 import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -49,7 +49,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
                 setError('No se ha configurado la dirección del negocio en la sección "Quién eres". Por favor, completa tu perfil.');
                 return;
             }
-             const result = await generateNewAppointmentWhatsapp({
+             const result = await generateWelcomeWhatsapp({
                 clientName: appointment.clientName.split(' ')[0],
                 businessAddress: businessProfile.address,
                 businessName: businessProfile.name,
