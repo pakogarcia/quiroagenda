@@ -10,9 +10,9 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
-import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear } from 'date-fns';
+import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isFuture, set } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check, UserX } from 'lucide-react';
+import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check, UserX, CalendarOff } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { type DateRange } from 'react-day-picker';
@@ -30,9 +30,13 @@ import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-updat
 import { NewAppointmentConfirmationDialog } from './new-appointment-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateNoShowWhatsapp } from '@/ai/flows/generate-no-show-whatsapp';
+import { generateCancellationWhatsapp } from '@/ai/flows/generate-cancellation-whatsapp';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar } from './ui/calendar';
+import { cn } from '@/lib/utils';
 
 
-export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus' | 'noShow';
+export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus' | 'noShow' | 'cancellation';
 
 type GeneratedMessage = {
   clientId: string;
@@ -51,12 +55,13 @@ type CampaignDialogProps = {
 const campaignDetails = {
     reminders: { title: 'Recordatorios de Citas', icon: Bell },
     pendingPayments: { title: 'Notificar Pagos Pendientes', icon: AlertCircle },
+    noShow: { title: 'Contactar por Ausencia (No Show)', icon: UserX },
+    cancellation: { title: 'Anulación/Modificación de Cita', icon: CalendarOff },
+    voucherStatus: { title: 'Notificar Sesiones de Bono', icon: Gift },
     birthdays: { title: 'Felicitaciones de Cumpleaños', icon: Cake },
     inactiveClients: { title: 'Clientes Inactivos', icon: Clock },
-    newClients: { title: 'Bienvenida a Nuevos Clientes', icon: Users },
+    newClients: { title: 'Bienvenida a Nuevos Clients', icon: Users },
     offer: { title: 'Campaña de Oferta', icon: Gift },
-    voucherStatus: { title: 'Notificar Sesiones de Bono', icon: Gift },
-    noShow: { title: 'Contactar por Ausencia (No Show)', icon: UserX },
 };
 
 export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogProps) {
@@ -75,6 +80,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
   const [welcomeMessage, setWelcomeMessage] = React.useState<Appointment | null>(null);
+  const [cancellationDate, setCancellationDate] = React.useState<Date | undefined>(addDays(new Date(), 1));
+  const [cancellationTime, setCancellationTime] = React.useState('10:00');
 
   const targetClients = useMemo(() => {
     if (!campaignType) return [];
@@ -82,14 +89,15 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
     switch (campaignType) {
         case 'reminders': {
-            const scheduledAppointments = appointments.filter(apt => apt.status === 'scheduled' && !apt.reminderSent);
             const nextAppointmentByClient: { [phone: string]: Appointment } = {};
 
-            scheduledAppointments.forEach(apt => {
-                if (!nextAppointmentByClient[apt.clientPhone] || apt.dateTime < nextAppointmentByClient[apt.clientPhone].dateTime) {
-                    nextAppointmentByClient[apt.clientPhone] = apt;
-                }
-            });
+            appointments
+                .filter(apt => apt.status === 'scheduled' && !apt.reminderSent && isFuture(apt.dateTime))
+                .forEach(apt => {
+                    if (!nextAppointmentByClient[apt.clientPhone] || apt.dateTime < nextAppointmentByClient[apt.clientPhone].dateTime) {
+                        nextAppointmentByClient[apt.clientPhone] = apt;
+                    }
+                });
 
             const clientPhones = new Set(Object.keys(nextAppointmentByClient));
             return clients.filter(c => clientPhones.has(c.phone));
@@ -110,6 +118,14 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             );
             return clients.filter(c => noShowPhones.has(c.phone));
         }
+        case 'cancellation': {
+             const upcomingAppointmentsPhones = new Set(
+                appointments
+                    .filter(apt => apt.status === 'scheduled' && isFuture(apt.dateTime))
+                    .map(apt => apt.clientPhone)
+            );
+            return clients.filter(c => upcomingAppointmentsPhones.has(c.phone));
+        }
         case 'birthdays': {
                 const todayDayOfYear = getDayOfYear(today);
                 const isLeapYear = (new Date(today.getFullYear(), 1, 29).getDate() === 29);
@@ -121,21 +137,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                         birthDate.setFullYear(today.getFullYear());
                         let birthDayOfYear = getDayOfYear(birthDate);
 
-                        if (isLeapYear && birthDayOfYear > 59) birthDayOfYear++;
-                        if (!isLeapYear && getMonth(parseISO(c.birthDate!)) > 1 && getMonth(parseISO(c.birthDate!)) === 2 && getDate(parseISO(c.birthDate!)) === 29) {
-                           // Approx for Feb 29 on non-leap year
-                        } else if (!isLeapYear && getMonth(parseISO(c.birthDate!)) > 1) {
-                           birthDayOfYear--;
+                        if (isLeapYear && getMonth(parseISO(c.birthDate!)) === 1 && getDate(parseISO(c.birthDate!)) === 29) {
+                           // Special handling for Feb 29 on leap years can be complex
+                        } else if (isLeapYear && getMonth(parseISO(c.birthDate!)) > 1) {
+                           birthDayOfYear++;
                         }
                         
-                        const diff = birthDayOfYear - todayDayOfYear;
+                        let proximity = birthDayOfYear - todayDayOfYear;
                         
-                        let proximity = diff;
-                        if (diff < -180) { 
-                            proximity = diff + (isLeapYear ? 366 : 365);
+                        const yearDays = isLeapYear ? 366 : 365;
+                        if (diff < -yearDays / 2) { 
+                            proximity += yearDays;
                         }
-                        if (diff > 180) {
-                            proximity = diff - (isLeapYear ? 366 : 365);
+                        if (diff > yearDays / 2) {
+                            proximity -= yearDays;
                         }
 
                         return { ...c, proximity };
@@ -158,7 +173,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             });
             return clients.filter(c => {
                 const lastVisit = clientLastVisit.get(c.id);
-                if (!lastVisit) return false;
+                if (!lastVisit) return false; // Or handle as active if no completed appointments
                 return differenceInDays(today, lastVisit) >= inactiveDays;
             });
         }
@@ -182,7 +197,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       setOfferMessage('');
       setInactiveDays(90);
       setNewClientName('');
-      setNewClientPhone('');
+      setNewClientPhone('+34 ');
       setWelcomeMessage(null);
     }
   }, [campaignType]);
@@ -202,7 +217,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             status: 'scheduled'
         }
         setWelcomeMessage(fakeAppointment);
-        onOpenChange(false);
+        // onOpenChange(false); // This was causing the dialog to close
         return;
     }
 
@@ -221,7 +236,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             switch(campaignType) {
                 case 'reminders': {
                      const nextAppointment = appointments
-                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent)
+                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent && isFuture(a.dateTime))
                         .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
 
                     if (nextAppointment) {
@@ -259,6 +274,27 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                             clientName: client.name,
                             businessName: profile?.name,
                             appointmentDateTime: format(lastNoShow.dateTime, "d 'de' MMMM", { locale: es }),
+                            customMessage: customNote,
+                        });
+                        message = result.whatsappMessage;
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote: '' });
+                    }
+                    break;
+                }
+                case 'cancellation': {
+                    const nextAppointment = appointments
+                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && isFuture(a.dateTime))
+                        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
+                    
+                    if (nextAppointment && cancellationDate) {
+                        const [hours, minutes] = cancellationTime.split(':').map(Number);
+                        const newProposedDateTime = set(cancellationDate, { hours, minutes });
+
+                        const result = await generateCancellationWhatsapp({
+                            clientName: client.name,
+                            businessName: profile?.name,
+                            originalAppointmentDateTime: format(nextAppointment.dateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es }),
+                            newProposedDateTime: format(newProposedDateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es }),
                             customMessage: customNote,
                         });
                         message = result.whatsappMessage;
@@ -318,7 +354,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(generated);
     setIsLoading(false);
     setStep('finished');
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services, onOpenChange]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, newClientName, newClientPhone, services, cancellationDate, cancellationTime]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -378,6 +414,36 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 </div>
             </div>
         )
+      }
+      if (campaignType === 'cancellation') {
+          return (
+            <div className='space-y-4'>
+                <Label>Proponer nueva fecha y hora</Label>
+                 <div className="grid grid-cols-2 gap-4">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn("pl-3 text-left font-normal", !cancellationDate && "text-muted-foreground")}
+                            >
+                                {cancellationDate ? format(cancellationDate, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={cancellationDate}
+                                onSelect={setCancellationDate}
+                                initialFocus
+                                locale={es}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <Input type="time" value={cancellationTime} onChange={e => setCancellationTime(e.target.value)} />
+                </div>
+            </div>
+          )
       }
       return null;
   }
@@ -455,7 +521,12 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 </div>
                 <ScrollArea className="h-[350px] pr-4">
                     <div className="space-y-3">
-                        {targetClients.map(c => (
+                        {targetClients.map(c => {
+                            const nextAppointment = (campaignType === 'reminders' || campaignType === 'cancellation')
+                                ? appointments.find(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime))
+                                : null;
+
+                            return (
                             <div key={c.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
                                 <div className="flex items-center space-x-3">
                                     <Checkbox
@@ -473,6 +544,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                                         {campaignType === 'birthdays' && c.birthDate && (
                                             <span className="text-xs text-primary">{format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es })}</span>
                                         )}
+                                        {nextAppointment && (
+                                            <span className="text-xs text-primary">{format(nextAppointment.dateTime, "d MMM, p", { locale: es })}</span>
+                                        )}
                                     </Label>
                                 </div>
                                  {selectedClientIds.includes(c.id) && (
@@ -487,7 +561,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                                     </div>
                                 )}
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </ScrollArea>
                 </>
@@ -521,6 +595,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         let disabled = isLoading;
         if (campaignType === 'newClients') {
             disabled = isLoading || !newClientName || !newClientPhone;
+        } else if (campaignType === 'cancellation') {
+            disabled = isLoading || selectedClientIds.length === 0 || !cancellationDate;
         } else {
             disabled = isLoading || selectedClientIds.length === 0 || (campaignType === 'offer' && !offerMessage);
         }
@@ -565,7 +641,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
               <AlertDialogHeader>
                   <AlertDialogTitle>¿Marcar como enviados?</AlertDialogTitle>
                   <AlertDialogDescription>
-                      Esta acción marcará los mensajes como enviados (si aplica) y no podrás volver a generarlos desde esta pantalla. ¿Estás seguro?
+                      {campaignType === 'reminders' ? "Esta acción marcará los recordatorios como enviados y no volverán a aparecer en esta lista. ¿Estás seguro?" : "Esta acción es solo para cerrar la ventana. ¿Estás seguro?"}
                   </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -620,6 +696,7 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
             </div>
             <Separator className="my-2" />
             <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">"{message.message}"</p>
+            {message.customNote && <p className="mt-2 text-xs text-blue-600 border-l-2 border-blue-600 pl-2">Nota: {message.customNote}</p>}
         </div>
     )
 }

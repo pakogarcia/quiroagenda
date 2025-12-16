@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX } from 'lucide-react';
+import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX, CalendarOff } from 'lucide-react';
 import { CampaignDialog, CampaignType } from '@/components/campaign-dialog';
 
 const campaignOptions = [
@@ -25,6 +25,12 @@ const campaignOptions = [
     title: 'Contactar por Ausencia (No Show)',
     description: 'Envía un mensaje a clientes que no se presentaron a su cita.',
     icon: UserX,
+  },
+  {
+    type: 'cancellation',
+    title: 'Anulación/Modificación de Cita',
+    description: 'Envía un mensaje para cancelar o proponer un cambio en una cita por un imprevisto.',
+    icon: CalendarOff,
   },
   {
     type: 'voucherStatus',

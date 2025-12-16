@@ -12,4 +12,4 @@ import '@/ai/flows/generate-birthday-whatsapp.ts';
 import '@/ai/flows/generate-inactive-client-whatsapp.ts';
 import '@/ai/flows/generate-pending-payment-whatsapp.ts';
 import '@/ai/flows/generate-no-show-whatsapp.ts';
-
+import '@/ai/flows/generate-cancellation-whatsapp.ts';
