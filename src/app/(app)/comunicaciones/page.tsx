@@ -21,6 +21,12 @@ const campaignOptions = [
     icon: AlertCircle,
   },
   {
+    type: 'voucherStatus',
+    title: 'Notificar Sesiones de Bono',
+    description: 'Informa a un cliente sobre las sesiones que le quedan en su bono.',
+    icon: Gift,
+  },
+  {
     type: 'birthdays',
     title: 'Felicitaciones de Cumpleaños',
     description: 'Envía un mensaje a los clientes que cumplen años pronto.',

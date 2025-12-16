@@ -26,9 +26,10 @@ import { generateBirthdayWhatsapp } from '@/ai/flows/generate-birthday-whatsapp'
 import { generateInactiveClientWhatsapp } from '@/ai/flows/generate-inactive-client-whatsapp';
 import { generatePendingPaymentWhatsapp } from '@/ai/flows/generate-pending-payment-whatsapp';
 import { generateNewAppointmentWhatsapp } from '@/ai/flows/generate-new-appointment-whatsapp';
+import { generateVoucherUpdateWhatsapp } from '@/ai/flows/generate-voucher-update-whatsapp';
 
 
-export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer';
+export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus';
 
 type GeneratedMessage = {
   clientId: string;
@@ -49,6 +50,7 @@ const campaignDetails = {
     inactiveClients: { title: 'Clientes Inactivos', icon: Clock },
     newClients: { title: 'Bienvenida a Nuevos Clientes', icon: Users },
     offer: { title: 'Campaña de Oferta', icon: Gift },
+    voucherStatus: { title: 'Notificar Sesiones de Bono', icon: Gift }
 };
 
 export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogProps) {
@@ -114,6 +116,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 if (!lastVisit) return false;
                 return differenceInDays(today, lastVisit) >= inactiveDays;
             });
+        }
+        case 'voucherStatus': {
+            return clients.filter(c => c.voucher && c.voucher.sessions > 0);
         }
         case 'newClients':
             return []; // Will be handled by a special form
@@ -197,6 +202,19 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     });
                     message = result.whatsappMessage;
                      generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                    break;
+                }
+                case 'voucherStatus': {
+                    if (client.voucher && client.voucher.sessions > 0) {
+                        const result = await generateVoucherUpdateWhatsapp({
+                            clientName: client.name,
+                            remainingSessions: client.voucher.sessions,
+                            informativeOnly: true,
+                            businessName: profile?.name,
+                        });
+                        message = result.whatsappMessage;
+                        generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                    }
                     break;
                 }
             }

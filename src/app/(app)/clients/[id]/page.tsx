@@ -40,8 +40,7 @@ export default function ClientDetailPage() {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
     const [editingAppointment, setEditingAppointment] = React.useState<Appointment | null>(null);
     const [editingVoucherSale, setEditingVoucherSale] = React.useState<VoucherSale | null>(null);
-    const [notifyingVoucherClient, setNotifyingVoucherClient] = React.useState<Client | null>(null);
-
+    
 
     React.useEffect(() => {
         if (!isLoading && clientId) {
@@ -201,13 +200,7 @@ export default function ClientDetailPage() {
                         </Link>
                     </Button>
                     <div className="flex gap-2">
-                         {client.voucher && client.voucher.sessions > 0 && (
-                            <Button variant="outline" onClick={() => setNotifyingVoucherClient(client)}>
-                                <Gift className="h-4 w-4 md:mr-2" />
-                                <span className="hidden md:inline">Notificar Bono</span>
-                            </Button>
-                        )}
-                        <Button variant="outline" onClick={() => setIsFormOpen(true)}>
+                         <Button variant="outline" onClick={() => setIsFormOpen(true)}>
                             <Edit className="h-4 w-4 md:mr-2" />
                             <span className="hidden md:inline">Editar</span>
                         </Button>
@@ -443,10 +436,6 @@ export default function ClientDetailPage() {
                 onVoucherSaleUpdated={handleVoucherSaleUpdated}
             />
 
-            <NewAppointmentConfirmationDialog
-                voucherUpdateData={notifyingVoucherClient ? { client: notifyingVoucherClient, remainingSessions: notifyingVoucherClient.voucher!.sessions, informativeOnly: true } : null}
-                onOpenChange={() => setNotifyingVoucherClient(null)}
-            />
         </div>
     );
 }
