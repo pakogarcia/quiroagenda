@@ -214,7 +214,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             status: 'scheduled'
         }
         setWelcomeMessage(welcomeApt);
-        onOpenChange(false);
         return;
     }
 
@@ -380,6 +379,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   
   const details = campaignType ? campaignDetails[campaignType] : null;
   const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
+
+  const getDialogDescription = () => {
+    switch (step) {
+        case 'generate':
+            return 'Espera un momento, la IA está redactando los mensajes...';
+        case 'finished':
+            return '¡Mensajes listos! Ahora puedes copiarlos o enviarlos por WhatsApp.';
+        case 'select':
+        default:
+            return campaignType === 'newClients' 
+                ? 'Envía un mensaje de bienvenida a los clientes recién añadidos.' 
+                : 'Selecciona los destinatarios y configura las opciones para esta campaña.';
+    }
+  };
 
   const renderConfiguration = () => {
       if (campaignType === 'offer') {
@@ -592,7 +605,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     if (step === 'select') {
         let disabled = isLoading;
         if (campaignType === 'newClients') {
-            disabled = true; // Logic moved to direct dialog opening
+            // No action button here, direct dialog opening
         } else if (campaignType === 'cancellation') {
             disabled = isLoading || selectedClientIds.length === 0 || !cancellationDate;
         } else if (campaignType === 'offer') {
@@ -603,9 +616,17 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             disabled = isLoading || selectedClientIds.length === 0;
         }
         
-        const buttonAction = () => handleGenerateMessages(customNotes);
+        const buttonAction = () => {
+            if (campaignType === 'newClients') {
+                handleGenerateMessages({});
+            } else {
+                handleGenerateMessages(customNotes);
+            }
+        };
 
-        const buttonText = `Generar ${selectedClientIds.length} Mensaje(s)`;
+        const buttonText = campaignType === 'newClients' 
+            ? 'Crear Mensaje de Bienvenida'
+            : `Generar ${selectedClientIds.length} Mensaje(s)`;
 
         return (
             <Button onClick={buttonAction} disabled={disabled}>
@@ -629,7 +650,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
               {details.title}
             </DialogTitle>
             <DialogDescription>
-              {campaignType === 'newClients' ? 'Envía un mensaje de bienvenida a los clientes recién añadidos.' : 'Selecciona los destinatarios y configura las opciones para esta campaña.'}
+                {getDialogDescription()}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">{renderContent()}</div>
@@ -654,7 +675,12 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       </AlertDialog>
       <NewAppointmentConfirmationDialog
         appointment={welcomeMessage}
-        onOpenChange={() => setWelcomeMessage(null)}
+        onOpenChange={(isOpen) => {
+            if (!isOpen) {
+                setWelcomeMessage(null);
+                onOpenChange(false); 
+            }
+        }}
       />
     </>
   );
@@ -697,3 +723,5 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
         </div>
     )
 }
+
+    
