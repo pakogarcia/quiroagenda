@@ -36,6 +36,7 @@ type GeneratedMessage = {
   clientName: string;
   clientPhone: string;
   message: string;
+  appointmentId?: string;
 };
 
 type CampaignDialogProps = {
@@ -156,16 +157,26 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         try {
             switch(campaignType) {
                 case 'reminders': {
-                    const clientAppointments = appointments.filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent);
-                    for (const apt of clientAppointments) {
-                         const result = await generateWhatsappReminder({
+                    const clientAppointments = appointments
+                        .filter(a => a.clientPhone === client.phone && a.status === 'scheduled' && !a.reminderSent && !isBefore(a.dateTime, startOfToday()))
+                        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+
+                    if (clientAppointments.length > 0) {
+                        const nextAppointment = clientAppointments[0];
+                        const result = await generateWhatsappReminder({
                             clientName: client.name.split(' ')[0],
-                            appointmentDateTime: format(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
+                            appointmentDateTime: format(nextAppointment.dateTime, "EEEE, d 'de' MMMM 'de' yyyy 'a las' p", { locale: es }),
                             clientPhoneNumber: client.phone,
                             businessName: profile?.name,
                         });
                         message = result.whatsappMessage;
-                         generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message });
+                        generated.push({ 
+                            clientId: client.id, 
+                            clientName: client.name, 
+                            clientPhone: client.phone, 
+                            message,
+                            appointmentId: nextAppointment.id
+                        });
                     }
                     break;
                 }
@@ -250,15 +261,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
-        const appointmentIdsToUpdate = appointments
-            .filter(apt => {
-                const client = clients.find(c => c.phone === apt.clientPhone);
-                return client && selectedClientIds.includes(client.id) && apt.status === 'scheduled' && !apt.reminderSent;
-            })
-            .map(apt => apt.id);
-        
+        const sentAppointmentIds = generatedMessages.map(msg => msg.appointmentId).filter(id => id !== undefined) as string[];
         setAppointments(prev => prev.map(apt => 
-            appointmentIdsToUpdate.includes(apt.id) ? { ...apt, reminderSent: true } : apt
+            sentAppointmentIds.includes(apt.id) ? { ...apt, reminderSent: true } : apt
         ));
     }
     setIsConfirmSentOpen(false);
@@ -342,7 +347,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     <AnimatePresence>
                     {generatedMessages.map((msg) => (
                         <motion.div 
-                            key={msg.clientId}
+                            key={msg.clientId + (msg.appointmentId || '')}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
