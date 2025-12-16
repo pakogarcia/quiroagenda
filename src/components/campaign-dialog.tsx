@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -13,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
 import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isFuture, set } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check, UserX, CalendarOff } from 'lucide-react';
+import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check, UserX, CalendarOff, Megaphone } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { type DateRange } from 'react-day-picker';
@@ -35,9 +34,10 @@ import { generateCancellationWhatsapp } from '@/ai/flows/generate-cancellation-w
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { cn } from '@/lib/utils';
+import { generateGeneralMessageWhatsapp } from '@/ai/flows/generate-general-message-whatsapp';
 
 
-export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus' | 'noShow' | 'cancellation';
+export type CampaignType = 'reminders' | 'pendingPayments' | 'birthdays' | 'inactiveClients' | 'newClients' | 'offer' | 'voucherStatus' | 'noShow' | 'cancellation' | 'generalMessage';
 
 type GeneratedMessage = {
   clientId: string;
@@ -63,6 +63,7 @@ const campaignDetails = {
     inactiveClients: { title: 'Clientes Inactivos', icon: Clock },
     newClients: { title: 'Bienvenida a Nuevos Clients', icon: Users },
     offer: { title: 'Campaña de Oferta', icon: Gift },
+    generalMessage: { title: 'Comunicado General', icon: Megaphone },
 };
 
 export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogProps) {
@@ -74,14 +75,14 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [step, setStep] = useState<'select' | 'generate' | 'finished'>('select');
   
   const [isConfirmSentOpen, setIsConfirmSentOpen] = React.useState(false);
+  const [welcomeMessage, setWelcomeMessage] = React.useState<Appointment | null>(null);
 
   // Specific state for different campaigns
   const [offerMessage, setOfferMessage] = useState('');
   const [inactiveDays, setInactiveDays] = useState<number>(90);
-  const [newClientName, setNewClientName] = useState('');
-  const [newClientPhone, setNewClientPhone] = useState('');
   const [cancellationDate, setCancellationDate] = React.useState<Date | undefined>(addDays(new Date(), 1));
   const [cancellationTime, setCancellationTime] = React.useState('10:00');
+  const [generalMessage, setGeneralMessage] = useState('');
 
   const targetClients = useMemo(() => {
     if (!campaignType) return [];
@@ -174,9 +175,11 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         case 'voucherStatus': {
             return clients.filter(c => c.voucher && c.voucher.sessions > 0);
         }
-        case 'newClients':
-            return []; // Will be handled by a special form
+        case 'newClients': {
+            return []; // Handled by a special form, but the type needs to be present
+        }
         case 'offer':
+        case 'generalMessage':
             return clients;
         default:
             return [];
@@ -190,8 +193,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       setSelectedClientIds([]);
       setOfferMessage('');
       setInactiveDays(90);
-      setNewClientName('');
-      setNewClientPhone('+34 ');
+      setGeneralMessage('');
+      if (campaignType !== 'newClients') {
+          setWelcomeMessage(null);
+      }
     }
   }, [campaignType]);
 
@@ -199,7 +204,17 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     if (!campaignType) return;
     
     if (campaignType === 'newClients') {
-        // This is handled in the renderContent and renderFooter
+        const welcomeApt: Appointment = {
+            id: 'new-client-welcome',
+            clientName: '',
+            clientPhone: '',
+            dateTime: new Date(),
+            notes: '',
+            reminderSent: false,
+            status: 'scheduled'
+        }
+        setWelcomeMessage(welcomeApt);
+        onOpenChange(false);
         return;
     }
 
@@ -326,6 +341,16 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     }
                     break;
                 }
+                case 'generalMessage': {
+                     const result = await generateGeneralMessageWhatsapp({
+                        clientName: client.name,
+                        customMessage: generalMessage,
+                        businessName: profile?.name,
+                    });
+                    message = result.whatsappMessage;
+                     generated.push({ clientId: client.id, clientName: client.name, clientPhone: client.phone, message, customNote });
+                    break;
+                }
             }
            
         } catch (error) {
@@ -336,7 +361,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(generated);
     setIsLoading(false);
     setStep('finished');
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, services, cancellationDate, cancellationTime]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, services, cancellationDate, cancellationTime, generalMessage]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -356,35 +381,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const details = campaignType ? campaignDetails[campaignType] : null;
   const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
 
-  const handleNewClientSubmit = async () => {
-    if (campaignType !== 'newClients' || !newClientName || !newClientPhone) return;
-
-    setIsLoading(true);
-    setStep('generate');
-    setGeneratedMessages([]);
-
-    try {
-      const result = await generateWelcomeWhatsapp({
-        clientName: newClientName.split(' ')[0],
-        businessAddress: profile?.address || '',
-        businessName: profile?.name,
-        services: services.map(s => ({ name: s.name, price: s.price })),
-      });
-      setGeneratedMessages([{
-        clientId: 'new-client',
-        clientName: newClientName,
-        clientPhone: newClientPhone,
-        message: result.whatsappMessage,
-        customNote: '',
-      }]);
-    } catch (error) {
-      console.error("Failed to generate welcome message", error);
-    }
-
-    setIsLoading(false);
-    setStep('finished');
-  };
-
   const renderConfiguration = () => {
       if (campaignType === 'offer') {
           return (
@@ -395,6 +391,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                     placeholder="p. ej., 20% de descuento en masajes relajantes."
                     value={offerMessage}
                     onChange={(e) => setOfferMessage(e.target.value)}
+                />
+              </div>
+          )
+      }
+      if (campaignType === 'generalMessage') {
+          return (
+              <div className="space-y-2">
+                <Label htmlFor="generalMessage">Mensaje a Enviar</Label>
+                <Textarea
+                    id="generalMessage"
+                    placeholder="Escribe aquí tu comunicado..."
+                    value={generalMessage}
+                    onChange={(e) => setGeneralMessage(e.target.value)}
+                    className="h-28"
                 />
               </div>
           )
@@ -411,20 +421,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 />
               </div>
           )
-      }
-      if (campaignType === 'newClients') {
-        return (
-            <div className="space-y-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="newClientName">Nombre del Cliente</Label>
-                    <Input id="newClientName" value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Nombre del nuevo cliente"/>
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="newClientPhone">Teléfono del Cliente</Label>
-                    <Input id="newClientPhone" value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} placeholder="+34 ..."/>
-                </div>
-            </div>
-        )
       }
       if (campaignType === 'cancellation') {
           return (
@@ -560,7 +556,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                                         )}
                                     </Label>
                                 </div>
-                                 {selectedClientIds.includes(c.id) && (
+                                 {selectedClientIds.includes(c.id) && (campaignType === 'reminders' || campaignType === 'pendingPayments' || campaignType === 'noShow' || campaignType === 'cancellation' || campaignType === 'birthdays' || campaignType === 'inactiveClients') && (
                                     <div className="pl-6 pt-2">
                                        <Textarea
                                             id={`custom-note-${c.id}`}
@@ -596,18 +592,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     if (step === 'select') {
         let disabled = isLoading;
         if (campaignType === 'newClients') {
-            disabled = isLoading || !newClientName || !newClientPhone;
+            disabled = true; // Logic moved to direct dialog opening
         } else if (campaignType === 'cancellation') {
             disabled = isLoading || selectedClientIds.length === 0 || !cancellationDate;
+        } else if (campaignType === 'offer') {
+            disabled = isLoading || selectedClientIds.length === 0 || !offerMessage;
+        } else if (campaignType === 'generalMessage') {
+             disabled = isLoading || selectedClientIds.length === 0 || !generalMessage;
         } else {
-            disabled = isLoading || selectedClientIds.length === 0 || (campaignType === 'offer' && !offerMessage);
+            disabled = isLoading || selectedClientIds.length === 0;
         }
         
-        const buttonAction = campaignType === 'newClients' ? handleNewClientSubmit : () => handleGenerateMessages(customNotes);
+        const buttonAction = () => handleGenerateMessages(customNotes);
 
-        const buttonText = campaignType === 'newClients'
-            ? 'Generar Mensaje'
-            : `Generar ${selectedClientIds.length} Mensaje(s)`;
+        const buttonText = `Generar ${selectedClientIds.length} Mensaje(s)`;
 
         return (
             <Button onClick={buttonAction} disabled={disabled}>
@@ -623,7 +621,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   return (
     <>
-      <Dialog open={!!campaignType} onOpenChange={onOpenChange}>
+      <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
@@ -631,7 +629,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
               {details.title}
             </DialogTitle>
             <DialogDescription>
-              {campaignType === 'newClients' ? 'Introduce los datos del nuevo cliente para generar un mensaje de bienvenida.' : 'Selecciona los destinatarios y configura las opciones para esta campaña.'}
+              {campaignType === 'newClients' ? 'Envía un mensaje de bienvenida a los clientes recién añadidos.' : 'Selecciona los destinatarios y configura las opciones para esta campaña.'}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">{renderContent()}</div>
@@ -654,6 +652,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
+      <NewAppointmentConfirmationDialog
+        appointment={welcomeMessage}
+        onOpenChange={() => setWelcomeMessage(null)}
+      />
     </>
   );
 }
@@ -692,10 +694,6 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
             </div>
             <Separator className="my-2" />
             <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">"{message.message}"</p>
-            {message.customNote && <p className="mt-2 text-xs text-blue-600 border-l-2 border-blue-600 pl-2">Nota: {message.customNote}</p>}
         </div>
     )
 }
-
-
-    

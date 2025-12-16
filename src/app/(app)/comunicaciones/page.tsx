@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX, CalendarOff } from 'lucide-react';
+import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX, CalendarOff, Megaphone } from 'lucide-react';
 import { CampaignDialog, CampaignType } from '@/components/campaign-dialog';
 
 const campaignOptions = [
@@ -61,6 +61,12 @@ const campaignOptions = [
     title: 'Campaña de Oferta',
     description: 'Lanza una promoción especial para todos o algunos de tus clientes.',
     icon: Gift,
+  },
+  {
+    type: 'generalMessage',
+    title: 'Comunicado General',
+    description: 'Envía un mensaje personalizado a un grupo de clientes (vacaciones, noticias, etc.).',
+    icon: Megaphone,
   },
 ] as const;
 
