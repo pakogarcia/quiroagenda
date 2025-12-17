@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -261,6 +262,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                      message = `Hola ${clientName}, ¡enhorabuena! Has completado todas las sesiones de tu bono. Ha sido un placer cuidarte. Si quieres renovarlo o probar alguno de nuestros otros servicios, no dudes en consultarnos. ¡Muchas gracias por tu confianza! Un saludo, ${profile.name}`;
                 }
             }
+        } else if (campaignType === 'birthdays') {
+            const clientName = client.name.split(' ')[0];
+            message = `¡Hola ${clientName}!\n\n¡Feliz cumpleaños! 🎉 De parte de todo el equipo de ${profile.name}, te deseamos que pases un día maravilloso.\n\nPara celebrarlo contigo, queremos regalarte un 20% de descuento en tu próxima cita con nosotros.\n\n¡Muchas gracias por tu confianza y esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
         }
 
 
@@ -614,3 +618,6 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
     )
 }
 
+
+
+    
