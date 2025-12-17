@@ -103,9 +103,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             return clients.filter(c => pendingPaymentPhones.has(c.phone));
         }
         case 'noShow': {
+            const sevenDaysAgo = subDays(today, 7);
             const noShowPhones = new Set(
                 appointments
-                    .filter(apt => apt.status === 'no-show')
+                    .filter(apt => apt.status === 'no-show' && isWithinInterval(new Date(apt.dateTime), { start: sevenDaysAgo, end: addDays(today,1) }))
                     .map(apt => apt.clientPhone)
             );
             return clients.filter(c => noShowPhones.has(c.phone));
