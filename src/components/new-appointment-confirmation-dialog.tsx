@@ -13,7 +13,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
 import { useAppData } from '@/context/app-data-context';
-import { CampaignType } from './campaign-dialog';
 
 type DialogMode = 'newAppointment' | 'voucherUpdate';
 
@@ -25,22 +24,46 @@ type NewAppointmentConfirmationDialogProps = {
 
 
 export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateData, onOpenChange }: NewAppointmentConfirmationDialogProps) {
-  const [isLoading, setIsLoading] = React.useState(false);
   const [generatedMessage, setGeneratedMessage] = React.useState('');
-  const [error, setError] = React.useState('');
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
-  const [isGenerating, setIsGenerating] = React.useState(false);
   const { profile: businessProfile, services } = useAppData();
-  const [showAIOffline, setShowAIOffline] = React.useState(false);
 
   const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : null;
   
-  const generateMessage = React.useCallback(async () => {
+  const generateMessage = React.useCallback(() => {
     if (!mode || !businessProfile) return;
-    
-    setShowAIOffline(true);
 
-  }, [mode, businessProfile]);
+    let finalMessage = '';
+    const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
+    
+    if (mode === 'newAppointment' && appointment) {
+        const serviceLine = appointment.serviceName ? `💆 *Servicio:* ${appointment.serviceName}\n` : '';
+        const socialLinks = [];
+
+        if (socials.website && businessProfile.website) socialLinks.push(`Página Web: ${businessProfile.website}`);
+        if (socials.instagram && businessProfile.instagram) socialLinks.push(`Instagram: ${businessProfile.instagram}`);
+        if (socials.facebook && businessProfile.facebook) socialLinks.push(`Facebook: ${businessProfile.facebook}`);
+        if (socials.tiktok && businessProfile.tiktok) socialLinks.push(`TikTok: ${businessProfile.tiktok}`);
+        if (socials.youtube && businessProfile.youtube) socialLinks.push(`YouTube: ${businessProfile.youtube}`);
+
+        const socialBlock = socialLinks.length > 0 ? `\n\nSíguenos en nuestras redes:\n${socialLinks.join('\n')}` : '';
+
+        finalMessage = `¡Hola ${appointment.clientName.split(' ')[0]}!\n\nTe confirmo tu cita en *${businessProfile.name}*.\n\nAquí tienes los detalles:\n🗓️ *Fecha:* ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ *Hora:* ${format(appointment.dateTime, "p", { locale: es })}\n${serviceLine}\nNos vemos en:\n📍 ${businessProfile.address}\n\n*Recuerda, el pago es siempre en efectivo.*\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Muchas gracias!\n${businessProfile.name}${socialBlock}`;
+    } else if (mode === 'voucherUpdate' && voucherUpdateData && clientData) {
+        const clientName = clientData.name.split(' ')[0];
+        const remaining = voucherUpdateData.remainingSessions;
+        if (remaining > 1) {
+            finalMessage = `¡Hola ${clientName}! Te informamos que, tras tu última sesión, a tu bono le quedan *${remaining} sesiones*. ¡Esperamos verte pronto para la siguiente! Un saludo, ${businessProfile.name}.`;
+        } else if (remaining === 1) {
+            finalMessage = `¡Hola ${clientName}! Te informamos que, tras tu última sesión, a tu bono le queda solo *1 sesión*. ¡Te esperamos para la última! Un saludo, ${businessProfile.name}.`;
+        } else {
+            finalMessage = `¡Hola ${clientName}! Te informamos que has agotado las sesiones de tu bono. ¡Ha sido un placer! Si quieres renovarlo o probar otro servicio, no dudes en consultarnos. Un saludo, ${businessProfile.name}.`;
+        }
+    }
+
+    setGeneratedMessage(finalMessage);
+
+  }, [mode, businessProfile, appointment, voucherUpdateData, services, socials]);
 
 
   React.useEffect(() => {
@@ -48,6 +71,13 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
         generateMessage();
     }
   }, [businessProfile, appointment, voucherUpdateData, generateMessage]);
+  
+  // Effect to regenerate message when socials change
+  React.useEffect(() => {
+      if (businessProfile && (appointment || voucherUpdateData)) {
+          generateMessage();
+      }
+  }, [socials, generateMessage, businessProfile, appointment, voucherUpdateData]);
   
   const handleClose = () => {
     onOpenChange(false);
@@ -66,14 +96,14 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
       if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Envía un mensaje a tu cliente para informarle de las sesiones que le quedan." : "Se ha descontado una sesión del bono. Puedes enviar una notificación por WhatsApp.";
       return appointment?.id === 'new-client-welcome' ? "Envía un mensaje de presentación con tus servicios y datos de contacto a este nuevo cliente potencial." : "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp.";
   }
-
-  if (!mode) return null;
   
   const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
   const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : voucherUpdateData?.client.phone;
   const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}` : '';
 
-  const showSocials = !isLoading && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+  const showSocials = businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
+
+  if (!mode) return null;
 
   return (
     <Dialog open={!!mode} onOpenChange={handleClose}>
@@ -85,23 +115,12 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
           </DialogDescription>
         </DialogHeader>
         <div className="my-4 space-y-4">
-          {(isLoading || isGenerating || showAIOffline) && (
-             <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Función no disponible</AlertTitle>
-                <AlertDescription>
-                    La generación de mensajes con IA ha sido desactivada temporalmente.
-                </AlertDescription>
-            </Alert>
-          )}
-          {error && !isGenerating && (
-            <Alert variant="destructive">
-              <MessageSquare className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {generatedMessage && !isGenerating && (
+          {!generatedMessage ? (
+             <div className="space-y-3">
+                <Skeleton className="h-5 w-1/4" />
+                <Skeleton className="h-16 w-full" />
+             </div>
+          ) : (
             <div className="p-4 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap">
               <p className='font-semibold text-primary flex items-center gap-2 mb-2'><Smartphone className="w-4 h-4"/>{clientData?.clientName || clientData?.name}</p>
               <p>{generatedMessage}</p>
@@ -109,7 +128,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
           )}
         </div>
 
-        {showSocials && (
+        {showSocials && mode === 'newAppointment' && (
              <>
                 <Separator />
                 <div className="pt-4 space-y-4">
@@ -152,7 +171,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
         
         <DialogFooter className="pt-4">
             <div className="flex flex-col gap-2 w-full">
-              {generatedMessage && !isGenerating && clientPhoneNumber && (
+              {generatedMessage && clientPhoneNumber && (
                   <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={handleClose} className="w-full">
                       <Button className="w-full">
                           <Send className="mr-2 h-4 w-4" /> Enviar WhatsApp
@@ -168,4 +187,3 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
     </Dialog>
   );
 }
-
