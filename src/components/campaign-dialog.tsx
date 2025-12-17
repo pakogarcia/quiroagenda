@@ -71,7 +71,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [cancellationDate, setCancellationDate] = React.useState<Date | undefined>(addDays(new Date(), 1));
   const [cancellationTime, setCancellationTime] = React.useState('10:00');
   const [generalMessage, setGeneralMessage] = useState('');
-    const [showAIOffline, setShowAIOffline] = useState(false);
 
   const {toast} = useToast();
 
@@ -192,8 +191,50 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   }, [campaignType]);
 
   const generateMessages = useCallback(async (customNotes: Record<string, string>) => {
-    setShowAIOffline(true);
-  }, []);
+    if (!profile) {
+        toast({
+            variant: 'destructive',
+            title: 'Perfil incompleto',
+            description: 'Por favor, completa el perfil de tu negocio en "Quién Eres" para generar mensajes.',
+        });
+        return;
+    }
+
+    setStep('generate');
+    setIsLoading(true);
+
+    const selectedAppointments = appointments.filter(apt => {
+        const client = clients.find(c => c.phone === apt.clientPhone);
+        return client && selectedClientIds.includes(client.id);
+    });
+
+    const messages: GeneratedMessage[] = [];
+
+    if (campaignType === 'reminders') {
+        for (const clientId of selectedClientIds) {
+            const client = clients.find(c => c.id === clientId);
+            const appointment = appointments
+                .filter(apt => apt.clientPhone === client?.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
+                .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
+
+            if (client && appointment) {
+                const message = `Hola ${client.name},\n\nTe escribo para recordarte tu próxima cita en ${profile.name}.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n\n📍 Ubicación: ${profile.address}\n\nPor favor, si necesitas cancelar o reprogramar, avísanos con la mayor antelación posible.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
+                messages.push({
+                    clientId: client.id,
+                    clientName: `${client.name} ${client.lastName}`,
+                    clientPhone: client.phone,
+                    message,
+                    appointmentId: appointment.id
+                });
+            }
+        }
+    }
+
+    setGeneratedMessages(messages);
+    setIsLoading(false);
+    setStep('finished');
+
+  }, [campaignType, selectedClientIds, clients, appointments, profile, toast]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -216,7 +257,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const getDialogDescription = () => {
     switch (step) {
         case 'generate':
-            return 'Espera un momento, la IA está redactando los mensajes...';
+            return 'Espera un momento, estoy preparando los mensajes...';
         case 'finished':
             if (campaignType === 'newClients') {
                 return '¡Mensaje de bienvenida listo! Puedes enviarlo por WhatsApp.';
@@ -305,21 +346,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   }
 
   const renderContent = () => {
-     if (showAIOffline) {
-        return (
-            <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Función no disponible</AlertTitle>
-                <AlertDescription>
-                    La generación de mensajes con IA ha sido desactivada temporalmente.
-                </AlertDescription>
-            </Alert>
-        );
-    }
     if (step === 'generate') {
       return (
         <div className="flex justify-center items-center h-40">
-            <p className="text-sm text-center text-muted-foreground animate-pulse">Generando mensajes con IA...</p>
+            <p className="text-sm text-center text-muted-foreground animate-pulse">Generando mensajes...</p>
         </div>
       );
     }
@@ -565,7 +595,9 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
                 </div>
             </div>
             <Separator className="my-2" />
-            <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">"{message.message}"</p>
+            <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">{message.message}</p>
         </div>
     )
 }
+
+    
