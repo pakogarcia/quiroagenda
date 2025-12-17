@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Client, BusinessProfile, Appointment } from '@/lib/types';
+import type { Client, BusinessProfile, Appointment, Service } from '@/lib/types';
 import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isFuture, set, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check, UserX, CalendarOff, Megaphone } from 'lucide-react';
@@ -50,13 +50,13 @@ const campaignDetails = {
     voucherStatus: { title: 'Notificar Sesiones de Bono', icon: Gift },
     birthdays: { title: 'Felicitaciones de Cumpleaños', icon: Cake },
     inactiveClients: { title: 'Clientes Inactivos', icon: Clock },
-    newClients: { title: 'Bienvenida a Nuevos Clients', icon: Users },
+    newClients: { title: 'Bienvenida a Nuevos Clientes', icon: Users },
     offer: { title: 'Campaña de Oferta', icon: Gift },
     generalMessage: { title: 'Comunicado General', icon: Megaphone },
 };
 
 export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogProps) {
-  const { clients, profile, appointments, setAppointments } = useAppData();
+  const { clients, profile, appointments, setAppointments, services } = useAppData();
   
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([]);
@@ -70,6 +70,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [cancellationDate, setCancellationDate] = React.useState<Date | undefined>(addDays(new Date(), 1));
   const [cancellationTime, setCancellationTime] = React.useState('10:00');
   const [generalMessage, setGeneralMessage] = useState('');
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
 
   const {toast} = useToast();
 
@@ -164,12 +166,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         case 'voucherStatus': {
             return clients.filter(c => c.voucher && c.voucher.sessions > 0);
         }
-        case 'newClients': {
-             return clients.filter(c => differenceInDays(today, new Date(c.id.substring(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'))) <= 7);
-        }
         case 'offer':
         case 'generalMessage':
             return clients;
+        case 'newClients':
         default:
             return [];
     }
@@ -183,6 +183,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       setOfferMessage('');
       setInactiveDays(90);
       setGeneralMessage('');
+      setNewClientName('');
+      setNewClientPhone('');
     }
   }, [campaignType]);
 
@@ -198,87 +200,111 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
     const messages: GeneratedMessage[] = [];
 
-    for (const clientId of selectedClientIds) {
-        const client = clients.find(c => c.id === clientId);
-        if (!client) continue;
+    if (campaignType === 'newClients') {
+        const clientName = newClientName.split(' ')[0] || 'futuro cliente';
+        const serviceList = services.map(s => `- ${s.name} (${s.duration} min): ${s.price.toFixed(2)}€`).join('\n');
+        
+        const socialLinks = [
+            profile.website && `Página Web: ${profile.website}`,
+            profile.instagram && `Instagram: ${profile.instagram}`,
+            profile.facebook && `Facebook: ${profile.facebook}`,
+            profile.tiktok && `TikTok: ${profile.tiktok}`,
+            profile.youtube && `YouTube: ${profile.youtube}`,
+        ].filter(Boolean).join('\n');
+        
+        const socialBlock = socialLinks ? `\n\nTambién puedes encontrarnos aquí:\n${socialLinks}` : '';
+        
+        const message = `¡Hola ${clientName}!\n\nGracias por tu interés en ${profile.name}. ¡Será un placer cuidarte!\n\nAquí tienes la información que necesitas:\n\n📍 **Nuestra ubicación:**\n${profile.address || 'Contacta para más detalles'}\n\n💆 **Nuestros servicios:**\n${serviceList}\n\nSi tienes cualquier duda o quieres agendar una cita, no dudes en escribirnos.\n\n¡Te esperamos!${socialBlock}\n\nUn saludo,\n${profile.name}`;
+        
+        messages.push({
+            clientId: 'new-client',
+            clientName: newClientName,
+            clientPhone: newClientPhone,
+            message: message,
+        });
 
-        let message = '';
-        let appointmentId: string | undefined = undefined;
+    } else {
+        for (const clientId of selectedClientIds) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) continue;
 
-        if (campaignType === 'reminders') {
-            const appointment = appointments
-                .filter(apt => apt.clientPhone === client?.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
-                .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
-            
-            if (appointment) {
-                appointmentId = appointment.id;
-                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en ${profile.name}.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n\n📍 Ubicación: ${profile.address}\n\nRecuerda, el pago es siempre en efectivo.\n\nPor favor, si necesitas cancelar o reprogramar, avísanos con la mayor antelación posible.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
-            }
-        } else if (campaignType === 'pendingPayments') {
-             const appointment = appointments
-                .filter(apt => apt.clientPhone === client.phone && apt.status === 'completed' && !apt.payment)
-                .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0]; // Get the most recent one
+            let message = '';
+            let appointmentId: string | undefined = undefined;
 
-            if (appointment) {
-                appointmentId = appointment.id;
-                const date = format(appointment.dateTime, "d 'de' MMMM", { locale: es });
-                const price = appointment.servicePrice || 0;
+            if (campaignType === 'reminders') {
+                const appointment = appointments
+                    .filter(apt => apt.clientPhone === client?.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
+                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
                 
-                message = `Hola ${client.name.split(' ')[0]},\n\nEspero que estés muy bien.\n\nTe escribo de parte de ${profile.name} para recordarte que el pago de tu cita, del día ${date}, está aún pendiente de pago. El importe es de ${price.toFixed(2)}€.\n\nPuedes realizar el pago de la forma que te sea más cómoda. Si ya has realizado el pago, por favor, ignora este mensaje.\n\n¡Muchas gracias por tu confianza!\n\nUn saludo,\n${profile.name}`;
-            }
-        } else if (campaignType === 'noShow') {
-             const appointment = appointments
-                .filter(apt => apt.clientPhone === client.phone && apt.status === 'no-show')
-                .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0]; // Get the most recent one
-
-            if (appointment) {
-                appointmentId = appointment.id;
-                const date = format(appointment.dateTime, "d 'de' MMMM", { locale: es });
-                
-                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} en relación a tu cita del día ${date}, a la que lamentablemente no has acudido.\n\nEntendemos que pueden surgir imprevistos. Nos gustaría recordarte la importancia de cancelar con antelación para poder ofrecer la hora a otro cliente.\n\nSi deseas volver a agendar una cita, no dudes en ponerte en contacto con nosotros.\n\nUn saludo,\n${profile.name}`;
-            }
-        } else if (campaignType === 'cancellation') {
-            const appointment = appointments
-                .filter(apt => apt.clientPhone === client.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
-                .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0]; // Get the closest future appointment
-
-            if (appointment && cancellationDate) {
-                appointmentId = appointment.id;
-                const originalDate = format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es });
-                const [hours, minutes] = cancellationTime.split(':').map(Number);
-                const newDateTime = set(cancellationDate, { hours, minutes });
-
-                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} por un imprevisto que me ha surgido. Lamento informarte que no podré atender tu cita del próximo ${originalDate}.\n\nTe pido disculpas por las molestias.\n\nComo alternativa, te propongo mover la cita al siguiente día y hora:\n🗓️ Nueva Fecha: ${format(newDateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Nueva Hora: ${format(newDateTime, "p", { locale: es })}\n\nPor favor, confírmame si esta nueva fecha te viene bien. Si no es posible para ti, podemos buscar otra alternativa o, si lo prefieres, procedemos a anular la cita sin ningún compromiso.\n\nGracias por tu comprensión,\n${profile.name}`;
-            }
-        } else if (campaignType === 'voucherStatus') {
-            if (client.voucher) {
-                const clientName = client.name.split(' ')[0];
-                const remaining = client.voucher.sessions;
-                if (remaining > 1) {
-                    message = `Hola ${clientName}, te recordamos que tienes un bono activo con nosotros. Actualmente te quedan ${remaining} sesiones disponibles. ¡No dejes que se te pasen! Esperamos verte pronto por ${profile.name}. Un saludo.`;
-                } else if (remaining === 1) {
-                    message = `Hola ${clientName}, ¡estás a punto de completar tu bono! Te informamos de que te queda solo 1 sesión disponible. ¡Te esperamos para la última! Un saludo, ${profile.name}`;
-                } else {
-                     message = `Hola ${clientName}, ¡enhorabuena! Has completado todas las sesiones de tu bono. Ha sido un placer cuidarte. Si quieres renovarlo o probar alguno de nuestros otros servicios, no dudes en consultarnos. ¡Muchas gracias por tu confianza! Un saludo, ${profile.name}`;
+                if (appointment) {
+                    appointmentId = appointment.id;
+                    message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en ${profile.name}.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n\n📍 Ubicación: ${profile.address}\n\nRecuerda, el pago es siempre en efectivo.\n\nPor favor, si necesitas cancelar o reprogramar, avísanos con la mayor antelación posible.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
                 }
+            } else if (campaignType === 'pendingPayments') {
+                const appointment = appointments
+                    .filter(apt => apt.clientPhone === client.phone && apt.status === 'completed' && !apt.payment)
+                    .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0]; // Get the most recent one
+
+                if (appointment) {
+                    appointmentId = appointment.id;
+                    const date = format(appointment.dateTime, "d 'de' MMMM", { locale: es });
+                    const price = appointment.servicePrice || 0;
+                    
+                    message = `Hola ${client.name.split(' ')[0]},\n\nEspero que estés muy bien.\n\nTe escribo de parte de ${profile.name} para recordarte que el pago de tu cita, del día ${date}, está aún pendiente de pago. El importe es de ${price.toFixed(2)}€.\n\nPuedes realizar el pago de la forma que te sea más cómoda. Si ya has realizado el pago, por favor, ignora este mensaje.\n\n¡Muchas gracias por tu confianza!\n\nUn saludo,\n${profile.name}`;
+                }
+            } else if (campaignType === 'noShow') {
+                const appointment = appointments
+                    .filter(apt => apt.clientPhone === client.phone && apt.status === 'no-show')
+                    .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0]; // Get the most recent one
+
+                if (appointment) {
+                    appointmentId = appointment.id;
+                    const date = format(appointment.dateTime, "d 'de' MMMM", { locale: es });
+                    
+                    message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} en relación a tu cita del día ${date}, a la que lamentablemente no has acudido.\n\nEntendemos que pueden surgir imprevistos. Nos gustaría recordarte la importancia de cancelar con antelación para poder ofrecer la hora a otro cliente.\n\nSi deseas volver a agendar una cita, no dudes en ponerte en contacto con nosotros.\n\nUn saludo,\n${profile.name}`;
+                }
+            } else if (campaignType === 'cancellation') {
+                const appointment = appointments
+                    .filter(apt => apt.clientPhone === client.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
+                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0]; // Get the closest future appointment
+
+                if (appointment && cancellationDate) {
+                    appointmentId = appointment.id;
+                    const originalDate = format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es });
+                    const [hours, minutes] = cancellationTime.split(':').map(Number);
+                    const newDateTime = set(cancellationDate, { hours, minutes });
+
+                    message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} por un imprevisto que me ha surgido. Lamento informarte que no podré atender tu cita del próximo ${originalDate}.\n\nTe pido disculpas por las molestias.\n\nComo alternativa, te propongo mover la cita al siguiente día y hora:\n🗓️ Nueva Fecha: ${format(newDateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Nueva Hora: ${format(newDateTime, "p", { locale: es })}\n\nPor favor, confírmame si esta nueva fecha te viene bien. Si no es posible para ti, podemos buscar otra alternativa o, si lo prefieres, procedemos a anular la cita sin ningún compromiso.\n\nGracias por tu comprensión,\n${profile.name}`;
+                }
+            } else if (campaignType === 'voucherStatus') {
+                if (client.voucher) {
+                    const clientName = client.name.split(' ')[0];
+                    const remaining = client.voucher.sessions;
+                    if (remaining > 1) {
+                        message = `Hola ${clientName}, te recordamos que tienes un bono activo con nosotros. Actualmente te quedan ${remaining} sesiones disponibles. ¡No dejes que se te pasen! Esperamos verte pronto por ${profile.name}. Un saludo.`;
+                    } else if (remaining === 1) {
+                        message = `Hola ${clientName}, ¡estás a punto de completar tu bono! Te informamos de que te queda solo 1 sesión disponible. ¡Te esperamos para la última! Un saludo, ${profile.name}`;
+                    } else {
+                        message = `Hola ${clientName}, ¡enhorabuena! Has completado todas las sesiones de tu bono. Ha sido un placer cuidarte. Si quieres renovarlo o probar alguno de nuestros otros servicios, no dudes en consultarnos. ¡Muchas gracias por tu confianza! Un saludo, ${profile.name}`;
+                    }
+                }
+            } else if (campaignType === 'birthdays') {
+                const clientName = client.name.split(' ')[0];
+                message = `¡Hola ${clientName}!\n\n¡Feliz cumpleaños! 🎉 De parte de todo el equipo de ${profile.name}, te deseamos que pases un día maravilloso.\n\nPara celebrarlo contigo, queremos regalarte un 20% de descuento en tu próxima cita con nosotros.\n\n¡Muchas gracias por tu confianza y esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
+            } else if (campaignType === 'inactiveClients') {
+                const clientName = client.name.split(' ')[0];
+                message = `Hola ${clientName},\n\n¡Hace tiempo que no te vemos por ${profile.name} y te echamos de menos!\n\nNos encantaría ayudarte a retomar tu rutina de bienestar. Si estás pensando en volver, no dudes en escribirnos para encontrar el momento perfecto para tu próxima cita.\n\n¡Esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
             }
-        } else if (campaignType === 'birthdays') {
-            const clientName = client.name.split(' ')[0];
-            message = `¡Hola ${clientName}!\n\n¡Feliz cumpleaños! 🎉 De parte de todo el equipo de ${profile.name}, te deseamos que pases un día maravilloso.\n\nPara celebrarlo contigo, queremos regalarte un 20% de descuento en tu próxima cita con nosotros.\n\n¡Muchas gracias por tu confianza y esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
-        } else if (campaignType === 'inactiveClients') {
-            const clientName = client.name.split(' ')[0];
-            message = `Hola ${clientName},\n\n¡Hace tiempo que no te vemos por ${profile.name} y te echamos de menos!\n\nNos encantaría ayudarte a retomar tu rutina de bienestar. Si estás pensando en volver, no dudes en escribirnos para encontrar el momento perfecto para tu próxima cita.\n\n¡Esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
-        }
 
-
-        if (message) {
-            messages.push({
-                clientId: client.id,
-                clientName: `${client.name} ${client.lastName}`,
-                clientPhone: client.phone,
-                message,
-                appointmentId: appointmentId
-            });
+            if (message) {
+                messages.push({
+                    clientId: client.id,
+                    clientName: `${client.name} ${client.lastName}`,
+                    clientPhone: client.phone,
+                    message,
+                    appointmentId: appointmentId
+                });
+            }
         }
     }
 
@@ -286,7 +312,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(messages);
     setStep('finished');
 
-  }, [campaignType, selectedClientIds, clients, appointments, profile, toast, cancellationDate, cancellationTime]);
+  }, [campaignType, selectedClientIds, clients, appointments, profile, toast, cancellationDate, cancellationTime, newClientName, newClientPhone, services]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -311,12 +337,40 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             return '¡Mensajes listos! Ahora puedes editarlos, copiarlos o enviarlos por WhatsApp.';
         case 'select':
         default:
+            if (campaignType === 'newClients') {
+                return 'Introduce los datos de la persona que te ha contactado para generar un mensaje de bienvenida.'
+            }
             return 'Selecciona los destinatarios y configura las opciones para esta campaña.';
     }
   };
 
   const renderConfiguration = () => {
       if (step !== 'select') return null;
+
+      if (campaignType === 'newClients') {
+        return (
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="new-client-name">Nombre del Contacto</Label>
+                    <Input 
+                        id="new-client-name"
+                        placeholder="p. ej., Laura"
+                        value={newClientName}
+                        onChange={(e) => setNewClientName(e.target.value)}
+                    />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="new-client-phone">Teléfono del Contacto</Label>
+                    <Input 
+                        id="new-client-phone"
+                        placeholder="p. ej., +34 600112233"
+                        value={newClientPhone}
+                        onChange={(e) => setNewClientPhone(e.target.value)}
+                    />
+                </div>
+            </div>
+        )
+      }
 
       if (campaignType === 'offer') {
           return (
@@ -428,7 +482,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
 
     // Step 'select'
-    if (targetClients.length === 0) {
+    if (campaignType !== 'newClients' && targetClients.length === 0) {
         return (
             <Alert>
                 <CheckCircle className="h-4 w-4" />
@@ -443,64 +497,69 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     return (
         <div className="space-y-4">
             {renderConfiguration()}
-            <div className="flex items-center space-x-2 border-b pb-4">
-                <Checkbox 
-                    id="select-all" 
-                    onCheckedChange={handleSelectAll}
-                    checked={selectedClientIds.length === targetClients.length && targetClients.length > 0}
-                />
-                <Label htmlFor="select-all" className="font-bold text-base">
-                    Seleccionar Todo ({targetClients.length})
-                </Label>
-            </div>
-            <ScrollArea className="h-[350px] pr-4">
-                <div className="space-y-3">
-                    {targetClients.map(c => {
-                        let appointmentInfo = null;
+            
+            {campaignType !== 'newClients' && (
+                <>
+                    <div className="flex items-center space-x-2 border-b pb-4">
+                        <Checkbox 
+                            id="select-all" 
+                            onCheckedChange={handleSelectAll}
+                            checked={selectedClientIds.length === targetClients.length && targetClients.length > 0}
+                        />
+                        <Label htmlFor="select-all" className="font-bold text-base">
+                            Seleccionar Todo ({targetClients.length})
+                        </Label>
+                    </div>
+                    <ScrollArea className="h-[350px] pr-4">
+                        <div className="space-y-3">
+                            {targetClients.map(c => {
+                                let appointmentInfo = null;
 
-                        if (campaignType === 'reminders' || campaignType === 'cancellation') {
-                            const nextAppointment = appointments
-                                .filter(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime))
-                                .sort((d1, d2) => d1.dateTime.getTime() - d2.dateTime.getTime())[0];
-                            if (nextAppointment) {
-                                appointmentInfo = format(nextAppointment.dateTime, "d MMM, p", { locale: es });
-                            }
-                        } else if (campaignType === 'pendingPayments') {
-                            const pendingAppointment = appointments
-                                .filter(a => a.clientPhone === c.phone && a.status === 'completed' && !a.payment)
-                                .sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
-                             if (pendingAppointment) {
-                                const price = pendingAppointment.servicePrice || 0;
-                                appointmentInfo = `Pendiente: ${price.toFixed(2)}€`;
-                             }
-                        } else if (campaignType === 'birthdays' && c.birthDate) {
-                            appointmentInfo = format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es });
-                        }
+                                if (campaignType === 'reminders' || campaignType === 'cancellation') {
+                                    const nextAppointment = appointments
+                                        .filter(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime))
+                                        .sort((d1, d2) => d1.dateTime.getTime() - d2.dateTime.getTime())[0];
+                                    if (nextAppointment) {
+                                        appointmentInfo = format(nextAppointment.dateTime, "d MMM, p", { locale: es });
+                                    }
+                                } else if (campaignType === 'pendingPayments') {
+                                    const pendingAppointment = appointments
+                                        .filter(a => a.clientPhone === c.phone && a.status === 'completed' && !a.payment)
+                                        .sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
+                                    if (pendingAppointment) {
+                                        const price = pendingAppointment.servicePrice || 0;
+                                        appointmentInfo = `Pendiente: ${price.toFixed(2)}€`;
+                                    }
+                                } else if (campaignType === 'birthdays' && c.birthDate) {
+                                    appointmentInfo = format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es });
+                                }
 
-                        return (
-                        <div key={c.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id={c.id}
-                                    onCheckedChange={(checked) => {
-                                        setSelectedClientIds(prev => 
-                                            checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
-                                        );
-                                    }}
-                                    checked={selectedClientIds.includes(c.id)}
-                                />
-                                <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
-                                    <span className="font-semibold">{c.name} {c.lastName}</span>
-                                    <span className="text-sm text-muted-foreground">{c.phone}</span>
-                                    {appointmentInfo && (
-                                        <span className="text-xs text-primary">{appointmentInfo}</span>
-                                    )}
-                                </Label>
-                            </div>
+                                return (
+                                <div key={c.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
+                                    <div className="flex items-center space-x-3">
+                                        <Checkbox
+                                            id={c.id}
+                                            onCheckedChange={(checked) => {
+                                                setSelectedClientIds(prev => 
+                                                    checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                                                );
+                                            }}
+                                            checked={selectedClientIds.includes(c.id)}
+                                        />
+                                        <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
+                                            <span className="font-semibold">{c.name} {c.lastName}</span>
+                                            <span className="text-sm text-muted-foreground">{c.phone}</span>
+                                            {appointmentInfo && (
+                                                <span className="text-xs text-primary">{appointmentInfo}</span>
+                                            )}
+                                        </Label>
+                                    </div>
+                                </div>
+                            )})}
                         </div>
-                    )})}
-                </div>
-            </ScrollArea>
+                    </ScrollArea>
+                </>
+            )}
         </div>
     )
   }
@@ -518,20 +577,22 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         return <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>;
     }
     if (step === 'select') {
-        let disabled = selectedClientIds.length === 0;
+        let disabled = false;
+        let buttonText = 'Generar Mensaje(s)';
 
-        if (campaignType === 'offer' && !offerMessage) disabled = true;
-        if (campaignType === 'generalMessage' && !generalMessage) disabled = true;
-        if (campaignType === 'cancellation' && !cancellationDate) disabled = true;
+        if (campaignType === 'newClients') {
+            disabled = !newClientName || !newClientPhone;
+            buttonText = 'Generar Mensaje de Bienvenida';
+        } else {
+            disabled = selectedClientIds.length === 0;
+            if (campaignType === 'offer' && !offerMessage) disabled = true;
+            if (campaignType === 'generalMessage' && !generalMessage) disabled = true;
+            if (campaignType === 'cancellation' && !cancellationDate) disabled = true;
+            buttonText = `Generar ${selectedClientIds.length} Mensaje(s)`;
+        }
         
-        const buttonAction = () => {
-             generateMessages();
-        };
-
-        const buttonText = `Generar ${selectedClientIds.length} Mensaje(s)`;
-
         return (
-            <Button onClick={buttonAction} disabled={disabled}>
+            <Button onClick={generateMessages} disabled={disabled}>
                 <Send className="mr-2 h-4 w-4" />
                 {buttonText}
             </Button>
