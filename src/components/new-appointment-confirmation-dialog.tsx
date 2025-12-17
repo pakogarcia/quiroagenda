@@ -27,7 +27,7 @@ type NewAppointmentConfirmationDialogProps = {
 export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateData, onOpenChange }: NewAppointmentConfirmationDialogProps) {
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [editedMessage, setEditedMessage] = React.useState('');
-  const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
+  const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
   const { profile: businessProfile, services } = useAppData();
 
   const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : null;
