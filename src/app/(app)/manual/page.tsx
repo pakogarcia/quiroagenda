@@ -5,7 +5,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound, Edit, UserX, CalendarOff, Megaphone, Clock, Cake, Bell } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound, Edit, UserX, CalendarOff, Megaphone, Clock, Cake, Bell, Edit2 } from 'lucide-react';
 
 
 export default function ManualPage() {
@@ -94,7 +94,7 @@ export default function ManualPage() {
                 <AccordionItem value="item-5">
                   <AccordionTrigger><div className='flex items-center gap-2'><MessageSquare className="w-4 h-4" />Confirmación por WhatsApp</div></AccordionTrigger>
                   <AccordionContent>
-                    Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Puedes elegir qué redes sociales adjuntar al mensaje para una personalización completa.
+                    Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Puedes elegir qué redes sociales adjuntar al mensaje y editar el texto antes de enviarlo.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -172,10 +172,16 @@ export default function ManualPage() {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
+                 <AccordionItem value="item-12">
+                  <AccordionTrigger><div className='flex items-center gap-2 text-primary'><Edit2 className="w-4 h-4" /> Plantillas 100% Editables</div></AccordionTrigger>
+                  <AccordionContent>
+                   <p>¡Tú tienes el control total! Todas las campañas generan un mensaje basado en una plantilla profesional, pero siempre podrás **editar el texto** antes de enviarlo por WhatsApp. Esto te permite añadir un toque personal, modificar una oferta o simplemente ajustar el tono a tu gusto, combinando la velocidad de las plantillas con la flexibilidad de la personalización.</p>
+                  </AccordionContent>
+                </AccordionItem>
                 <AccordionItem value="item-1">
                   <AccordionTrigger><div className='flex items-center gap-2'><Bell className="w-4 h-4" /> Recordatorios de Citas</div></AccordionTrigger>
                   <AccordionContent>
-                    Reduce las ausencias enviando recordatorios por WhatsApp. La IA solo te mostrará los clientes con una cita próxima para evitar duplicados.
+                    Reduce las ausencias enviando recordatorios por WhatsApp. La aplicación solo te mostrará los clientes con una cita próxima para la que aún no se ha enviado un recordatorio.
                   </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="item-2">
@@ -211,7 +217,7 @@ export default function ManualPage() {
                  <AccordionItem value="item-7">
                   <AccordionTrigger><div className='flex items-center gap-2'><Clock className="w-4 h-4" /> Clientes Inactivos</div></AccordionTrigger>
                   <AccordionContent>
-                    Recupera a esos clientes que hace tiempo que no te visitan. Puedes configurar el número de días de inactividad para que la IA te sugiera a quién contactar con un mensaje cercano.
+                    Recupera a esos clientes que hace tiempo que no te visitan. Puedes configurar el número de días de inactividad para que la aplicación te sugiera a quién contactar con un mensaje cercano.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-8">
@@ -223,19 +229,13 @@ export default function ManualPage() {
                  <AccordionItem value="item-9">
                   <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4" /> Campaña de Oferta</div></AccordionTrigger>
                   <AccordionContent>
-                    Crea ofertas especiales y promociónalas entre los clientes que elijas. La IA redactará un mensaje persuasivo y personalizado para cada uno.
+                    Crea ofertas especiales y promociónalas entre los clientes que elijas. La aplicación preparará un mensaje persuasivo y personalizado para cada uno.
                   </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="item-10">
                   <AccordionTrigger><div className='flex items-center gap-2'><Megaphone className="w-4 h-4" /> Comunicado General</div></AccordionTrigger>
                   <AccordionContent>
                     La herramienta definitiva para la flexibilidad. Anuncia vacaciones, cambios de horario o cualquier otra noticia. Escribe un mensaje totalmente libre y envíalo a los clientes que selecciones.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-11">
-                  <AccordionTrigger><div className='flex items-center gap-2 text-primary'><Edit className="w-4 h-4" /> Nota Personalizada</div></AccordionTrigger>
-                  <AccordionContent>
-                    En la mayoría de las campañas, al seleccionar un cliente, aparecerá un campo de texto para que añadas una nota opcional (ej. "¡Espero que te recuperes pronto!" o "Recuerda que la puntualidad es importante"). Este texto se integrará de forma natural en el mensaje final, dándote el poder de personalizar la comunicación masiva.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -310,14 +310,6 @@ export default function ManualPage() {
           </Card>
           
 
-          <div className="text-center pt-8">
-            <Bot className="h-10 w-10 text-primary mx-auto mb-2" />
-            <h3 className="text-xl font-headline text-primary">Potenciado por Inteligencia Artificial</h3>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              QuiroAgenda utiliza IA para generar mensajes de WhatsApp naturales, profesionales y efectivos, ahorrándote tiempo y mejorando la comunicación con tus clientes.
-            </p>
-          </div>
-          
           <footer className="text-center text-sm text-muted-foreground pt-8">
               <p>Manual de ayuda de QuiroAgenda.</p>
           </footer>
@@ -326,3 +318,5 @@ export default function ManualPage() {
     </div>
   );
 }
+
+    
