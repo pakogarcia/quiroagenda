@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
-import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isFuture, set } from 'date-fns';
+import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isFuture, set, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Gift, Send, Calendar as CalendarIcon, Smartphone, MessageSquare, CheckCircle, Bell, Cake, Clock, Users, AlertCircle, Copy, Check, UserX, CalendarOff, Megaphone } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,7 +58,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'finished'>('select');
   
   const [isConfirmSentOpen, setIsConfirmSentOpen] = React.useState(false);
@@ -195,32 +194,51 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         return;
     }
 
-    setIsLoading(true);
-
     const messages: GeneratedMessage[] = [];
 
-    if (campaignType === 'reminders') {
-        for (const clientId of selectedClientIds) {
-            const client = clients.find(c => c.id === clientId);
+    for (const clientId of selectedClientIds) {
+        const client = clients.find(c => c.id === clientId);
+        if (!client) continue;
+
+        let message = '';
+        let appointmentId: string | undefined = undefined;
+
+        if (campaignType === 'reminders') {
             const appointment = appointments
                 .filter(apt => apt.clientPhone === client?.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
                 .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
-
-            if (client && appointment) {
-                const message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en ${profile.name}.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n\n📍 Ubicación: ${profile.address}\n\nRecuerda, el pago es siempre en efectivo.\n\nPor favor, si necesitas cancelar o reprogramar, avísanos con la mayor antelación posible.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
-                messages.push({
-                    clientId: client.id,
-                    clientName: `${client.name} ${client.lastName}`,
-                    clientPhone: client.phone,
-                    message,
-                    appointmentId: appointment.id
-                });
+            
+            if (appointment) {
+                appointmentId = appointment.id;
+                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en ${profile.name}.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n\n📍 Ubicación: ${profile.address}\n\nRecuerda, el pago es siempre en efectivo.\n\nPor favor, si necesitas cancelar o reprogramar, avísanos con la mayor antelación posible.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
             }
+        } else if (campaignType === 'pendingPayments') {
+             const appointment = appointments
+                .filter(apt => apt.clientPhone === client.phone && apt.status === 'completed' && !apt.payment)
+                .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0]; // Get the most recent one
+
+            if (appointment) {
+                appointmentId = appointment.id;
+                const date = format(appointment.dateTime, "d 'de' MMMM", { locale: es });
+                const price = appointment.servicePrice || appointment.payment?.amount || 0;
+                
+                message = `Hola ${client.name.split(' ')[0]},\n\nEspero que estés muy bien.\n\nTe escribo de parte de ${profile.name} para recordarte que el pago de tu cita, del día ${date}, está aún pendiente de pago. El importe es de ${price.toFixed(2)}€.\n\nPuedes realizar el pago de la forma que te sea más cómoda. Si ya has realizado el pago, por favor, ignora este mensaje.\n\n¡Muchas gracias por tu confianza!\n\nUn saludo,\n${profile.name}`;
+            }
+        }
+
+        if (message) {
+            messages.push({
+                clientId: client.id,
+                clientName: `${client.name} ${client.lastName}`,
+                clientPhone: client.phone,
+                message,
+                appointmentId: appointmentId
+            });
         }
     }
 
+
     setGeneratedMessages(messages);
-    setIsLoading(false);
     setStep('finished');
 
   }, [campaignType, selectedClientIds, clients, appointments, profile, toast]);
@@ -327,13 +345,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   }
 
   const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center h-40">
-            <p className="text-sm text-center text-muted-foreground animate-pulse">Generando mensajes...</p>
-        </div>
-      );
-    }
     
     if(step === 'finished') {
         if (generatedMessages.length === 0) {
@@ -398,9 +409,26 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             <ScrollArea className="h-[350px] pr-4">
                 <div className="space-y-3">
                     {targetClients.map(c => {
-                        const nextAppointment = (campaignType === 'reminders' || campaignType === 'cancellation')
-                            ? appointments.filter(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime)).sort((d1, d2) => d1.dateTime.getTime() - d2.dateTime.getTime())[0]
-                            : null;
+                        let appointmentInfo = null;
+
+                        if (campaignType === 'reminders' || campaignType === 'cancellation') {
+                            const nextAppointment = appointments
+                                .filter(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime))
+                                .sort((d1, d2) => d1.dateTime.getTime() - d2.dateTime.getTime())[0];
+                            if (nextAppointment) {
+                                appointmentInfo = format(nextAppointment.dateTime, "d MMM, p", { locale: es });
+                            }
+                        } else if (campaignType === 'pendingPayments') {
+                            const pendingAppointment = appointments
+                                .filter(a => a.clientPhone === c.phone && a.status === 'completed' && !a.payment)
+                                .sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
+                             if (pendingAppointment) {
+                                const price = pendingAppointment.servicePrice || pendingAppointment.payment?.amount || 0;
+                                appointmentInfo = `Pendiente: ${price.toFixed(2)}€`;
+                             }
+                        } else if (campaignType === 'birthdays' && c.birthDate) {
+                            appointmentInfo = format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es });
+                        }
 
                         return (
                         <div key={c.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
@@ -417,11 +445,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                                 <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
                                     <span className="font-semibold">{c.name} {c.lastName}</span>
                                     <span className="text-sm text-muted-foreground">{c.phone}</span>
-                                    {campaignType === 'birthdays' && c.birthDate && (
-                                        <span className="text-xs text-primary">{format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es })}</span>
-                                    )}
-                                    {nextAppointment && (
-                                        <span className="text-xs text-primary">{format(nextAppointment.dateTime, "d MMM, p", { locale: es })}</span>
+                                    {appointmentInfo && (
+                                        <span className="text-xs text-primary">{appointmentInfo}</span>
                                     )}
                                 </Label>
                             </div>
@@ -446,7 +471,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         return <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>;
     }
     if (step === 'select') {
-        let disabled = isLoading || selectedClientIds.length === 0;
+        let disabled = selectedClientIds.length === 0;
 
         if (campaignType === 'offer' && !offerMessage) disabled = true;
         if (campaignType === 'generalMessage' && !generalMessage) disabled = true;
@@ -461,7 +486,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         return (
             <Button onClick={buttonAction} disabled={disabled}>
                 <Send className="mr-2 h-4 w-4" />
-                {isLoading ? 'Generando...' : buttonText}
+                {buttonText}
             </Button>
         )
     }
