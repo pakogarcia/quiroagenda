@@ -265,6 +265,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         } else if (campaignType === 'birthdays') {
             const clientName = client.name.split(' ')[0];
             message = `¡Hola ${clientName}!\n\n¡Feliz cumpleaños! 🎉 De parte de todo el equipo de ${profile.name}, te deseamos que pases un día maravilloso.\n\nPara celebrarlo contigo, queremos regalarte un 20% de descuento en tu próxima cita con nosotros.\n\n¡Muchas gracias por tu confianza y esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
+        } else if (campaignType === 'inactiveClients') {
+            const clientName = client.name.split(' ')[0];
+            message = `Hola ${clientName},\n\n¡Hace tiempo que no te vemos por ${profile.name} y te echamos de menos!\n\nNos encantaría ayudarte a retomar tu rutina de bienestar. Si estás pensando en volver, no dudes en escribirnos para encontrar el momento perfecto para tu próxima cita.\n\n¡Esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
         }
 
 
