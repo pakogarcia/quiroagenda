@@ -221,7 +221,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             if (appointment) {
                 appointmentId = appointment.id;
                 const date = format(appointment.dateTime, "d 'de' MMMM", { locale: es });
-                const price = appointment.servicePrice || appointment.payment?.amount || 0;
+                const price = appointment.servicePrice || 0;
                 
                 message = `Hola ${client.name.split(' ')[0]},\n\nEspero que estés muy bien.\n\nTe escribo de parte de ${profile.name} para recordarte que el pago de tu cita, del día ${date}, está aún pendiente de pago. El importe es de ${price.toFixed(2)}€.\n\nPuedes realizar el pago de la forma que te sea más cómoda. Si ya has realizado el pago, por favor, ignora este mensaje.\n\n¡Muchas gracias por tu confianza!\n\nUn saludo,\n${profile.name}`;
             }
@@ -236,7 +236,21 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 
                 message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} en relación a tu cita del día ${date}, a la que lamentablemente no has acudido.\n\nEntendemos que pueden surgir imprevistos. Nos gustaría recordarte la importancia de cancelar con antelación para poder ofrecer la hora a otro cliente.\n\nSi deseas volver a agendar una cita, no dudes en ponerte en contacto con nosotros.\n\nUn saludo,\n${profile.name}`;
             }
+        } else if (campaignType === 'cancellation') {
+            const appointment = appointments
+                .filter(apt => apt.clientPhone === client.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
+                .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0]; // Get the closest future appointment
+
+            if (appointment && cancellationDate) {
+                appointmentId = appointment.id;
+                const originalDate = format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es });
+                const [hours, minutes] = cancellationTime.split(':').map(Number);
+                const newDateTime = set(cancellationDate, { hours, minutes });
+
+                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} por un imprevisto que me ha surgido. Lamento informarte que no podré atender tu cita del próximo ${originalDate}.\n\nTe pido disculpas por las molestias.\n\nComo alternativa, te propongo mover la cita al siguiente día y hora:\n🗓️ Nueva Fecha: ${format(newDateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Nueva Hora: ${format(newDateTime, "p", { locale: es })}\n\nPor favor, confírmame si esta nueva fecha te viene bien. Si no, buscamos otra alternativa sin problema.\n\nGracias por tu comprensión,\n${profile.name}`;
+            }
         }
+
 
         if (message) {
             messages.push({
@@ -253,7 +267,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(messages);
     setStep('finished');
 
-  }, [campaignType, selectedClientIds, clients, appointments, profile, toast]);
+  }, [campaignType, selectedClientIds, clients, appointments, profile, toast, cancellationDate, cancellationTime]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -435,7 +449,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                                 .filter(a => a.clientPhone === c.phone && a.status === 'completed' && !a.payment)
                                 .sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
                              if (pendingAppointment) {
-                                const price = pendingAppointment.servicePrice || pendingAppointment.payment?.amount || 0;
+                                const price = pendingAppointment.servicePrice || 0;
                                 appointmentInfo = `Pendiente: ${price.toFixed(2)}€`;
                              }
                         } else if (campaignType === 'birthdays' && c.birthDate) {
@@ -585,3 +599,5 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
         </div>
     )
 }
+
+    
