@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -46,14 +47,8 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
     if (businessProfile && (appointment || voucherUpdateData)) {
         generateMessage();
     }
-  }, [businessProfile, appointment, voucherUpdateData]);
+  }, [businessProfile, appointment, voucherUpdateData, generateMessage]);
   
-  if (!mode) return null;
-  
-  const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
-  const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : voucherUpdateData?.client.phone;
-  const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}` : '';
-
   const handleClose = () => {
     onOpenChange(false);
   }
@@ -61,15 +56,6 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   const handleSocialsChange = (social: keyof typeof socials, checked: boolean) => {
     setSocials(s => ({...s, [social]: checked }));
   }
-
-  // Effect to regenerate message when socials change
-  React.useEffect(() => {
-      if (businessProfile && (appointment || voucherUpdateData)) {
-          generateMessage();
-      }
-  }, [socials, businessProfile, appointment, voucherUpdateData, generateMessage]);
-
-  const showSocials = !isLoading && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   const getDialogTitle = () => {
     if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Notificar Sesiones Restantes" : "Bono Actualizado";
@@ -80,6 +66,14 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
       if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Envía un mensaje a tu cliente para informarle de las sesiones que le quedan." : "Se ha descontado una sesión del bono. Puedes enviar una notificación por WhatsApp.";
       return appointment?.id === 'new-client-welcome' ? "Envía un mensaje de presentación con tus servicios y datos de contacto a este nuevo cliente potencial." : "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp.";
   }
+
+  if (!mode) return null;
+  
+  const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
+  const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : voucherUpdateData?.client.phone;
+  const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}` : '';
+
+  const showSocials = !isLoading && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
   return (
     <Dialog open={!!mode} onOpenChange={handleClose}>
@@ -174,3 +168,4 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
     </Dialog>
   );
 }
+
