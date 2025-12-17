@@ -247,7 +247,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 const [hours, minutes] = cancellationTime.split(':').map(Number);
                 const newDateTime = set(cancellationDate, { hours, minutes });
 
-                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} por un imprevisto que me ha surgido. Lamento informarte que no podré atender tu cita del próximo ${originalDate}.\n\nTe pido disculpas por las molestias.\n\nComo alternativa, te propongo mover la cita al siguiente día y hora:\n🗓️ Nueva Fecha: ${format(newDateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Nueva Hora: ${format(newDateTime, "p", { locale: es })}\n\nPor favor, confírmame si esta nueva fecha te viene bien. Si no, buscamos otra alternativa sin problema.\n\nGracias por tu comprensión,\n${profile.name}`;
+                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} por un imprevisto que me ha surgido. Lamento informarte que no podré atender tu cita del próximo ${originalDate}.\n\nTe pido disculpas por las molestias.\n\nComo alternativa, te propongo mover la cita al siguiente día y hora:\n🗓️ Nueva Fecha: ${format(newDateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Nueva Hora: ${format(newDateTime, "p", { locale: es })}\n\nPor favor, confírmame si esta nueva fecha te viene bien. Si no es posible para ti, podemos buscar otra alternativa o, si lo prefieres, procedemos a anular la cita sin ningún compromiso.\n\nGracias por tu comprensión,\n${profile.name}`;
             }
         }
 
