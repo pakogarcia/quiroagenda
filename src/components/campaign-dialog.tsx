@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -223,6 +224,17 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 const price = appointment.servicePrice || appointment.payment?.amount || 0;
                 
                 message = `Hola ${client.name.split(' ')[0]},\n\nEspero que estés muy bien.\n\nTe escribo de parte de ${profile.name} para recordarte que el pago de tu cita, del día ${date}, está aún pendiente de pago. El importe es de ${price.toFixed(2)}€.\n\nPuedes realizar el pago de la forma que te sea más cómoda. Si ya has realizado el pago, por favor, ignora este mensaje.\n\n¡Muchas gracias por tu confianza!\n\nUn saludo,\n${profile.name}`;
+            }
+        } else if (campaignType === 'noShow') {
+             const appointment = appointments
+                .filter(apt => apt.clientPhone === client.phone && apt.status === 'no-show')
+                .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0]; // Get the most recent one
+
+            if (appointment) {
+                appointmentId = appointment.id;
+                const date = format(appointment.dateTime, "d 'de' MMMM", { locale: es });
+                
+                message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} en relación a tu cita del día ${date}, a la que lamentablemente no has acudido.\n\nEntendemos que pueden surgir imprevistos. Nos gustaría recordarte la importancia de cancelar con antelación para poder ofrecer la hora a otro cliente.\n\nSi deseas volver a agendar una cita, no dudes en ponerte en contacto con nosotros.\n\nUn saludo,\n${profile.name}`;
             }
         }
 
