@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -35,7 +34,6 @@ type GeneratedMessage = {
   clientPhone: string;
   message: string;
   appointmentId?: string;
-  customNote: string;
 };
 
 type CampaignDialogProps = {
@@ -73,6 +71,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [cancellationDate, setCancellationDate] = React.useState<Date | undefined>(addDays(new Date(), 1));
   const [cancellationTime, setCancellationTime] = React.useState('10:00');
   const [generalMessage, setGeneralMessage] = useState('');
+
+  const {toast} = useToast();
 
   const targetClients = useMemo(() => {
     if (!campaignType) return [];
@@ -191,42 +191,15 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   }, [campaignType]);
 
   const handleGenerateMessages = useCallback(async (customNotes: Record<string, string>) => {
-    if (!campaignType) return;
+    if (!campaignType || !profile) return;
+
+    toast({
+        variant: 'destructive',
+        title: 'Función no disponible',
+        description: 'La generación de mensajes con IA ha sido desactivada temporalmente.',
+    });
     
-    if (campaignType === 'newClients') {
-        const welcomeApt: Appointment = {
-            id: 'new-client-welcome',
-            clientName: '',
-            clientPhone: '',
-            dateTime: new Date(),
-            notes: '',
-            reminderSent: false,
-            status: 'scheduled'
-        }
-        setWelcomeMessage(welcomeApt);
-        return;
-    }
-
-    setIsLoading(true);
-    setStep('generate');
-
-    // Simulate AI generation
-    setTimeout(() => {
-        setGeneratedMessages(selectedClientIds.map(id => {
-            const client = targetClients.find(c => c.id === id);
-            return {
-                clientId: id,
-                clientName: client?.name || 'Cliente',
-                clientPhone: client?.phone || '',
-                message: `[Mensaje de IA para ${client?.name} sobre ${campaignDetails[campaignType].title}]`,
-                customNote: customNotes[id] || '',
-            }
-        }));
-        setIsLoading(false);
-        setStep('finished');
-    }, 1000);
-
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, targetClients, services, cancellationDate, cancellationTime, generalMessage]);
+  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, clients, services, generalMessage, cancellationDate, cancellationTime, toast]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -337,8 +310,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const renderContent = () => {
     if (step === 'generate') {
       return (
-        <div className="space-y-4">
-            <p className="text-sm text-center text-muted-foreground animate-pulse">Generando mensajes...</p>
+        <div className="flex justify-center items-center h-40">
+            <p className="text-sm text-center text-muted-foreground animate-pulse">Generando mensajes con IA...</p>
         </div>
       );
     }
