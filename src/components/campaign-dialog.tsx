@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Client, BusinessProfile, Appointment } from '@/lib/types';
 import { format, subDays, startOfToday, isWithinInterval, parseISO, getMonth, getDate, differenceInDays, addDays, getDayOfYear, isFuture, set } from 'date-fns';
@@ -55,16 +54,15 @@ const campaignDetails = {
 };
 
 export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogProps) {
-  const { clients, profile, appointments, setAppointments, services } = useAppData();
+  const { clients, profile, appointments, setAppointments } = useAppData();
   
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<'select' | 'generate' | 'finished'>('select');
+  const [step, setStep] = useState<'select' | 'finished'>('select');
   
   const [isConfirmSentOpen, setIsConfirmSentOpen] = React.useState(false);
-  const [welcomeMessage, setWelcomeMessage] = React.useState<Appointment | null>(null);
-
+  
   // Specific state for different campaigns
   const [offerMessage, setOfferMessage] = useState('');
   const [inactiveDays, setInactiveDays] = useState<number>(90);
@@ -158,7 +156,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             });
             return clients.filter(c => {
                 const lastVisit = clientLastVisit.get(c.id);
-                if (!lastVisit) return false; // Or handle as active if no completed appointments
+                if (!lastVisit) return false;
                 return differenceInDays(today, lastVisit) >= inactiveDays;
             });
         }
@@ -166,7 +164,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             return clients.filter(c => c.voucher && c.voucher.sessions > 0);
         }
         case 'newClients': {
-            return []; // Handled by a special form, but the type needs to be present
+             return clients.filter(c => differenceInDays(today, new Date(c.id.substring(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'))) <= 7);
         }
         case 'offer':
         case 'generalMessage':
@@ -184,13 +182,10 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       setOfferMessage('');
       setInactiveDays(90);
       setGeneralMessage('');
-      if (campaignType !== 'newClients') {
-          setWelcomeMessage(null);
-      }
     }
   }, [campaignType]);
 
-  const generateMessages = useCallback(async (customNotes: Record<string, string>) => {
+  const generateMessages = useCallback(() => {
     if (!profile) {
         toast({
             variant: 'destructive',
@@ -200,13 +195,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         return;
     }
 
-    setStep('generate');
     setIsLoading(true);
-
-    const selectedAppointments = appointments.filter(apt => {
-        const client = clients.find(c => c.phone === apt.clientPhone);
-        return client && selectedClientIds.includes(client.id);
-    });
 
     const messages: GeneratedMessage[] = [];
 
@@ -218,7 +207,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
                 .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
 
             if (client && appointment) {
-                const message = `Hola ${client.name},\n\nTe escribo para recordarte tu próxima cita en ${profile.name}.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n\n📍 Ubicación: ${profile.address}\n\nRecuerda, el pago es siempre en efectivo.\n\nPor favor, si necesitas cancelar o reprogramar, avísanos con la mayor antelación posible.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
+                const message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en ${profile.name}.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n\n📍 Ubicación: ${profile.address}\n\nRecuerda, el pago es siempre en efectivo.\n\nPor favor, si necesitas cancelar o reprogramar, avísanos con la mayor antelación posible.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
                 messages.push({
                     clientId: client.id,
                     clientName: `${client.name} ${client.lastName}`,
@@ -252,22 +241,14 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   };
   
   const details = campaignType ? campaignDetails[campaignType] : null;
-  const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
 
   const getDialogDescription = () => {
     switch (step) {
-        case 'generate':
-            return 'Espera un momento, estoy preparando los mensajes...';
         case 'finished':
-            if (campaignType === 'newClients') {
-                return '¡Mensaje de bienvenida listo! Puedes enviarlo por WhatsApp.';
-            }
             return '¡Mensajes listos! Ahora puedes copiarlos o enviarlos por WhatsApp.';
         case 'select':
         default:
-            return campaignType === 'newClients' 
-                ? 'Envía un mensaje de bienvenida a los clientes recién añadidos.' 
-                : 'Selecciona los destinatarios y configura las opciones para esta campaña.';
+            return 'Selecciona los destinatarios y configura las opciones para esta campaña.';
     }
   };
 
@@ -346,7 +327,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   }
 
   const renderContent = () => {
-    if (step === 'generate') {
+    if (isLoading) {
       return (
         <div className="flex justify-center items-center h-40">
             <p className="text-sm text-center text-muted-foreground animate-pulse">Generando mensajes...</p>
@@ -355,9 +336,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
     
     if(step === 'finished') {
-        if (campaignType === 'newClients') {
-            return null; // Will be handled by the NewAppointmentConfirmationDialog
-        }
         if (generatedMessages.length === 0) {
             return (
                 <Alert>
@@ -392,7 +370,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
 
     // Step 'select'
-    if (campaignType !== 'newClients' && targetClients.length === 0) {
+    if (targetClients.length === 0) {
         return (
             <Alert>
                 <CheckCircle className="h-4 w-4" />
@@ -407,74 +385,59 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     return (
         <div className="space-y-4">
             {renderConfiguration()}
-            {campaignType !== 'newClients' && (
-                <>
-                <div className="flex items-center space-x-2 border-b pb-4">
-                    <Checkbox 
-                        id="select-all" 
-                        onCheckedChange={handleSelectAll}
-                        checked={selectedClientIds.length === targetClients.length && targetClients.length > 0}
-                    />
-                    <Label htmlFor="select-all" className="font-bold text-base">
-                        Seleccionar Todo ({targetClients.length})
-                    </Label>
-                </div>
-                <ScrollArea className="h-[350px] pr-4">
-                    <div className="space-y-3">
-                        {targetClients.map(c => {
-                            const nextAppointment = (campaignType === 'reminders' || campaignType === 'cancellation')
-                                ? appointments.filter(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime)).sort((d1, d2) => d1.dateTime.getTime() - d2.dateTime.getTime())[0]
-                                : null;
+            <div className="flex items-center space-x-2 border-b pb-4">
+                <Checkbox 
+                    id="select-all" 
+                    onCheckedChange={handleSelectAll}
+                    checked={selectedClientIds.length === targetClients.length && targetClients.length > 0}
+                />
+                <Label htmlFor="select-all" className="font-bold text-base">
+                    Seleccionar Todo ({targetClients.length})
+                </Label>
+            </div>
+            <ScrollArea className="h-[350px] pr-4">
+                <div className="space-y-3">
+                    {targetClients.map(c => {
+                        const nextAppointment = (campaignType === 'reminders' || campaignType === 'cancellation')
+                            ? appointments.filter(a => a.clientPhone === c.phone && a.status === 'scheduled' && isFuture(a.dateTime)).sort((d1, d2) => d1.dateTime.getTime() - d2.dateTime.getTime())[0]
+                            : null;
 
-                            return (
-                            <div key={c.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
-                                <div className="flex items-center space-x-3">
-                                    <Checkbox
-                                        id={c.id}
-                                        onCheckedChange={(checked) => {
-                                            setSelectedClientIds(prev => 
-                                                checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
-                                            );
-                                        }}
-                                        checked={selectedClientIds.includes(c.id)}
-                                    />
-                                    <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
-                                        <span className="font-semibold">{c.name} {c.lastName}</span>
-                                        <span className="text-sm text-muted-foreground">{c.phone}</span>
-                                        {campaignType === 'birthdays' && c.birthDate && (
-                                            <span className="text-xs text-primary">{format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es })}</span>
-                                        )}
-                                        {nextAppointment && (
-                                            <span className="text-xs text-primary">{format(nextAppointment.dateTime, "d MMM, p", { locale: es })}</span>
-                                        )}
-                                    </Label>
-                                </div>
-                                 {selectedClientIds.includes(c.id) && (campaignType === 'reminders' || campaignType === 'pendingPayments' || campaignType === 'noShow' || campaignType === 'cancellation' || campaignType === 'birthdays' || campaignType === 'inactiveClients') && (
-                                    <div className="pl-6 pt-2">
-                                       <Textarea
-                                            id={`custom-note-${c.id}`}
-                                            className="mt-1 text-sm h-16"
-                                            placeholder="Añadir nota personal (opcional)..."
-                                            value={customNotes[c.id] || ''}
-                                            onChange={(e) => setCustomNotes(prev => ({...prev, [c.id]: e.target.value}))}
-                                        />
-                                    </div>
-                                )}
+                        return (
+                        <div key={c.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
+                            <div className="flex items-center space-x-3">
+                                <Checkbox
+                                    id={c.id}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedClientIds(prev => 
+                                            checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                                        );
+                                    }}
+                                    checked={selectedClientIds.includes(c.id)}
+                                />
+                                <Label htmlFor={c.id} className="flex flex-col flex-grow cursor-pointer">
+                                    <span className="font-semibold">{c.name} {c.lastName}</span>
+                                    <span className="text-sm text-muted-foreground">{c.phone}</span>
+                                    {campaignType === 'birthdays' && c.birthDate && (
+                                        <span className="text-xs text-primary">{format(parseISO(c.birthDate), "d 'de' MMMM", { locale: es })}</span>
+                                    )}
+                                    {nextAppointment && (
+                                        <span className="text-xs text-primary">{format(nextAppointment.dateTime, "d MMM, p", { locale: es })}</span>
+                                    )}
+                                </Label>
                             </div>
-                        )})}
-                    </div>
-                </ScrollArea>
-                </>
-            )}
+                        </div>
+                    )})}
+                </div>
+            </ScrollArea>
         </div>
     )
   }
 
   const renderFooter = () => {
     if (step === 'finished') {
-        if (campaignType === 'newClients' || generatedMessages.length > 0) {
+        if (generatedMessages.length > 0) {
              return (
-                <Button variant="default" onClick={() => campaignType === 'newClients' ? onOpenChange(false) : setIsConfirmSentOpen(true)}>
+                <Button variant="default" onClick={() => setIsConfirmSentOpen(true)}>
                     <CheckCircle className="mr-2 h-4 w-4" />
                     {campaignType === 'reminders' ? 'Marcar como Enviados y Cerrar' : 'Cerrar'}
                 </Button>
@@ -483,26 +446,17 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         return <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>;
     }
     if (step === 'select') {
-        let disabled = isLoading;
-        if (campaignType === 'newClients') {
-            // No action button here, direct dialog opening
-        } else if (campaignType === 'cancellation') {
-            disabled = isLoading || selectedClientIds.length === 0 || !cancellationDate;
-        } else if (campaignType === 'offer') {
-            disabled = isLoading || selectedClientIds.length === 0 || !offerMessage;
-        } else if (campaignType === 'generalMessage') {
-             disabled = isLoading || selectedClientIds.length === 0 || !generalMessage;
-        } else if (campaignType !== 'newClients') {
-            disabled = isLoading || selectedClientIds.length === 0;
-        }
+        let disabled = isLoading || selectedClientIds.length === 0;
+
+        if (campaignType === 'offer' && !offerMessage) disabled = true;
+        if (campaignType === 'generalMessage' && !generalMessage) disabled = true;
+        if (campaignType === 'cancellation' && !cancellationDate) disabled = true;
         
         const buttonAction = () => {
-             generateMessages(customNotes);
+             generateMessages();
         };
 
-        const buttonText = campaignType === 'newClients' 
-            ? 'Crear Mensaje de Bienvenida'
-            : `Generar ${selectedClientIds.length} Mensaje(s)`;
+        const buttonText = `Generar ${selectedClientIds.length} Mensaje(s)`;
 
         return (
             <Button onClick={buttonAction} disabled={disabled}>
@@ -518,7 +472,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   return (
     <>
-      <Dialog open={!!campaignType && !welcomeMessage} onOpenChange={onOpenChange}>
+      <Dialog open={!!campaignType} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
@@ -549,15 +503,6 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
-      <NewAppointmentConfirmationDialog
-        appointment={welcomeMessage}
-        onOpenChange={(isOpen) => {
-            if (!isOpen) {
-                setWelcomeMessage(null);
-                onOpenChange(false); 
-            }
-        }}
-      />
     </>
   );
 }
@@ -599,5 +544,3 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
         </div>
     )
 }
-
-    
