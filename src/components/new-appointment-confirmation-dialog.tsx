@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
 import { useAppData } from '@/context/app-data-context';
+import { Textarea } from './ui/textarea';
 
 type DialogMode = 'newAppointment' | 'voucherUpdate';
 
@@ -25,6 +26,7 @@ type NewAppointmentConfirmationDialogProps = {
 
 export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateData, onOpenChange }: NewAppointmentConfirmationDialogProps) {
   const [generatedMessage, setGeneratedMessage] = React.useState('');
+  const [editedMessage, setEditedMessage] = React.useState('');
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
   const { profile: businessProfile, services } = useAppData();
 
@@ -62,6 +64,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
     }
 
     setGeneratedMessage(finalMessage);
+    setEditedMessage(finalMessage);
 
   }, [mode, businessProfile, appointment, voucherUpdateData, services, socials]);
 
@@ -99,7 +102,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   
   const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
   const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : voucherUpdateData?.client.phone;
-  const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}` : '';
+  const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(editedMessage)}` : '';
 
   const showSocials = businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
@@ -121,9 +124,13 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
                 <Skeleton className="h-16 w-full" />
              </div>
           ) : (
-            <div className="p-4 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap">
+            <div className="p-4 bg-muted rounded-md text-sm">
               <p className='font-semibold text-primary flex items-center gap-2 mb-2'><Smartphone className="w-4 h-4"/>{clientData?.clientName || clientData?.name}</p>
-              <p>{generatedMessage}</p>
+               <Textarea 
+                  value={editedMessage}
+                  onChange={(e) => setEditedMessage(e.target.value)}
+                  className="min-h-[200px] text-muted-foreground whitespace-pre-wrap bg-background"
+              />
             </div>
           )}
         </div>

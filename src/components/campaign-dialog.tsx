@@ -245,7 +245,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const getDialogDescription = () => {
     switch (step) {
         case 'finished':
-            return '¡Mensajes listos! Ahora puedes copiarlos o enviarlos por WhatsApp.';
+            return '¡Mensajes listos! Ahora puedes editarlos, copiarlos o enviarlos por WhatsApp.';
         case 'select':
         default:
             return 'Selecciona los destinatarios y configura las opciones para esta campaña.';
@@ -510,11 +510,11 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 function MessageCard({ message }: { message: GeneratedMessage; }) {
     const { toast } = useToast();
     const [isCopied, setIsCopied] = useState(false);
-    const fullMessage = message.message;
-    const whatsappLink = `https://wa.me/${message.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(fullMessage)}`;
+    const [editedMessage, setEditedMessage] = useState(message.message);
+    const whatsappLink = `https://wa.me/${message.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(editedMessage)}`;
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(fullMessage);
+        navigator.clipboard.writeText(editedMessage);
         toast({
             title: "Copiado",
             description: "Mensaje copiado al portapapeles."
@@ -540,7 +540,11 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
                 </div>
             </div>
             <Separator className="my-2" />
-            <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">{message.message}</p>
+            <Textarea
+                value={editedMessage}
+                onChange={(e) => setEditedMessage(e.target.value)}
+                className="text-sm text-muted-foreground italic whitespace-pre-wrap mt-2 min-h-[150px] bg-muted/50"
+            />
         </div>
     )
 }
