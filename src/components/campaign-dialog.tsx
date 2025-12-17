@@ -297,6 +297,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   };
 
   const renderConfiguration = () => {
+      if (step !== 'select') return null;
+
       if (campaignType === 'offer') {
           return (
               <div className="space-y-2">
@@ -599,5 +601,3 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
         </div>
     )
 }
-
-    
