@@ -294,6 +294,12 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             } else if (campaignType === 'inactiveClients') {
                 const clientName = client.name.split(' ')[0];
                 message = `Hola ${clientName},\n\n¡Hace tiempo que no te vemos por ${profile.name} y te echamos de menos!\n\nNos encantaría ayudarte a retomar tu rutina de bienestar. Si estás pensando en volver, no dudes en escribirnos para encontrar el momento perfecto para tu próxima cita.\n\n¡Esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
+            } else if (campaignType === 'offer' && offerMessage) {
+                const clientName = client.name.split(' ')[0];
+                message = `¡Hola ${clientName}!\n\nEn ${profile.name} estamos de celebración y queremos compartirlo contigo.\n\nTenemos una oferta especial que te va a encantar:\n**${offerMessage}**\n\nAprovecha esta oportunidad para darte un capricho. Si quieres reservar, solo tienes que responder a este mensaje.\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
+            } else if (campaignType === 'generalMessage' && generalMessage) {
+                const clientName = client.name.split(' ')[0];
+                message = `Hola ${clientName},\n\nTe escribo de parte de ${profile.name} para informarte sobre lo siguiente:\n\n${generalMessage}\n\nGracias por tu atención.\n\nUn saludo,\n${profile.name}`;
             }
 
             if (message) {
@@ -312,7 +318,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     setGeneratedMessages(messages);
     setStep('finished');
 
-  }, [campaignType, selectedClientIds, clients, appointments, profile, toast, cancellationDate, cancellationTime, newClientName, newClientPhone, services]);
+  }, [campaignType, selectedClientIds, clients, appointments, profile, toast, cancellationDate, cancellationTime, newClientName, newClientPhone, services, offerMessage, generalMessage]);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -375,12 +381,13 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
       if (campaignType === 'offer') {
           return (
               <div className="space-y-2">
-                <Label htmlFor="offerMessage">Mensaje de la Oferta</Label>
+                <Label htmlFor="offerMessage">Texto de la Oferta</Label>
                 <Textarea
                     id="offerMessage"
-                    placeholder="p. ej., 20% de descuento en masajes relajantes."
+                    placeholder="p. ej., 20% de descuento en masajes relajantes solo esta semana."
                     value={offerMessage}
                     onChange={(e) => setOfferMessage(e.target.value)}
+                    className="h-24"
                 />
               </div>
           )
