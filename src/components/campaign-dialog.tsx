@@ -71,6 +71,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   const [cancellationDate, setCancellationDate] = React.useState<Date | undefined>(addDays(new Date(), 1));
   const [cancellationTime, setCancellationTime] = React.useState('10:00');
   const [generalMessage, setGeneralMessage] = useState('');
+    const [showAIOffline, setShowAIOffline] = useState(false);
 
   const {toast} = useToast();
 
@@ -190,16 +191,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
   }, [campaignType]);
 
-  const handleGenerateMessages = useCallback(async (customNotes: Record<string, string>) => {
-    if (!campaignType || !profile) return;
-
-    toast({
-        variant: 'destructive',
-        title: 'Función no disponible',
-        description: 'La generación de mensajes con IA ha sido desactivada temporalmente.',
-    });
-    
-  }, [campaignType, selectedClientIds, appointments, profile, offerMessage, inactiveDays, clients, services, generalMessage, cancellationDate, cancellationTime, toast]);
+  const generateMessages = useCallback(async (customNotes: Record<string, string>) => {
+    setShowAIOffline(true);
+  }, []);
 
   const handleMarkAsSent = () => {
      if (campaignType === 'reminders') {
@@ -224,6 +218,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
         case 'generate':
             return 'Espera un momento, la IA está redactando los mensajes...';
         case 'finished':
+            if (campaignType === 'newClients') {
+                return '¡Mensaje de bienvenida listo! Puedes enviarlo por WhatsApp.';
+            }
             return '¡Mensajes listos! Ahora puedes copiarlos o enviarlos por WhatsApp.';
         case 'select':
         default:
@@ -308,6 +305,17 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
   }
 
   const renderContent = () => {
+     if (showAIOffline) {
+        return (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Función no disponible</AlertTitle>
+                <AlertDescription>
+                    La generación de mensajes con IA ha sido desactivada temporalmente.
+                </AlertDescription>
+            </Alert>
+        );
+    }
     if (step === 'generate') {
       return (
         <div className="flex justify-center items-center h-40">
@@ -317,6 +325,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
     }
     
     if(step === 'finished') {
+        if (campaignType === 'newClients') {
+            return null; // Will be handled by the NewAppointmentConfirmationDialog
+        }
         if (generatedMessages.length === 0) {
             return (
                 <Alert>
@@ -431,11 +442,11 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
   const renderFooter = () => {
     if (step === 'finished') {
-        if (generatedMessages.length > 0) {
-            return (
-                <Button variant="default" onClick={() => setIsConfirmSentOpen(true)}>
+        if (campaignType === 'newClients' || generatedMessages.length > 0) {
+             return (
+                <Button variant="default" onClick={() => campaignType === 'newClients' ? onOpenChange(false) : setIsConfirmSentOpen(true)}>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Marcar como Enviados y Cerrar
+                    {campaignType === 'reminders' ? 'Marcar como Enviados y Cerrar' : 'Cerrar'}
                 </Button>
             );
         }
@@ -451,16 +462,12 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
             disabled = isLoading || selectedClientIds.length === 0 || !offerMessage;
         } else if (campaignType === 'generalMessage') {
              disabled = isLoading || selectedClientIds.length === 0 || !generalMessage;
-        } else {
+        } else if (campaignType !== 'newClients') {
             disabled = isLoading || selectedClientIds.length === 0;
         }
         
         const buttonAction = () => {
-            if (campaignType === 'newClients') {
-                handleGenerateMessages({});
-            } else {
-                handleGenerateMessages(customNotes);
-            }
+             generateMessages(customNotes);
         };
 
         const buttonText = campaignType === 'newClients' 

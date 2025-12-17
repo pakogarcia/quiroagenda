@@ -1,12 +1,10 @@
-
-
 'use client';
 
 import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { type Appointment, type Client } from '@/lib/types';
-import { Send, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon, Globe } from 'lucide-react';
+import { type Appointment, type Client, type BusinessProfile } from '@/lib/types';
+import { Send, Smartphone, MessageSquare, Instagram, Facebook, Youtube, Link as LinkIcon, Globe, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
 import { useAppData } from '@/context/app-data-context';
+import { CampaignType } from './campaign-dialog';
 
 type DialogMode = 'newAppointment' | 'voucherUpdate';
 
@@ -31,48 +30,23 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   const [socials, setSocials] = React.useState({ website: true, instagram: true, facebook: true, tiktok: true, youtube: true });
   const [isGenerating, setIsGenerating] = React.useState(false);
   const { profile: businessProfile, services } = useAppData();
+  const [showAIOffline, setShowAIOffline] = React.useState(false);
 
   const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : null;
   
   const generateMessage = React.useCallback(async () => {
     if (!mode || !businessProfile) return;
     
-    setIsGenerating(true);
-    setGeneratedMessage('');
-    setError('');
+    setShowAIOffline(true);
 
-    // Simulate AI generation
-    setTimeout(() => {
-        let message = `Hola! Este es un mensaje de prueba para la confirmación.`;
-        if (mode === 'newAppointment' && appointment) {
-            message = `Hola ${appointment.clientName}, te confirmamos tu cita para el ${format(appointment.dateTime, "EEEE, d 'de' MMMM 'a las' p", { locale: es })}. ¡Te esperamos en ${businessProfile.name}!`;
-        } else if (mode === 'voucherUpdate' && voucherUpdateData) {
-            message = `Hola ${voucherUpdateData.client.name}, te informamos que te quedan ${voucherUpdateData.remainingSessions} sesiones en tu bono.`;
-        }
-
-        let socialLinks = [];
-        if (socials.website && businessProfile.website) socialLinks.push(`Web: ${businessProfile.website}`);
-        if (socials.instagram && businessProfile.instagram) socialLinks.push(`Instagram: ${businessProfile.instagram}`);
-        if (socials.facebook && businessProfile.facebook) socialLinks.push(`Facebook: ${businessProfile.facebook}`);
-        if (socials.tiktok && businessProfile.tiktok) socialLinks.push(`TikTok: ${businessProfile.tiktok}`);
-        if (socials.youtube && businessProfile.youtube) socialLinks.push(`YouTube: ${businessProfile.youtube}`);
-
-        if (socialLinks.length > 0) {
-            message += `\n\nSíguenos en nuestras redes:\n${socialLinks.join('\n')}`;
-        }
-
-        setGeneratedMessage(message);
-        setIsGenerating(false);
-    }, 500);
-
-  }, [appointment, voucherUpdateData, businessProfile, socials, mode, services]);
+  }, [mode, businessProfile]);
 
 
   React.useEffect(() => {
     if (businessProfile && (appointment || voucherUpdateData)) {
         generateMessage();
     }
-  }, [businessProfile, generateMessage, appointment, voucherUpdateData]);
+  }, [businessProfile, appointment, voucherUpdateData]);
   
   if (!mode) return null;
   
@@ -87,6 +61,13 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   const handleSocialsChange = (social: keyof typeof socials, checked: boolean) => {
     setSocials(s => ({...s, [social]: checked }));
   }
+
+  // Effect to regenerate message when socials change
+  React.useEffect(() => {
+      if (businessProfile && (appointment || voucherUpdateData)) {
+          generateMessage();
+      }
+  }, [socials, businessProfile, appointment, voucherUpdateData, generateMessage]);
 
   const showSocials = !isLoading && businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
@@ -110,12 +91,14 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
           </DialogDescription>
         </DialogHeader>
         <div className="my-4 space-y-4">
-          {(isLoading || isGenerating) && (
-            <div className="p-4 border rounded-lg space-y-3">
-              <Skeleton className="h-5 w-1/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
-            </div>
+          {(isLoading || isGenerating || showAIOffline) && (
+             <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Función no disponible</AlertTitle>
+                <AlertDescription>
+                    La generación de mensajes con IA ha sido desactivada temporalmente.
+                </AlertDescription>
+            </Alert>
           )}
           {error && !isGenerating && (
             <Alert variant="destructive">
@@ -169,7 +152,6 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
                              </div>
                         )}
                      </div>
-                     <Button variant="secondary" size="sm" onClick={generateMessage} disabled={isGenerating}>Regenerar Mensaje</Button>
                 </div>
             </>
         )}
