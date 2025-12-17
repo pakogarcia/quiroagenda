@@ -249,6 +249,18 @@ export function CampaignDialog({ campaignType, onOpenChange }: CampaignDialogPro
 
                 message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo de parte de ${profile.name} por un imprevisto que me ha surgido. Lamento informarte que no podré atender tu cita del próximo ${originalDate}.\n\nTe pido disculpas por las molestias.\n\nComo alternativa, te propongo mover la cita al siguiente día y hora:\n🗓️ Nueva Fecha: ${format(newDateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Nueva Hora: ${format(newDateTime, "p", { locale: es })}\n\nPor favor, confírmame si esta nueva fecha te viene bien. Si no es posible para ti, podemos buscar otra alternativa o, si lo prefieres, procedemos a anular la cita sin ningún compromiso.\n\nGracias por tu comprensión,\n${profile.name}`;
             }
+        } else if (campaignType === 'voucherStatus') {
+            if (client.voucher) {
+                const clientName = client.name.split(' ')[0];
+                const remaining = client.voucher.sessions;
+                if (remaining > 1) {
+                    message = `Hola ${clientName}, te recordamos que tienes un bono activo con nosotros. Actualmente te quedan ${remaining} sesiones disponibles. ¡No dejes que se te pasen! Esperamos verte pronto por ${profile.name}. Un saludo.`;
+                } else if (remaining === 1) {
+                    message = `Hola ${clientName}, ¡estás a punto de completar tu bono! Te informamos de que te queda solo 1 sesión disponible. ¡Te esperamos para la última! Un saludo, ${profile.name}`;
+                } else {
+                     message = `Hola ${clientName}, ¡enhorabuena! Has completado todas las sesiones de tu bono. Ha sido un placer cuidarte. Si quieres renovarlo o probar alguno de nuestros otros servicios, no dudes en consultarnos. ¡Muchas gracias por tu confianza! Un saludo, ${profile.name}`;
+                }
+            }
         }
 
 
@@ -601,3 +613,4 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
         </div>
     )
 }
+
