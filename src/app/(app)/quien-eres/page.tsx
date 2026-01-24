@@ -257,7 +257,13 @@ export default function ProfilePage() {
                                             <PopoverTrigger asChild>
                                                 <Button id="date" variant={"outline"} className={cn("flex-1 justify-start text-left font-normal", !newVacation && "text-muted-foreground" )}>
                                                     <Calendar className="mr-2 h-4 w-4" />
-                                                    {newVacation?.from ? ( newVacation.to ? ( `${format(newVacation.from, "LLL dd, y", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` ) : ( format(newVacation.from, "LLL dd, y", { locale: es }) ) ) : ( <span>Elige un rango</span> )}
+                                                     <span>
+                                                        {newVacation?.from ? 
+                                                            (newVacation.to ? 
+                                                                `${format(newVacation.from, "LLL dd, y", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` 
+                                                                : format(newVacation.from, "LLL dd, y", { locale: es })) 
+                                                            : 'Elige un rango'}
+                                                    </span>
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0" align="start">
