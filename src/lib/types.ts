@@ -38,6 +38,11 @@ export type Client = {
   voucher?: Voucher;
 };
 
+export type Vacation = {
+  from: string; // ISO string
+  to: string;   // ISO string
+};
+
 export type BusinessProfile = {
   name: string;
   address: string;
@@ -48,6 +53,11 @@ export type BusinessProfile = {
   facebook?: string;
   tiktok?: string;
   youtube?: string;
+  openingHours?: {
+    morning: { start: string; end: string }; // "HH:mm"
+    afternoon: { start: string; end: string }; // "HH:mm"
+  };
+  vacations?: Vacation[];
 };
 
 export type VoucherSale = {

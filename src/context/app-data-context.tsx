@@ -101,8 +101,21 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
             // Profile
             const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+            const defaultProfile = {
+                name: 'QuiroAgenda',
+                address: '',
+                phone: '',
+                openingHours: {
+                    morning: { start: '09:00', end: '14:00' },
+                    afternoon: { start: '16:00', end: '20:00' },
+                },
+                vacations: [],
+            };
             if (storedProfile) {
-                setProfile(JSON.parse(storedProfile));
+                 const parsed = JSON.parse(storedProfile);
+                 setProfile({ ...defaultProfile, ...parsed });
+            } else {
+                setProfile(defaultProfile);
             }
             
             // Voucher Sales

@@ -3,10 +3,10 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, set, addMinutes } from 'date-fns';
+import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, set, addMinutes, isWithinInterval, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock, AlertCircle, Tag } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock, AlertCircle, Tag, Ban } from 'lucide-react';
 import type { Appointment, TimeSlot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -33,6 +33,7 @@ export default function Home() {
     blockedDays, 
     setBlockedDays,
     services,
+    profile,
     isLoading 
   } = useAppData();
   
@@ -50,8 +51,22 @@ export default function Home() {
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
 
   const isDayBlocked = React.useCallback((date: Date): boolean => {
-    return blockedDays.includes(format(date, 'yyyy-MM-dd'));
-  }, [blockedDays]);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    if (blockedDays.includes(dateStr)) {
+        return true;
+    }
+    if (profile?.vacations) {
+        for (const vacation of profile.vacations) {
+            const start = parseISO(vacation.from);
+            const end = parseISO(vacation.to);
+             if (isSameDay(date, start) || isSameDay(date, end) || isWithinInterval(date, { start, end })) {
+                return true;
+            }
+        }
+    }
+    return false;
+  }, [blockedDays, profile?.vacations]);
+
 
   const dailyAppointments = React.useMemo(() => {
     if (!selectedDate) return [];
@@ -61,18 +76,32 @@ export default function Home() {
   }, [appointments, selectedDate]);
   
   const timeSlots = React.useMemo(() => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !profile) return [];
+    
     const slots: TimeSlot[] = [];
-    const startHour = 8;
-    const endHour = 21;
     const interval = 15;
+    
+    const { openingHours } = profile;
+    const { morning, afternoon } = openingHours || { 
+        morning: { start: '08:00', end: '21:00' }, 
+        afternoon: { start: '21:00', end: '21:00' } // effectively empty
+    };
 
-    for (let i = startHour; i < endHour; i++) {
-        for (let j = 0; j < 60; j += interval) {
-            const time = set(selectedDate, { hours: i, minutes: j, seconds: 0, milliseconds: 0 });
-            slots.push({ time: format(time, 'HH:mm'), isBooked: false });
+    const generateSlotsForPeriod = (startStr: string, endStr: string) => {
+        const [startHour, startMinute] = startStr.split(':').map(Number);
+        const [endHour, endMinute] = endStr.split(':').map(Number);
+        
+        let currentTime = set(selectedDate, { hours: startHour, minutes: startMinute, seconds: 0, milliseconds: 0 });
+        const endTime = set(selectedDate, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 });
+
+        while (isBefore(currentTime, endTime)) {
+            slots.push({ time: format(currentTime, 'HH:mm'), isBooked: false });
+            currentTime = addMinutes(currentTime, interval);
         }
-    }
+    };
+    
+    generateSlotsForPeriod(morning.start, morning.end);
+    generateSlotsForPeriod(afternoon.start, afternoon.end);
 
     dailyAppointments.forEach(apt => {
         if (apt.status === 'scheduled') {
@@ -102,10 +131,10 @@ export default function Home() {
     });
     // Filter out the slots that are covered by an appointment but are not the starting slot
     return slots.filter((slot, index, self) => 
-        index === self.findIndex((s) => (s.time === slot.time && !s.isBooked)) || (slot.isBooked && slot.appointment)
+        !slot.isBooked || (slot.isBooked && slot.appointment)
     );
 
-  }, [selectedDate, dailyAppointments, services]);
+  }, [selectedDate, dailyAppointments, services, profile]);
   
   const upcomingAppointments = React.useMemo(() => {
     const today = startOfToday();
@@ -133,8 +162,19 @@ export default function Home() {
 
   const modifiers = React.useMemo(() => {
     const today = startOfToday();
+    const vacationDays = (profile?.vacations || []).reduce((acc, vac) => {
+        let current = parseISO(vac.from);
+        const end = parseISO(vac.to);
+        while(current <= end) {
+            acc.push(new Date(current));
+            current = addDays(current, 1);
+        }
+        return acc;
+    }, [] as Date[]);
+
     return {
       blocked: (date: Date) => blockedDays.includes(format(date, 'yyyy-MM-dd')),
+      vacation: vacationDays,
       oneAppointment: (date: Date) => {
         if (isBefore(date, today) || isDayBlocked(date)) return false;
         const day = format(date, 'yyyy-MM-dd');
@@ -151,10 +191,11 @@ export default function Home() {
         return appointmentsByDay[day] >= 3;
       },
     };
-  }, [appointmentsByDay, isDayBlocked, blockedDays]);
+  }, [appointmentsByDay, isDayBlocked, blockedDays, profile?.vacations]);
 
   const modifierClassNames = {
     blocked: 'blocked-day',
+    vacation: 'vacation-day',
     oneAppointment: 'one-appointment',
     twoAppointments: 'two-appointments',
     threeOrMoreAppointments: 'three-or-more-appointments',
@@ -343,7 +384,7 @@ export default function Home() {
                         <Plus className="h-4 w-4 md:mr-2" />
                         <span className="hidden md:inline">Nueva Cita</span>
                     </Button>
-                    <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay}>
+                    <Button variant={isCurrentDayBlocked && !profile?.vacations?.some(vac => isWithinInterval(selectedDate!, {start: parseISO(vac.from), end: parseISO(vac.to)})) ? "destructive" : "outline"} onClick={handleToggleBlockDay} disabled={profile?.vacations?.some(vac => isWithinInterval(selectedDate!, {start: parseISO(vac.from), end: parseISO(vac.to)}))}>
                         {isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}
                         <span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear' : 'Bloquear'}</span>
                     </Button>
@@ -376,9 +417,9 @@ export default function Home() {
           
           {isCurrentDayBlocked ? (
              <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg bg-muted/50">
-                <Lock className="w-16 h-16 text-muted-foreground/50 mb-4" />
-                <h3 className="text-xl font-semibold text-muted-foreground">Este día está bloqueado.</h3>
-                <p className="text-muted-foreground mt-1">No se pueden agendar citas. Puedes desbloquearlo para continuar.</p>
+                <Ban className="w-16 h-16 text-muted-foreground/50 mb-4" />
+                <h3 className="text-xl font-semibold text-muted-foreground">Este día no está disponible.</h3>
+                <p className="text-muted-foreground mt-1">Está marcado como día bloqueado o período de vacaciones.</p>
             </div>
           ) : (
             <TimeSlotView

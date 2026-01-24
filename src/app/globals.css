@@ -103,12 +103,16 @@ body {
   border-radius: var(--radius) !important;
 }
 
-.rdp-button.blocked-day {
+.rdp-button.blocked-day, .rdp-button.vacation-day {
   background-color: hsl(var(--muted)) !important;
   color: hsl(var(--muted-foreground)) !important;
   text-decoration: line-through;
   opacity: 0.7;
 }
+.rdp-button.vacation-day {
+  opacity: 0.9;
+}
+
 
 @media print {
   body {
