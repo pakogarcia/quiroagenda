@@ -1,12 +1,13 @@
 
+
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay } from 'date-fns';
+import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, set, addMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Edit, Trash2, Send, CheckCircle, XCircle, Plus, Gift, Euro, Lock, Unlock, AlertCircle, Tag } from 'lucide-react';
-import type { Appointment } from '@/lib/types';
+import type { Appointment, TimeSlot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -23,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useAppData } from '@/context/app-data-context';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import Link from 'next/link';
+import { TimeSlotView } from '@/components/timeslot-view';
 
 export default function Home() {
   const { 
@@ -30,6 +32,7 @@ export default function Home() {
     setAppointments, 
     blockedDays, 
     setBlockedDays,
+    services,
     isLoading 
   } = useAppData();
   
@@ -56,6 +59,66 @@ export default function Home() {
       .filter((apt) => isSameDay(apt.dateTime, selectedDate))
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   }, [appointments, selectedDate]);
+  
+  const timeSlots = React.useMemo(() => {
+    if (!selectedDate) return [];
+    const slots: TimeSlot[] = [];
+    const startHour = 8;
+    const endHour = 21;
+    const interval = 15;
+
+    for (let i = startHour; i < endHour; i++) {
+        for (let j = 0; j < 60; j += interval) {
+            const time = set(selectedDate, { hours: i, minutes: j, seconds: 0, milliseconds: 0 });
+            slots.push({ time: format(time, 'HH:mm'), isBooked: false });
+        }
+    }
+
+    dailyAppointments.forEach(apt => {
+        if (apt.status === 'scheduled') {
+            const aptStart = apt.dateTime;
+            const service = services.find(s => s.id === apt.serviceId);
+            const duration = service?.duration || 60; // default duration 60 mins
+            
+            const startIndex = slots.findIndex(s => s.time === format(aptStart, 'HH:mm'));
+
+            if (startIndex !== -1) {
+                const numSlotsToBook = Math.ceil(duration / interval);
+                for (let i = 0; i < numSlotsToBook; i++) {
+                    const slotIndex = startIndex + i;
+                    if (slotIndex < slots.length) {
+                        if (i === 0) {
+                            slots[slotIndex].isBooked = true;
+                            slots[slotIndex].appointment = apt;
+                            slots[slotIndex].duration = duration;
+                        } else {
+                            // These slots are covered by an appointment, so we can remove them
+                            slots[slotIndex].isBooked = true; 
+                        }
+                    }
+                }
+            }
+        }
+    });
+    // Filter out the slots that are covered by an appointment but are not the starting slot
+    return slots.filter((slot, index) => {
+        if (!slot.isBooked) return true;
+        if (slot.appointment) return true; // It's a starting slot
+        // If it's booked but not a starting slot, check if the previous one was a starting slot
+        if (index > 0 && slots[index - 1].isBooked && slots[index-1].appointment) {
+             const prevApt = slots[index-1].appointment;
+             const prevService = services.find(s => s.id === prevApt?.serviceId);
+             const prevDuration = prevService?.duration || 60;
+             const prevAptEndTime = addMinutes(prevApt!.dateTime, prevDuration);
+             const slotTime = set(selectedDate, {hours: parseInt(slot.time.split(':')[0]), minutes: parseInt(slot.time.split(':')[1])});
+             return !isBefore(slotTime, prevAptEndTime);
+        }
+        return false;
+    }).filter((slot, index, self) => 
+        index === self.findIndex((s) => (s.time === slot.time))
+    );
+
+  }, [selectedDate, dailyAppointments, services]);
   
   const upcomingAppointments = React.useMemo(() => {
     const today = startOfToday();
@@ -196,6 +259,15 @@ export default function Home() {
     }
   }
   
+  const handleSlotClick = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newSelectedDate = set(selectedDate!, { hours, minutes });
+    setSelectedDate(newSelectedDate);
+    setEditingAppointment(undefined);
+    setIsFormOpen(true);
+  };
+
+
   if (isLoading) {
     return <SplashScreen />;
   }
@@ -259,7 +331,7 @@ export default function Home() {
                         <DialogTrigger asChild>
                             <Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="w-auto p-0">
+                        <DialogContent className="w-auto p-0 pt-0">
                            <Calendar
                                 mode="single"
                                 selected={selectedDate}
@@ -321,94 +393,15 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-muted-foreground">Este día está bloqueado.</h3>
                 <p className="text-muted-foreground mt-1">No se pueden agendar citas. Puedes desbloquearlo para continuar.</p>
             </div>
-          ) : dailyAppointments.length > 0 ? (
-            <motion.div layout className="space-y-4 max-w-xl">
-              <AnimatePresence>
-                {dailyAppointments.map((apt, index) => (
-                  <motion.div
-                    key={apt.id}
-                    layout
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: index * 0.05 } }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="origin-top"
-                  >
-                    <Card className={cn('shadow-md hover:shadow-xl transition-shadow duration-300 group', {
-                        'bg-muted/50': apt.status !== 'scheduled',
-                        'border-yellow-500/50': apt.status === 'completed' && !apt.payment,
-                    })}>
-                      <CardHeader className="flex flex-row items-center justify-between">
-                        <div className="flex flex-col">
-                            <div className="flex items-center gap-2">
-                                <CardTitle className="text-xl text-accent">{apt.clientName}</CardTitle>
-                                {getStatusBadge(apt.status, apt.payment)}
-                            </div>
-                           <CardDescription className="flex items-center gap-2 pt-1">
-                               <Clock className="w-4 h-4"/>
-                               {format(apt.dateTime, 'p', { locale: es })}
-                           </CardDescription>
-                           {apt.serviceName && (
-                                <CardDescription className="flex items-center gap-2 pt-1">
-                                  <Tag className="w-4 h-4"/>
-                                  {apt.serviceName}
-                                </CardDescription>
-                            )}
-                        </div>
-                         <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                            {((apt.status === 'scheduled' && (isBefore(apt.dateTime, new Date()) || isSameDay(apt.dateTime, new Date()))) || (apt.status === 'completed' && !apt.payment)) && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" onClick={() => setFinishingAppointment(apt)}>
-                                                <Euro className="w-5 h-5 text-green-600" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Finalizar Cita (Pagar / No presentado)</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => openEditForm(apt)} disabled={apt.status !== 'scheduled'}>
-                                            <Edit className="w-5 h-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Editar cita</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(apt.id)} disabled={apt.status !== 'scheduled'}>
-                                            <Trash2 className="w-5 h-5 text-destructive" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Eliminar cita</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground">{apt.notes}</p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
-                <CalendarIcon className="w-16 h-16 text-muted-foreground/50 mb-4" />
-                <h3 className="text-xl font-semibold text-muted-foreground">No hay citas programadas para este día.</h3>
-                <p className="text-muted-foreground mt-1">Selecciona otra fecha o añade una nueva cita.</p>
-            </div>
+            <TimeSlotView
+                slots={timeSlots}
+                onSlotClick={handleSlotClick}
+                onAppointmentClick={(apt) => {
+                    setEditingAppointment(apt);
+                    setIsFormOpen(true);
+                }}
+            />
           )}
            <div className="pt-4 mt-auto md:hidden">
              <Button 

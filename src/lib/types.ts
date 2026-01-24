@@ -1,4 +1,5 @@
 
+
 export type PaymentMethod = 'cash' | 'bizum' | 'voucher' | 'paypal';
 
 export type Payment = {
@@ -64,5 +65,12 @@ export type Service = {
   name: string;
   duration: number; // Duration in minutes
   price: number;
+};
+
+export type TimeSlot = {
+    time: string;
+    isBooked: boolean;
+    appointment?: Appointment;
+    duration?: number; // in minutes
 };
     

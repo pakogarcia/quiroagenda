@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { format, set, parse } from 'date-fns';
+import { format, set, parse, addMinutes, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -38,7 +39,7 @@ type AppointmentFormProps = {
 };
 
 export function AppointmentForm({ onSubmit, appointment, selectedDate }: AppointmentFormProps) {
-  const { clients, services, blockedDays } = useAppData();
+  const { clients, services, blockedDays, appointments } = useAppData();
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -86,6 +87,47 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
   const blockedDates = React.useMemo(() => 
     blockedDays.map(dayStr => parse(dayStr, 'yyyy-MM-dd', new Date())),
   [blockedDays]);
+
+  const serviceId = form.watch('serviceId');
+  const selectedService = services.find(s => s.id === serviceId);
+  const serviceDuration = selectedService?.duration || 60; // Default to 60 mins if no service selected
+
+  const timeSlots = React.useMemo(() => {
+    const slots = [];
+    const date = form.watch('date');
+    const dayAppointments = appointments.filter(a => 
+      a.id !== appointment?.id && 
+      format(a.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
+      a.status === 'scheduled'
+    );
+
+    for (let i = 8; i < 21; i++) { // From 8:00 to 20:45
+      for (let j = 0; j < 60; j += 15) {
+        const slotTime = set(date, { hours: i, minutes: j });
+        const slotEndTime = addMinutes(slotTime, serviceDuration);
+
+        let isOverlapping = false;
+        for (const apt of dayAppointments) {
+          const aptService = services.find(s => s.id === apt.serviceId);
+          const aptDuration = aptService?.duration || 60;
+          const aptEndTime = addMinutes(apt.dateTime, aptDuration);
+
+          if (
+            (isBefore(slotTime, aptEndTime) && isBefore(apt.dateTime, slotEndTime))
+          ) {
+            isOverlapping = true;
+            break;
+          }
+        }
+
+        if (!isOverlapping) {
+          slots.push(format(slotTime, 'HH:mm'));
+        }
+      }
+    }
+    return slots;
+  }, [form.watch('date'), appointments, serviceDuration, appointment?.id, services]);
+
 
   return (
     <Form {...form}>
@@ -152,7 +194,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                             <SelectContent>
                                 {services.map(service => (
                                     <SelectItem key={service.id} value={service.id}>
-                                        {service.name}
+                                        {service.name} ({service.duration} min)
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -205,17 +247,28 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
             )}
             />
             <FormField
-            control={form.control}
-            name="time"
-            render={({ field }) => (
+              control={form.control}
+              name="time"
+              render={({ field }) => (
                 <FormItem>
-                <FormLabel>Hora</FormLabel>
-                <FormControl>
-                    <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
+                  <FormLabel>Hora</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una hora" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {timeSlots.map(slot => (
+                                <SelectItem key={slot} value={slot}>
+                                    {slot}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
         </div>
         <FormField
