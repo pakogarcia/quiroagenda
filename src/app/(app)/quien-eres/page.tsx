@@ -256,13 +256,15 @@ export default function ProfilePage() {
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button id="date" variant={"outline"} className={cn("flex-1 justify-start text-left font-normal", !newVacation && "text-muted-foreground" )}>
-                                                    <Calendar className="mr-2 h-4 w-4" />
-                                                     <span>
-                                                        {newVacation?.from ? 
-                                                            (newVacation.to ? 
-                                                                `${format(newVacation.from, "LLL dd, y", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` 
-                                                                : format(newVacation.from, "LLL dd, y", { locale: es })) 
-                                                            : 'Elige un rango'}
+                                                    <span className="flex items-center">
+                                                        <Calendar className="mr-2 h-4 w-4" />
+                                                        <span>
+                                                            {newVacation?.from ? 
+                                                                (newVacation.to ? 
+                                                                    `${format(newVacation.from, "LLL dd, y", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` 
+                                                                    : format(newVacation.from, "LLL dd, y", { locale: es })) 
+                                                                : 'Elige un rango'}
+                                                        </span>
                                                     </span>
                                                 </Button>
                                             </PopoverTrigger>
