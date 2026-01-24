@@ -73,4 +73,5 @@ export type TimeSlot = {
     appointment?: Appointment;
     duration?: number; // in minutes
 };
+
     

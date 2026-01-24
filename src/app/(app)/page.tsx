@@ -101,21 +101,8 @@ export default function Home() {
         }
     });
     // Filter out the slots that are covered by an appointment but are not the starting slot
-    return slots.filter((slot, index) => {
-        if (!slot.isBooked) return true;
-        if (slot.appointment) return true; // It's a starting slot
-        // If it's booked but not a starting slot, check if the previous one was a starting slot
-        if (index > 0 && slots[index - 1].isBooked && slots[index-1].appointment) {
-             const prevApt = slots[index-1].appointment;
-             const prevService = services.find(s => s.id === prevApt?.serviceId);
-             const prevDuration = prevService?.duration || 60;
-             const prevAptEndTime = addMinutes(prevApt!.dateTime, prevDuration);
-             const slotTime = set(selectedDate, {hours: parseInt(slot.time.split(':')[0]), minutes: parseInt(slot.time.split(':')[1])});
-             return !isBefore(slotTime, prevAptEndTime);
-        }
-        return false;
-    }).filter((slot, index, self) => 
-        index === self.findIndex((s) => (s.time === slot.time))
+    return slots.filter((slot, index, self) => 
+        index === self.findIndex((s) => (s.time === slot.time && !s.isBooked)) || (slot.isBooked && slot.appointment)
     );
 
   }, [selectedDate, dailyAppointments, services]);
@@ -398,8 +385,20 @@ export default function Home() {
                 slots={timeSlots}
                 onSlotClick={handleSlotClick}
                 onAppointmentClick={(apt) => {
-                    setEditingAppointment(apt);
-                    setIsFormOpen(true);
+                    if (apt) {
+                        const today = startOfToday();
+                        const isPast = isBefore(apt.dateTime, today) && !isSameDay(apt.dateTime, today);
+                        
+                        if (isPast) {
+                            setFinishingAppointment(apt);
+                        } else {
+                            if (apt.status === 'scheduled') {
+                                openEditForm(apt);
+                            } else {
+                                setFinishingAppointment(apt);
+                            }
+                        }
+                    }
                 }}
             />
           )}
@@ -457,3 +456,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

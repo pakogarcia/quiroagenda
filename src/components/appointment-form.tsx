@@ -47,9 +47,9 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
       clientName: appointment?.clientName || '',
       clientPhone: appointment?.clientPhone || '+34 ',
       date: appointment?.dateTime || selectedDate || new Date(),
-      time: appointment ? format(appointment.dateTime, 'HH:mm') : '10:00',
+      time: appointment ? format(appointment.dateTime, 'HH:mm') : format(selectedDate || new Date(), 'HH:mm'),
       notes: appointment?.notes || '',
-      serviceId: appointment?.serviceId || undefined,
+      serviceId: appointment?.serviceId || services[0]?.id || undefined,
     },
   });
 
@@ -61,13 +61,6 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
       }
   };
   
-  const handleServiceChange = (serviceId: string) => {
-    const selectedService = services.find(s => s.id === serviceId);
-    if (selectedService) {
-        form.setValue('serviceId', selectedService.id, { shouldValidate: true });
-    }
-  };
-
   const handleSubmit = (values: AppointmentFormValues) => {
     const [hours, minutes] = values.time.split(':').map(Number);
     const combinedDateTime = set(values.date, { hours, minutes });
@@ -95,6 +88,8 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
   const timeSlots = React.useMemo(() => {
     const slots = [];
     const date = form.watch('date');
+    if (!date) return [];
+    
     const dayAppointments = appointments.filter(a => 
       a.id !== appointment?.id && 
       format(a.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
@@ -125,8 +120,17 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
         }
       }
     }
+    // ensure the current appointment time is in the list if editing
+    if (appointment) {
+        const appointmentTime = format(appointment.dateTime, 'HH:mm');
+        if (!slots.includes(appointmentTime)) {
+            slots.push(appointmentTime);
+            slots.sort();
+        }
+    }
+    
     return slots;
-  }, [form.watch('date'), appointments, serviceDuration, appointment?.id, services]);
+  }, [form.watch('date'), appointments, serviceDuration, appointment, services]);
 
 
   return (
@@ -289,3 +293,5 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
     </Form>
   );
 }
+
+    
