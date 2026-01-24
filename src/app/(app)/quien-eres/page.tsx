@@ -255,15 +255,26 @@ export default function ProfilePage() {
                                     <div className="flex items-center gap-2 pt-2">
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button id="date" variant={"outline"} className={cn("flex-1 justify-start text-left font-normal", !newVacation && "text-muted-foreground" )}>
-                                                    <div className="flex items-center w-full justify-start">
+                                                <Button
+                                                    id="date"
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "flex-1 justify-start text-left font-normal",
+                                                        !newVacation && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <div className="flex items-center w-full">
                                                         <Calendar className="mr-2 h-4 w-4" />
                                                         <span className="truncate">
-                                                            {newVacation?.from ? 
-                                                                (newVacation.to ? 
-                                                                    `${format(newVacation.from, "LLL dd, y", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` 
-                                                                    : format(newVacation.from, "LLL dd, y", { locale: es })) 
-                                                                : 'Elige un rango'}
+                                                        {newVacation?.from ? (
+                                                            newVacation.to ? (
+                                                                `${format(newVacation.from, "LLL dd, y", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}`
+                                                            ) : (
+                                                                format(newVacation.from, "LLL dd, y", { locale: es })
+                                                            )
+                                                        ) : (
+                                                            'Elige un rango'
+                                                        )}
                                                         </span>
                                                     </div>
                                                 </Button>
