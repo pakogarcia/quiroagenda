@@ -7,7 +7,7 @@ import { Calendar as CalendarIcon, Plus, Lock, Unlock, Ban } from 'lucide-react'
 import type { Appointment, TimeSlot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointment-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -154,6 +154,14 @@ export default function Home() {
     if(confirmedAppointment) setConfirmationAppointment(confirmedAppointment);
   };
 
+  const handleDeleteAppointment = () => {
+    if (!deletingAppointmentId) return;
+    setAppointments(prev => prev.filter(apt => apt.id !== deletingAppointmentId));
+    setIsDeleteConfirmOpen(false);
+    setDeletingAppointmentId(null);
+    toast({ title: 'Cita eliminada' });
+  };
+
   const handleFinishAppointment = (updatedAppointment: Appointment) => {
     setAppointments(prev => prev.map(apt => apt.id === updatedAppointment.id ? updatedAppointment : apt));
     setFinishingAppointment(null);
@@ -191,7 +199,11 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                      <h2 className="text-2xl md:text-3xl font-bold font-headline text-primary">{format(selectedDate, 'PPP', { locale: es })}</h2>
                      <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                        <DialogTrigger asChild><Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button></DialogTrigger>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="md:hidden">
+                                <CalendarIcon className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
                         <DialogContent className="w-auto p-0 pt-0">
                            <Calendar mode="single" selected={selectedDate} onSelect={(date) => { if (!date) return; const nd = new Date(date); nd.setHours(selectedDate.getHours(), selectedDate.getMinutes()); setSelectedDate(nd); setIsCalendarOpen(false); }} initialFocus locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
                         </DialogContent>
@@ -205,15 +217,43 @@ export default function Home() {
           {isCurrentDayBlocked ? (
              <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg bg-muted/50"><Ban className="w-16 h-16 text-muted-foreground/50 mb-4" /><h3 className="text-xl font-semibold text-muted-foreground">Día no disponible</h3></div>
           ) : (
-            <TimeSlotView slots={timeSlots} onSlotClick={(time) => { const [h, m] = time.split(':').map(Number); setSelectedDate(set(selectedDate, { hours: h, minutes: m })); setEditingAppointment(undefined); setIsFormOpen(true); }} onAppointmentClick={(apt) => { if (apt) { const today = startOfToday(); const isPast = isBefore(apt.dateTime, today) && !isSameDay(apt.dateTime, today); if (isPast || apt.status !== 'scheduled') setFinishingAppointment(apt); else { setEditingAppointment(apt); setIsFormOpen(true); } } }} />
+            <TimeSlotView 
+                slots={timeSlots} 
+                onSlotClick={(time) => { const [h, m] = time.split(':').map(Number); setSelectedDate(set(selectedDate, { hours: h, minutes: m })); setEditingAppointment(undefined); setIsFormOpen(true); }} 
+                onAppointmentClick={(apt) => { if (apt) { const today = startOfToday(); const isPast = isBefore(apt.dateTime, today) && !isSameDay(apt.dateTime, today); if (isPast || apt.status !== 'scheduled') setFinishingAppointment(apt); else { setEditingAppointment(apt); setIsFormOpen(true); } } }}
+                onEditAppointment={(apt) => { setEditingAppointment(apt); setIsFormOpen(true); }}
+                onDeleteAppointment={(id) => { setDeletingAppointmentId(id); setIsDeleteConfirmOpen(true); }}
+                onFinishAppointment={(apt) => { setFinishingAppointment(apt); }}
+            />
           )}
         </section>
       </main>
+      
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent><DialogHeader><DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle></DialogHeader><AppointmentForm onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment} appointment={editingAppointment} selectedDate={selectedDate} /></DialogContent>
+        <DialogContent>
+            <DialogHeader><DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle></DialogHeader>
+            <AppointmentForm onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment} appointment={editingAppointment} selectedDate={selectedDate} />
+        </DialogContent>
       </Dialog>
+
       <FinishAppointmentDialog appointment={finishingAppointment} onOpenChange={() => setFinishingAppointment(null)} onAppointmentFinished={handleFinishAppointment} />
+      
       <NewAppointmentConfirmationDialog appointment={confirmationAppointment} onOpenChange={() => setConfirmationAppointment(null)} />
+
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará la cita de forma permanente. No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAppointment} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
