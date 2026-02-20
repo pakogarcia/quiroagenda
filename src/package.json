@@ -53,6 +53,12 @@
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"
   },
+  "overrides": {
+    "react-day-picker": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
+  },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",

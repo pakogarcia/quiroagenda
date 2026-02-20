@@ -5,7 +5,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound, Edit, UserX, CalendarOff, Megaphone, Clock, Cake, Bell, Edit2 } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Bot, Lock, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Link as LinkIcon, Instagram, Facebook, Youtube, ShieldCheck, Database, KeyRound, Edit, UserX, CalendarOff, Megaphone, Clock, Cake, Bell, Edit2, CheckCircle } from 'lucide-react';
 
 
 export default function ManualPage() {
@@ -17,32 +17,36 @@ export default function ManualPage() {
         <header className="text-center mb-12">
           <Leaf className="h-16 w-16 text-primary mx-auto mb-4" />
           <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
-            Bienvenido a QuiroAgenda
+            Manual de QuiroAgenda
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
-            La herramienta definitiva para gestionar tu centro de masajes y estética.
+            Todo lo que necesitas saber para dominar tu nueva herramienta de gestión.
           </p>
         </header>
 
         <div className="max-w-4xl mx-auto space-y-8">
             <Card className="shadow-lg">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog /> Perfil de Negocio ("Quién Eres")</CardTitle>
-                    <CardDescription>Personaliza la aplicación para que hable por ti y refleje tu marca.</CardDescription>
+                    <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog /> Perfil y Horarios ("Quién Eres")</CardTitle>
+                    <CardDescription>Configura tu identidad y tu disponibilidad laboral.</CardDescription>
                 </CardHeader>
                 <CardContent>
                    <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value="item-1">
-                            <AccordionTrigger><div className='flex items-center gap-2'><FileText className="w-4 h-4" />Datos Básicos</div></AccordionTrigger>
-                            <AccordionContent>
-                                <p>Introduce el nombre, la situación y el teléfono de tu negocio. Esta información se utilizará para personalizar automáticamente todos los mensajes de WhatsApp, añadiendo el nombre de tu negocio al final para reforzar tu marca en cada comunicación.</p>
+                            <AccordionTrigger><div className='flex items-center gap-2'><Clock className="w-4 h-4" />Gestión de Turnos (Novedad)</div></AccordionTrigger>
+                            <AccordionContent className="space-y-2">
+                                <p>Ahora puedes definir tu jornada con total flexibilidad:</p>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    <li><strong>Interruptores de Turno:</strong> Activa o desactiva de forma independiente el turno de mañana y el de tarde.</li>
+                                    <li><strong>Optimización de Agenda:</strong> Si desactivas un turno, la agenda no mostrará esas horas, dejando el dietario limpio y enfocado solo en cuando trabajas.</li>
+                                </ul>
                             </AccordionContent>
                         </AccordionItem>
                          <AccordionItem value="item-2">
                             <AccordionTrigger><div className='flex items-center gap-2'><ImageIcon className="w-4 h-4" />Logotipo y Redes Sociales</div></AccordionTrigger>
                             <AccordionContent className="space-y-2">
-                                <p><strong>Sube tu logotipo:</strong> Añade tu logotipo en formato JPG. Se mostrará en la cabecera de la aplicación, reemplazando el icono por defecto para una personalización completa.</p>
-                                <p><strong>Conecta tus redes:</strong> Introduce los enlaces a tus perfiles de Instagram, Facebook, TikTok y YouTube. Estos enlaces se podrán añadir opcionalmente en tus comunicaciones por WhatsApp.</p>
+                                <p><strong>Identidad Visual:</strong> Sube tu logo en JPG para que aparezca en la cabecera y en la pantalla de carga.</p>
+                                <p><strong>Conexión Social:</strong> Enlaza tus perfiles. Estos enlaces se pueden incluir automáticamente en los mensajes de confirmación de WhatsApp que envíes a tus clientes.</p>
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
@@ -51,191 +55,43 @@ export default function ManualPage() {
         
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><CalendarDays /> Gestión de Agenda Inteligente</CardTitle>
-              <CardDescription>Tu tiempo es valioso. Organízalo sin esfuerzo.</CardDescription>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><CalendarDays /> Agenda Inteligente (Dietario)</CardTitle>
+              <CardDescription>Una vista profesional y organizada de tu día a día.</CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Eye className="w-4 h-4" />Visualización y Navegación</div></AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><Eye className="w-4 h-4" />Nueva Rejilla de Tiempo Fija</div></AccordionTrigger>
                   <AccordionContent className="space-y-2">
-                    <p>Navega por un calendario visual e intuitivo. Los días con citas se marcan con colores para que veas de un vistazo tu ocupación futura: verde (1 cita), naranja (2 citas) y rojo (3 o más).</p>
-                    <p>Los días que hayas bloqueado aparecerán en gris y no permitirán nuevas citas.</p>
+                    <p>Hemos rediseñado la agenda para que sea un dietario real:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                        <li><strong>Intervalos de 15 min:</strong> Una rejilla estable donde cada hora tiene su lugar físico exacto.</li>
+                        <li><strong>Posicionamiento Real:</strong> Las citas se colocan y dimensionan según su hora de inicio y duración, evitando confusiones visuales.</li>
+                        <li><strong>Creación Rápida:</strong> Haz clic en cualquier hueco vacío para abrir el formulario de cita ya pre-configurado a esa hora.</li>
+                    </ul>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-2">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Tag className="w-4 h-4" />Asignar Servicios a Citas</div></AccordionTrigger>
-                  <AccordionContent>
-                    <p>Al crear o editar una cita, ahora puedes seleccionar un servicio específico de tu catálogo. Esto no solo agiliza el proceso, sino que también enriquece tus registros y estadísticas.</p>
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-3">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Euro className="w-4 h-4" />Finalizar una Cita (Cobro, Ausencias y Pagos Pendientes)</div></AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><BarChart className="w-4 h-4" />Escala de Colores (Volumen de Citas)</div></AccordionTrigger>
                   <AccordionContent className="space-y-2">
-                    <p>En las citas pasadas (o el mismo día), verás un icono de Euro (€). Al pulsarlo, se abre un diálogo para finalizar la cita con varias opciones:</p>
+                    <p>El calendario te indica tu carga de trabajo diaria mediante colores:</p>
                     <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Registrar Pago:</strong> Anota el importe y el método de pago (Efectivo, Bizum, PayPal o Bono).</li>
-                      <li><strong>Completada (Pendiente de Pago):</strong> Marca la cita como realizada pero sin cobrar. El icono del Euro (€) seguirá visible para que puedas registrar el pago más adelante.</li>
-                      <li><strong>Marcar como No Presentado:</strong> Si el cliente no acude, esta opción lo registrará y la cita no contará en tu contabilidad.</li>
+                      <li><span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span><strong>Verde:</strong> Carga baja (1-2 citas).</li>
+                      <li><span className="inline-block w-3 h-3 rounded-full bg-amber-500 mr-2"></span><strong>Naranja:</strong> Carga media (3-4 citas).</li>
+                      <li><span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span><strong>Rojo:</strong> Carga alta (5-6 citas).</li>
+                      <li><span className="inline-block w-3 h-3 rounded-full bg-red-900 mr-2"></span><strong>Granate:</strong> Máxima capacidad (7 o más citas).</li>
                     </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-4">
-                    <AccordionTrigger>
-                        <div className="flex items-center gap-2">
-                            <Lock className="w-4 h-4" />
-                            <span>Bloqueo de Días</span>
-                        </div>
-                    </AccordionTrigger>
-                  <AccordionContent>
-                    ¿Necesitas un día libre? Selecciona un día en el calendario y pulsa el botón con el icono de candado (<Lock className="inline h-4 w-4"/>). El día se marcará como no disponible y no podrás agendar citas en él. Vuelve a pulsarlo para desbloquearlo.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-5">
-                  <AccordionTrigger><div className='flex items-center gap-2'><MessageSquare className="w-4 h-4" />Confirmación por WhatsApp</div></AccordionTrigger>
-                  <AccordionContent>
-                    Al crear o modificar una cita, QuiroAgenda genera un mensaje de confirmación profesional para enviar por WhatsApp. Puedes elegir qué redes sociales adjuntar al mensaje y editar el texto antes de enviarlo.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Users /> Fichero de Clientes Avanzado</CardTitle>
-              <CardDescription>Toda la información de tus clientes, centralizada y accesible.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger><div className='flex items-center gap-2'><History className="w-4 h-4" /> Historial Detallado por Cliente</div></AccordionTrigger>
-                  <AccordionContent>
-                    <p>Haz clic en la tarjeta de cualquier cliente para acceder a su ficha completa. Aquí encontrarás:</p>
-                     <ul className="list-disc pl-5 space-y-1 mt-2">
-                      <li><strong>Datos y Detalles:</strong> Su información de contacto, fecha de nacimiento y cualquier nota importante (alergias, preferencias, etc.).</li>
-                      <li><strong>Resumen Financiero y de Servicios:</strong> Tarjetas con el total facturado, citas completadas, ausencias y sus servicios más frecuentes.</li>
-                      <li><strong>Historial Completo:</strong> Una tabla con todas sus citas y compras de bonos, agrupadas por mes.</li>
-                      <li><strong>Edición de Pagos:</strong> ¿Te equivocaste al registrar un pago? Haz clic en el icono de editar (<Edit className="inline h-4 w-4" />) junto a una cita completada o una compra de bono para corregir el importe o el método de pago.</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-2">
-                    <AccordionTrigger><div className='flex items-center gap-2'><AlertCircle className="w-4 h-4 text-yellow-600" /> Gestión de Pagos Pendientes</div></AccordionTrigger>
-                    <AccordionContent>
-                        <p>Las tarjetas de los clientes con citas pendientes de pago aparecen con un borde amarillo para una rápida identificación. En su historial, puedes hacer clic directamente en el estado "Pendiente de Pago" para registrar el cobro sin tener que volver a la agenda principal.</p>
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-3">
-                  <AccordionTrigger><div className='flex items-center gap-2'><FileText className="w-4 h-4" /> Campo de Detalles del Cliente</div></AccordionTrigger>
-                  <AccordionContent>
-                    Al crear o editar un cliente, ahora dispones de un campo de "Detalles" para anotar información crucial como alergias, condiciones médicas, preferencias o cualquier otra nota relevante para ofrecer un servicio seguro y personalizado.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-4">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4"/> Gestión de Bonos por Cliente</div></AccordionTrigger>
-                  <AccordionContent>
-                    Desde la ficha de un cliente, puedes asignarle o modificar un bono. Cuando un cliente pague con bono, se descontará una sesión automáticamente. Tras usarlo, la aplicación generará un mensaje de WhatsApp para informarle de las sesiones restantes.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Tag /> Gestión de Servicios y Precios</CardTitle>
-              <CardDescription>Define tu catálogo de tratamientos para agilizar la creación de citas y obtener mejores estadísticas.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Tag className="w-4 h-4" />Define tu catálogo de servicios</div></AccordionTrigger>
-                  <AccordionContent>
-                    <p>En la nueva sección "Servicios", puedes crear, editar o eliminar cada uno de los tratamientos que ofreces. Asigna a cada uno:</p>
-                      <ul className="list-disc pl-5 space-y-1 mt-2">
-                        <li><strong>Nombre del Servicio:</strong> El nombre claro y descriptivo de tu tratamiento (ej. "Masaje Relajante").</li>
-                        <li><strong>Duración:</strong> El tiempo en minutos que dura el servicio.</li>
-                        <li><strong>Precio:</strong> El coste del servicio para el cliente.</li>
-                      </ul>
-                      <p className='mt-2'>Esta información se usará en la agenda para agilizar la creación de citas y en la contabilidad para darte estadísticas detalladas.</p>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Send /> Centro de Comunicaciones</CardTitle>
-              <CardDescription>Fideliza a tus clientes y aumenta tus ingresos con campañas de mensajería inteligentes.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                 <AccordionItem value="item-12">
-                  <AccordionTrigger><div className='flex items-center gap-2 text-primary'><Edit2 className="w-4 h-4" /> Plantillas 100% Editables</div></AccordionTrigger>
-                  <AccordionContent>
-                   <p>¡Tú tienes el control total! Todas las campañas generan un mensaje basado en una plantilla profesional, pero siempre podrás **editar el texto** antes de enviarlo por WhatsApp. Esto te permite añadir un toque personal, modificar una oferta o simplemente ajustar el tono a tu gusto, combinando la velocidad de las plantillas con la flexibilidad de la personalización.</p>
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-1">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Bell className="w-4 h-4" /> Recordatorios de Citas</div></AccordionTrigger>
-                  <AccordionContent>
-                    Reduce las ausencias enviando recordatorios por WhatsApp. La aplicación solo te mostrará los clientes con una cita próxima para la que aún no se ha enviado un recordatorio.
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-2">
-                  <AccordionTrigger><div className='flex items-center gap-2'><AlertCircle className="w-4 h-4" /> Pagos Pendientes</div></AccordionTrigger>
-                  <AccordionContent>
-                    Envía un amable recordatorio a los clientes que tienen citas completadas pero cuyo pago aún no has registrado.
                   </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="item-3">
-                  <AccordionTrigger><div className='flex items-center gap-2'><UserX className="w-4 h-4" /> Contactar por Ausencia (No Show)</div></AccordionTrigger>
-                  <AccordionContent>
-                    Comunícate con los clientes que no se presentaron a su última cita para entender el motivo y recordarles la política de cancelación si es necesario.
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-4">
-                  <AccordionTrigger><div className='flex items-center gap-2'><CalendarOff className="w-4 h-4" /> Anulación/Modificación de Cita</div></AccordionTrigger>
-                  <AccordionContent>
-                    Si te surge un imprevisto, informa rápidamente a los clientes afectados. Podrás proponer una nueva fecha y hora directamente en el mensaje.
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-5">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4" /> Notificar Sesiones de Bono</div></AccordionTrigger>
-                  <AccordionContent>
-                    Mantén informados a tus clientes sobre cuántas sesiones les quedan en su bono. Perfecto para cuando acaban de usar una o simplemente para que no se olviden de volver.
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-6">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Cake className="w-4 h-4" /> Felicitaciones de Cumpleaños</div></AccordionTrigger>
-                  <AccordionContent>
-                    ¡Fideliza con un detalle! La aplicación te mostrará los clientes cuyos cumpleaños fueron en la última semana o serán en las próximas dos, para que no se te pase ninguno.
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-7">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Clock className="w-4 h-4" /> Clientes Inactivos</div></AccordionTrigger>
-                  <AccordionContent>
-                    Recupera a esos clientes que hace tiempo que no te visitan. Puedes configurar el número de días de inactividad para que la aplicación te sugiera a quién contactar con un mensaje cercano.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-8">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Users className="w-4 h-4" /> Bienvenida a Nuevos Clientes</div></AccordionTrigger>
-                  <AccordionContent>
-                    ¿Alguien pide información? Envíale un mensaje de bienvenida profesional con tus datos de contacto, dirección y, lo más importante, tu lista de servicios con precios.
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-9">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4" /> Campaña de Oferta</div></AccordionTrigger>
-                  <AccordionContent>
-                    Crea ofertas especiales y promociónalas entre los clientes que elijas. La aplicación preparará un mensaje persuasivo y personalizado para cada uno.
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-10">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Megaphone className="w-4 h-4" /> Comunicado General</div></AccordionTrigger>
-                  <AccordionContent>
-                    La herramienta definitiva para la flexibilidad. Anuncia vacaciones, cambios de horario o cualquier otra noticia. Escribe un mensaje totalmente libre y envíalo a los clientes que selecciones.
+                  <AccordionTrigger><div className='flex items-center gap-2'><Edit className="w-4 h-4 text-blue-600" />Acciones Rápidas en Citas</div></AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p>Cada tarjeta de cita en la agenda incluye botones de alto contraste para gestionar tu trabajo al instante:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li><strong><Edit className="inline h-3 w-3 text-blue-600" /> Editar:</strong> Cambia datos de la cita.</li>
+                      <li><strong><AlertCircle className="inline h-3 w-3 text-red-600" /> Eliminar:</strong> Borra la cita permanentemente.</li>
+                      <li><strong><Euro className="inline h-3 w-3 text-amber-500" /> Registrar Pago:</strong> Finaliza la cita, marca el estado como pagado y registra el ingreso en contabilidad.</li>
+                    </ul>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -244,79 +100,55 @@ export default function ManualPage() {
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Calculator /> Contabilidad Avanzada</CardTitle>
-              <CardDescription>Transforma tus números en decisiones inteligentes.</CardDescription>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Users /> Fichero de Clientes</CardTitle>
+              <CardDescription>Gestión centralizada de tu cartera de clientes.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger><div className='flex items-center gap-2'><BarChart className="w-4 h-4" />Gráficos Interactivos</div></AccordionTrigger>
-                        <AccordionContent>
-                        Visualiza al instante de dónde provienen tus ganancias. Dos gráficos de tarta desglosan tus ingresos: uno por <strong>método de pago</strong> (Efectivo, Bizum, PayPal) y otro por <strong>servicio</strong>, mostrándote qué tratamientos son los más rentables.
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-2">
-                        <AccordionTrigger><div className='flex items-center gap-2'><FileText className="w-4 h-4" />Resúmenes Clave</div></AccordionTrigger>
-                        <AccordionContent>
-                        Tarjetas destacadas te muestran la información más relevante de un vistazo: los <strong>Ingresos Totales</strong> (resaltada para máxima visibilidad), el número de <strong>Citas Completadas</strong>, los <strong>Bonos Usados</strong> y, muy importante, los <strong>Pagos Pendientes</strong>.
-                        </AccordionContent>
-                    </AccordionItem>
-                     <AccordionItem value="item-3">
-                        <AccordionTrigger><div className='flex items-center gap-2'><History className="w-4 h-4" />Informes Detallados e Imprimibles</div></AccordionTrigger>
-                        <AccordionContent>
-                        La tabla de movimientos te ofrece un desglose de cada transacción (citas por servicio y ventas de bonos) en el período seleccionado. Además, puedes imprimir estos informes para tus registros o para una gestión más tradicional.
-                        </AccordionContent>
-                    </AccordionItem>
-                     <AccordionItem value="item-4">
-                        <AccordionTrigger><div className='flex items-center gap-2'><ShoppingCart className="w-4 h-4" />Venta Directa de Bonos</div></AccordionTrigger>
-                        <AccordionContent>
-                        No esperes a que un cliente esté en una cita. Desde la página de Contabilidad, puedes registrar la venta de un nuevo bono directamente, agilizando el proceso y manteniendo tus registros financieros y de clientes siempre sincronizados.
-                        </AccordionContent>
-                    </AccordionItem>
-                 </Accordion>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger><div className='flex items-center gap-2'><History className="w-4 h-4" /> Historial y Estadísticas</div></AccordionTrigger>
+                  <AccordionContent>
+                    <p>Al entrar en la ficha de un cliente verás su histórico completo de visitas, cuánto ha invertido en tu negocio y qué servicios prefiere. También podrás editar pagos de citas pasadas si hubo algún error.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4"/> Gestión de Bonos</div></AccordionTrigger>
+                  <AccordionContent>
+                    Puedes vender bonos de sesiones desde la ficha del cliente o desde Contabilidad. El sistema descuenta automáticamente una sesión cuando el cliente paga una cita con el método "Bono".
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
 
-           <Card className="shadow-lg">
+          <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><ShieldCheck /> Seguridad y Datos</CardTitle>
-              <CardDescription>Gestiona el acceso a tu aplicación y tus datos.</CardDescription>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Send /> Comunicaciones WhatsApp</CardTitle>
+              <CardDescription>Plantillas profesionales para fidelizar a tus clientes.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger><div className='flex items-center gap-2'><KeyRound className="w-4 h-4" />Contraseña de Acceso Local</div></AccordionTrigger>
-                        <AccordionContent>
-                        <p>Para proteger el acceso a la aplicación en un dispositivo, QuiroAgenda te pedirá que establezcas una contraseña la primera vez que la uses. Esta contraseña se guarda de forma segura en el navegador de ese dispositivo específico.</p>
-                        <ul className="list-disc pl-5 space-y-1 mt-2">
-                          <li><strong>¿Tengo que usar la misma contraseña en todos los dispositivos?</strong> No. Puedes (y deberías) establecer una contraseña diferente para cada navegador/dispositivo desde el que accedas.</li>
-                          <li><strong>¿Cómo cambio mi contraseña?</strong> En la sección "Quién Eres" > "Gestión de Datos", encontrarás un botón para cambiar tu contraseña local. Deberás introducir tu contraseña actual para poder establecer una nueva.</li>
-                          <li><strong>¿Qué pasa si olvido la contraseña?</strong> Dado que la contraseña es local y está encriptada, no se puede recuperar. La única solución es borrar los datos de navegación de ese navegador (cookies y datos de sitios). Al hacerlo, se eliminará la contraseña olvidada y podrás establecer una nueva la próxima vez que abras la aplicación.</li>
-                        </ul>
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-3">
-                        <AccordionTrigger><div className='flex items-center gap-2'><Database className="w-4 h-4" />Copias de Seguridad</div></AccordionTrigger>
-                        <AccordionContent>
-                        <p>Toda tu información (clientes, citas, servicios, etc.) se guarda localmente en tu navegador. Tú tienes el control total de tus datos. En la sección <strong>"Quién Eres" &gt; "Gestión de Datos"</strong>, puedes:</p>
-                        <ul className="list-disc pl-5 space-y-1 mt-2">
-                          <li><strong>Exportar Copia:</strong> Descarga un archivo JSON con todos los datos de tu aplicación. Es muy recomendable hacer copias de seguridad periódicas. <strong>¡Atención!</strong> Esta acción está protegida por tu contraseña local y el archivo contiene datos sensibles. Guárdalo en un lugar seguro y privado.</li>
-                          <li><strong>Importar Copia:</strong> Restaura toda tu aplicación a partir de un archivo de copia de seguridad. <strong>Importante:</strong> Al importar, se borrarán todos los datos actuales y se reemplazarán por los del archivo.</li>
-                        </ul>
-                        </AccordionContent>
-                    </AccordionItem>
-                 </Accordion>
+              <Accordion type="single" collapsible className="w-full">
+                 <AccordionItem value="item-1">
+                  <AccordionTrigger><div className='flex items-center gap-2'><Bell className="w-4 h-4" /> Recordatorios Automáticos</div></AccordionTrigger>
+                  <AccordionContent>
+                   Accede al Centro de Comunicaciones para enviar recordatorios de las citas de mañana. La app detecta quién no tiene el recordatorio enviado y prepara el mensaje por ti.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger><div className='flex items-center gap-2 text-primary'><Edit2 className="w-4 h-4" /> Mensajes Editables</div></AccordionTrigger>
+                  <AccordionContent>
+                   Todas las plantillas (cumpleaños, ofertas, recordatorios) permiten editar el texto final antes de abrir WhatsApp, dándote total control sobre lo que comunicas.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
-          
 
           <footer className="text-center text-sm text-muted-foreground pt-8">
-              <p>Manual de ayuda de QuiroAgenda.</p>
+              <p>Manual actualizado a la última versión de QuiroAgenda.</p>
           </footer>
         </div>
       </main>
     </div>
   );
 }
-
-    
