@@ -192,7 +192,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-5xl space-y-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                     <Card className="shadow-lg h-full">
                         <CardHeader>
                         <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>

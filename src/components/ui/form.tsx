@@ -110,7 +110,6 @@ const FormControl = React.forwardRef<
 >(({ children, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 
-  // Clean whitespace from children to prevent Radix error
   const childArray = React.Children.toArray(children).filter(child => {
     return !(typeof child === 'string' && child.trim() === '');
   });

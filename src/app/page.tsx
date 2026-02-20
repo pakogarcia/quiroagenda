@@ -228,11 +228,13 @@ export default function Home() {
                                 <CalendarIcon className="h-4 w-4" />
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="w-auto p-0 pt-0">
+                        <DialogContent className="max-w-[95vw] sm:max-w-[400px] p-0 pt-0">
                            <DialogHeader className="sr-only">
                              <DialogTitle>Seleccionar Fecha</DialogTitle>
                            </DialogHeader>
-                           <Calendar mode="single" selected={selectedDate} onSelect={(date) => { if (!date) return; const nd = new Date(date); nd.setHours(selectedDate.getHours(), selectedDate.getMinutes()); setSelectedDate(nd); setIsCalendarOpen(false); }} initialFocus locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
+                           <div className="flex justify-center p-2">
+                             <Calendar mode="single" selected={selectedDate} onSelect={(date) => { if (!date) return; const nd = new Date(date); nd.setHours(selectedDate.getHours(), selectedDate.getMinutes()); setSelectedDate(nd); setIsCalendarOpen(false); }} initialFocus locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
+                           </div>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -265,7 +267,11 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      <FinishAppointmentDialog appointment={finishingAppointment} onOpenChange={() => setFinishingAppointment(null)} onAppointmentFinished={handleFinishAppointment} />
+      <FinishAppointmentDialog 
+        appointment={finishingAppointment} 
+        onOpenChange={() => setFinishingAppointment(null)} 
+        onAppointmentFinished={handleFinishAppointment} 
+      />
       
       <NewAppointmentConfirmationDialog appointment={confirmationAppointment} onOpenChange={() => setConfirmationAppointment(null)} />
 
