@@ -102,7 +102,7 @@ export default function Home() {
     generateSlotsForPeriod(afternoon.start, afternoon.end);
 
     dailyAppointments.forEach(apt => {
-        if (apt.status === 'scheduled') {
+        if (apt.status === 'scheduled' || apt.status === 'completed' || apt.status === 'no-show') {
             const aptStart = apt.dateTime;
             const service = services.find(s => s.id === apt.serviceId);
             const duration = service?.duration || 60;
@@ -126,10 +126,8 @@ export default function Home() {
             }
         }
     });
-    return slots.filter((slot, index, self) => 
-        !slot.isBooked || (slot.isBooked && slot.appointment)
-    );
-
+    
+    return slots; // No filtramos para que la rejilla sea estable
   }, [selectedDate, dailyAppointments, services, profile]);
   
   const upcomingAppointments = React.useMemo(() => {

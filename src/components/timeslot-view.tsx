@@ -1,15 +1,13 @@
-
-
 'use client';
 
 import * as React from 'react';
-import { type TimeSlot, Appointment, Service } from '@/lib/types';
+import { type TimeSlot, Appointment } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Card, CardContent } from './ui/card';
+import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { AnimatePresence, motion } from 'framer-motion';
-import { format, isBefore, isSameDay, startOfToday } from 'date-fns';
-import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { isBefore, isSameDay, startOfToday } from 'date-fns';
+import { AlertCircle, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useAppData } from '@/context/app-data-context';
 
 type TimeSlotViewProps = {
@@ -33,93 +31,84 @@ export function TimeSlotView({ slots, onSlotClick, onAppointmentClick }: TimeSlo
         switch (status) {
           case 'completed': 
             return payment 
-                ? <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800"><CheckCircle className="w-3 h-3" />Completada</Badge>
-                : <Badge variant="outline" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 border-yellow-500"><AlertCircle className="w-3 h-3" />Pendiente Pago</Badge>;
+                ? <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800 border-green-200"><CheckCircle className="w-3 h-3" />Pagado</Badge>
+                : <Badge variant="outline" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 border-yellow-500"><AlertCircle className="w-3 h-3" />Pendiente</Badge>;
           case 'no-show': 
             return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" />No Presentado</Badge>;
-          case 'scheduled':
           default:
             return null;
         }
     }
 
-    return (
-        <div className="space-y-1 relative pr-4">
-            <AnimatePresence>
-                {slots.map((slot, index) => {
-                    const today = startOfToday();
-                    const appointmentTime = slot.appointment?.dateTime;
-                    const isPast = appointmentTime && (isBefore(appointmentTime, today) && !isSameDay(appointmentTime, today));
+    // Altura de cada fila de 15 minutos en rem
+    const ROW_HEIGHT = 2.5; 
+    const GAP = 0.25;
 
-                    if (slot.isBooked && slot.appointment) {
-                        const service = services.find(s => s.id === slot.appointment?.serviceId);
-                        const duration = service?.duration || 60;
-                        const durationInSlots = Math.max(1, Math.ceil(duration / 15));
-                        const height = `calc(${durationInSlots} * 2.5rem + ${durationInSlots - 1} * 0.25rem)`;
-                        
-                        return (
+    return (
+        <div className="flex flex-col gap-1 relative pr-4 select-none">
+            {slots.map((slot, index) => {
+                const today = startOfToday();
+                const isPast = slot.appointment?.dateTime && (isBefore(slot.appointment.dateTime, today) && !isSameDay(slot.appointment.dateTime, today));
+
+                return (
+                    <div 
+                        key={`${slot.time}-${index}`} 
+                        className="relative flex items-center gap-4 h-10 group"
+                    >
+                        {/* Etiqueta de hora */}
+                        <span className="text-xs font-medium text-muted-foreground w-12 text-right shrink-0">
+                            {slot.time}
+                        </span>
+
+                        {/* Línea divisoria y área clicable */}
+                        <div 
+                            className={cn(
+                                "flex-1 h-px bg-border border-dashed transition-all rounded-full cursor-pointer",
+                                !slot.isBooked && "group-hover:h-2 group-hover:bg-primary/10 group-hover:border-solid group-hover:border-primary/30"
+                            )}
+                            onClick={() => !slot.isBooked && onSlotClick(slot.time)}
+                        />
+
+                        {/* Caja de la Cita (solo si este es el inicio de la cita) */}
+                        {slot.appointment && (
                             <motion.div
-                                key={slot.appointment.id}
-                                layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                className="absolute w-full pl-16"
-                                style={{
-                                    top: `calc(${index} * (2.5rem + 0.25rem))`, // 2.5rem height + 0.25rem gap
-                                    height: height,
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="absolute left-16 right-0 z-10"
+                                style={{ 
+                                    top: 0, 
+                                    height: `calc(${Math.ceil((slot.duration || 60) / 15)} * ${ROW_HEIGHT}rem + ${Math.ceil((slot.duration || 60) / 15) - 1} * ${GAP}rem)` 
                                 }}
                             >
                                 <Card
                                     className={cn(
-                                        'h-full flex flex-col justify-center p-3 cursor-pointer hover:bg-opacity-90 transition-all text-sm',
-                                        slot.appointment.status === 'scheduled' && !isPast && 'bg-primary text-primary-foreground hover:bg-primary/90',
-                                        isPast && 'bg-muted text-muted-foreground',
-                                        slot.appointment.status === 'completed' && 'bg-green-50 border-green-200 text-green-900',
-                                        slot.appointment.status === 'no-show' && 'bg-red-50 border-red-200 text-red-900',
+                                        'h-full flex flex-col justify-start p-3 cursor-pointer hover:shadow-lg transition-all text-sm border-l-4 overflow-hidden',
+                                        slot.appointment.status === 'scheduled' && !isPast && 'bg-primary/10 border-l-primary text-primary-foreground hover:bg-primary/15',
+                                        isPast && 'bg-muted border-l-muted-foreground/30 text-muted-foreground',
+                                        slot.appointment.status === 'completed' && 'bg-green-50 border-l-green-500 text-green-900',
+                                        slot.appointment.status === 'no-show' && 'bg-red-50 border-l-red-500 text-red-900',
                                     )}
                                     onClick={() => onAppointmentClick(slot.appointment)}
                                 >
-                                    <div className="font-bold truncate">{slot.appointment.clientName}</div>
-                                    {slot.appointment.serviceName && <p className="opacity-90 truncate">{slot.appointment.serviceName}</p>}
-                                    
-                                    {slot.appointment.status !== 'scheduled' && (
-                                        <div className="mt-1">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <div className="min-w-0">
+                                            <p className={cn("font-bold truncate", slot.appointment.status === 'scheduled' && !isPast && "text-primary")}>
+                                                {slot.appointment.clientName}
+                                            </p>
+                                            <p className="text-xs opacity-80 truncate flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> {slot.appointment.serviceName || 'Cita'} ({slot.duration} min)
+                                            </p>
+                                        </div>
+                                        <div className="shrink-0">
                                             {getStatusBadge(slot.appointment.status, slot.appointment.payment)}
                                         </div>
-                                    )}
+                                    </div>
                                 </Card>
                             </motion.div>
-                        );
-                    }
-                    
-                    if (!slot.isBooked) {
-                        return (
-                           <motion.div
-                            key={slot.time}
-                            layout
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1, transition: { delay: index * 0.02 } }}
-                           >
-                             <div
-                                className="flex items-center gap-4 h-10"
-                            >
-                                <span className="text-xs text-muted-foreground w-12 text-right">{slot.time}</span>
-                                <div 
-                                    className="flex-1 h-px bg-border border-dashed hover:border-solid hover:border-primary hover:bg-primary/10 cursor-pointer rounded-md transition-all"
-                                    onClick={() => onSlotClick(slot.time)}
-                                ></div>
-                             </div>
-                           </motion.div>
-                        );
-                    }
-                    return null; // Don't render anything for covered slots
-                })}
-            </AnimatePresence>
-             {/* This div is to ensure the container has the correct total height based on all potential slots */}
-            <div style={{ height: `calc(${slots.length} * (2.5rem + 0.25rem))` }} aria-hidden="true" />
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }
-
-    
