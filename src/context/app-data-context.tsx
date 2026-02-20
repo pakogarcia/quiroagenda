@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -106,8 +104,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 address: '',
                 phone: '',
                 openingHours: {
-                    morning: { start: '09:00', end: '14:00' },
-                    afternoon: { start: '16:00', end: '20:00' },
+                    morning: { start: '09:00', end: '14:00', enabled: true },
+                    afternoon: { start: '16:00', end: '20:00', enabled: true },
                 },
                 vacations: [],
             };

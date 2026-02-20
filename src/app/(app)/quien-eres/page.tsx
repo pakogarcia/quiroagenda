@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
@@ -37,8 +38,8 @@ const profileSchema = z.object({
   tiktok: z.string().url().or(z.literal('')).optional(),
   youtube: z.string().url().or(z.literal('')).optional(),
   openingHours: z.object({
-      morning: z.object({ start: z.string(), end: z.string() }),
-      afternoon: z.object({ start: z.string(), end: z.string() })
+      morning: z.object({ start: z.string(), end: z.string(), enabled: z.boolean() }),
+      afternoon: z.object({ start: z.string(), end: z.string(), enabled: z.boolean() })
   }).optional(),
   vacations: z.array(z.object({ from: z.string(), to: z.string() })).optional()
 });
@@ -66,8 +67,8 @@ export default function ProfilePage() {
         tiktok: '',
         youtube: '',
         openingHours: {
-            morning: { start: '09:00', end: '14:00' },
-            afternoon: { start: '16:00', end: '20:00' }
+            morning: { start: '09:00', end: '14:00', enabled: true },
+            afternoon: { start: '16:00', end: '20:00', enabled: true }
         },
         vacations: []
     },
@@ -178,6 +179,8 @@ export default function ProfilePage() {
   
   const logoPreview = form.watch('logo');
   const vacations = form.watch('vacations') || [];
+  const morningEnabled = form.watch('openingHours.morning.enabled');
+  const afternoonEnabled = form.watch('openingHours.afternoon.enabled');
 
   return (
     <>
@@ -232,18 +235,25 @@ export default function ProfilePage() {
                             <div>
                                 <FormLabel className="text-base font-medium flex items-center gap-2 mb-2"><Clock className="w-5 h-5"/>Horario Laboral</FormLabel>
                                 <div className="space-y-4 rounded-md border p-4">
-                                    <div>
-                                        <p className="font-medium text-sm text-muted-foreground">Mañanas</p>
+                                    <div className={cn("space-y-2", !morningEnabled && "opacity-50")}>
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-medium text-sm text-muted-foreground">Mañanas</p>
+                                            <FormField control={form.control} name="openingHours.morning.enabled" render={({ field }) => ( <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem> )}/>
+                                        </div>
                                         <div className="flex items-center gap-2">
-                                            <FormField control={form.control} name="openingHours.morning.start" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Desde</FormLabel> <FormControl><Input type="time" {...field} /></FormControl> </FormItem> )}/>
-                                            <FormField control={form.control} name="openingHours.morning.end" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Hasta</FormLabel> <FormControl><Input type="time" {...field} /></FormControl> </FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.morning.start" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Desde</FormLabel> <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl> </FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.morning.end" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Hasta</FormLabel> <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl> </FormItem> )}/>
                                         </div>
                                     </div>
-                                    <div>
-                                        <p className="font-medium text-sm text-muted-foreground">Tardes</p>
+                                    <Separator />
+                                    <div className={cn("space-y-2", !afternoonEnabled && "opacity-50")}>
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-medium text-sm text-muted-foreground">Tardes</p>
+                                            <FormField control={form.control} name="openingHours.afternoon.enabled" render={({ field }) => ( <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem> )}/>
+                                        </div>
                                         <div className="flex items-center gap-2">
-                                            <FormField control={form.control} name="openingHours.afternoon.start" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Desde</FormLabel> <FormControl><Input type="time" {...field} /></FormControl> </FormItem> )}/>
-                                            <FormField control={form.control} name="openingHours.afternoon.end" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Hasta</FormLabel> <FormControl><Input type="time" {...field} /></FormControl> </FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.afternoon.start" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Desde</FormLabel> <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl> </FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.afternoon.end" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Hasta</FormLabel> <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl> </FormItem> )}/>
                                         </div>
                                     </div>
                                 </div>
@@ -267,7 +277,7 @@ export default function ProfilePage() {
 
                                     <div className="flex items-center gap-2 pt-2">
                                         <Popover>
-                                            <PopoverTrigger asChild><Button id="date" variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}><div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` : format(newVacation.from, "LLL dd, y", { locale: es })) : "Elige un rango"}</span></div></Button></PopoverTrigger>
+                                            <PopoverTrigger asChild><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}><div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` : format(newVacation.from, "LLL dd, y", { locale: es })) : "Elige un rango"}</span></div></Button></PopoverTrigger>
                                             <PopoverContent className="w-auto p-0" align="start">
                                                 <CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} />
                                             </PopoverContent>

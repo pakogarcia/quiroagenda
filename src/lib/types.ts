@@ -1,5 +1,3 @@
-
-
 export type PaymentMethod = 'cash' | 'bizum' | 'voucher' | 'paypal';
 
 export type Payment = {
@@ -54,8 +52,8 @@ export type BusinessProfile = {
   tiktok?: string;
   youtube?: string;
   openingHours?: {
-    morning: { start: string; end: string }; // "HH:mm"
-    afternoon: { start: string; end: string }; // "HH:mm"
+    morning: { start: string; end: string; enabled: boolean }; // "HH:mm"
+    afternoon: { start: string; end: string; enabled: boolean }; // "HH:mm"
   };
   vacations?: Vacation[];
 };
@@ -83,5 +81,3 @@ export type TimeSlot = {
     appointment?: Appointment;
     duration?: number; // in minutes
 };
-
-    

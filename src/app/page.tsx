@@ -80,12 +80,12 @@ export default function Home() {
     
     const { openingHours } = profile;
     const { morning, afternoon } = openingHours || { 
-        morning: { start: '08:00', end: '14:00' }, 
-        afternoon: { start: '16:00', end: '21:00' }
+        morning: { start: '08:00', end: '14:00', enabled: true }, 
+        afternoon: { start: '16:00', end: '21:00', enabled: true }
     };
 
-    const generateSlotsForPeriod = (startStr: string, endStr: string) => {
-        if (!startStr || !endStr || startStr === endStr) return;
+    const generateSlotsForPeriod = (startStr: string, endStr: string, isEnabled: boolean) => {
+        if (!isEnabled || !startStr || !endStr || startStr === endStr) return;
         const [startHour, startMinute] = startStr.split(':').map(Number);
         const [endHour, endMinute] = endStr.split(':').map(Number);
         
@@ -98,8 +98,8 @@ export default function Home() {
         }
     };
     
-    generateSlotsForPeriod(morning.start, morning.end);
-    generateSlotsForPeriod(afternoon.start, afternoon.end);
+    generateSlotsForPeriod(morning.start, morning.end, morning.enabled);
+    generateSlotsForPeriod(afternoon.start, afternoon.end, afternoon.enabled);
 
     dailyAppointments.forEach(apt => {
         if (apt.status === 'scheduled' || apt.status === 'completed' || apt.status === 'no-show') {
@@ -127,7 +127,7 @@ export default function Home() {
         }
     });
     
-    return slots; // No filtramos para que la rejilla sea estable
+    return slots;
   }, [selectedDate, dailyAppointments, services, profile]);
   
   const upcomingAppointments = React.useMemo(() => {
