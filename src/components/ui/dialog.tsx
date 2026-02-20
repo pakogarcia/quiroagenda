@@ -8,7 +8,17 @@ import { cn } from "@/lib/utils"
 
 const Dialog = DialogPrimitive.Root
 
-const DialogTrigger = DialogPrimitive.Trigger
+const DialogTrigger = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger>
+>(({ children, ...props }, ref) => (
+  <DialogPrimitive.Trigger ref={ref} {...props}>
+    {React.Children.toArray(children).find(
+      (child) => typeof child !== "string" || child.trim() !== ""
+    )}
+  </DialogPrimitive.Trigger>
+))
+DialogTrigger.displayName = "DialogTrigger"
 
 const DialogPortal = DialogPrimitive.Portal
 
