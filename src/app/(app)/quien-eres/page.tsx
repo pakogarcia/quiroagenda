@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -57,7 +56,21 @@ export default function ProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: profile || {},
+    defaultValues: profile || {
+        name: '',
+        address: '',
+        phone: '',
+        website: '',
+        instagram: '',
+        facebook: '',
+        tiktok: '',
+        youtube: '',
+        openingHours: {
+            morning: { start: '09:00', end: '14:00' },
+            afternoon: { start: '16:00', end: '20:00' }
+        },
+        vacations: []
+    },
   });
 
   React.useEffect(() => {
@@ -107,7 +120,7 @@ export default function ProfilePage() {
         title: 'Perfil guardado',
         description: 'La información de tu negocio ha sido actualizada.',
       });
-      form.reset(data, { keepValues: true }); // Resets dirty state
+      form.reset(data, { keepValues: true }); 
     } catch (error) {
       console.error('Failed to save profile.', error);
       toast({
@@ -185,7 +198,7 @@ export default function ProfilePage() {
                                 <div className="flex flex-col items-center">
                                     <FormLabel>Vista previa del Logotipo</FormLabel>
                                     <div className="mt-2 relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
-                                        <Image src={logoPreview} alt="Vista previa del logo" layout="fill" objectFit="cover" />
+                                        <Image src={logoPreview} alt="Vista previa del logo" layout="fill" style={{ objectFit: 'cover' }} />
                                     </div>
                                 </div>
                             )}
@@ -257,25 +270,26 @@ export default function ProfilePage() {
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     id="date"
-                                                    variant={"outline"}
+                                                    variant="outline"
                                                     className={cn(
                                                         "w-full justify-start text-left font-normal",
                                                         !newVacation && "text-muted-foreground"
                                                     )}
                                                 >
-                                                    <Calendar className="mr-2 h-4 w-4" />
-                                                    {newVacation?.from ? (
-                                                        newVacation.to ? (
-                                                            <>
-                                                                {format(newVacation.from, "LLL dd, y", { locale: es })} -{" "}
-                                                                {format(newVacation.to, "LLL dd, y", { locale: es })}
-                                                            </>
-                                                        ) : (
-                                                            format(newVacation.from, "LLL dd, y", { locale: es })
-                                                        )
-                                                    ) : (
-                                                        <span>Elige un rango</span>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="h-4 w-4" />
+                                                        <span>
+                                                            {newVacation?.from ? (
+                                                                newVacation.to ? (
+                                                                    `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}`
+                                                                ) : (
+                                                                    format(newVacation.from, "LLL dd, y", { locale: es })
+                                                                )
+                                                            ) : (
+                                                                "Elige un rango"
+                                                            )}
+                                                        </span>
+                                                    </div>
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0" align="start">
