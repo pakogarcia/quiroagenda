@@ -1,8 +1,7 @@
-
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, set, addMinutes, isWithinInterval, parseISO } from 'date-fns';
+import { addDays, format, isSameDay, isBefore, startOfToday, set, addMinutes, isWithinInterval, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon, Plus, Lock, Unlock, Ban } from 'lucide-react';
 import type { Appointment, TimeSlot } from '@/lib/types';
@@ -254,7 +253,7 @@ export default function Home() {
       </main>
       
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle></DialogHeader>
             <AppointmentForm onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment} appointment={editingAppointment} selectedDate={selectedDate} />
         </DialogContent>

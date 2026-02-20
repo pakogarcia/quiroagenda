@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -192,13 +191,12 @@ export default function ManualPage() {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="seguridad">
-                  <AccordionTrigger><div className='flex items-center gap-2'><ShieldCheck className="w-4 h-4 text-primary" />Seguridad, Copias y Licencia</div></AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2'><ShieldCheck className="w-4 h-4 text-primary" />Seguridad y Copias</div></AccordionTrigger>
                   <AccordionContent className="space-y-2">
                     <p>Tus datos son tuyos y están protegidos:</p>
                     <ul className="list-disc pl-5 space-y-1">
                       <li><strong>Contraseña Local:</strong> Tu app está protegida por una contraseña que tú eliges. Nadie más puede entrar desde ese navegador.</li>
                       <li><strong>Backups:</strong> Exporta toda tu base de datos a un archivo JSON en cualquier momento. Puedes restaurar tus datos en otro dispositivo importando ese archivo.</li>
-                      <li><strong>Sistema de Licencias:</strong> Tu acceso se valida mediante una clave única por dispositivo gestionada a través de Firebase Remote Config.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>

@@ -41,8 +41,8 @@ export function TimeSlotView({
         switch (status) {
           case 'completed': 
             return payment 
-                ? <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800 border-green-200"><CheckCircle className="w-3 h-3" />Pagado</Badge>
-                : <Badge variant="outline" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 border-yellow-500 font-bold shadow-sm">PENDIENTE</Badge>;
+                ? <Badge variant="secondary" className="flex items-center gap-1 bg-green-600 text-white border-green-700"><CheckCircle className="w-3 h-3" />Pagado</Badge>
+                : <Badge variant="outline" className="flex items-center gap-1 bg-amber-100 text-amber-900 border-amber-500 font-bold shadow-sm">PENDIENTE</Badge>;
           case 'no-show': 
             return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" />No Presentado</Badge>;
           default:
@@ -66,7 +66,7 @@ export function TimeSlotView({
                             key={`${slot.time}-${index}`} 
                             className="relative flex items-center gap-4 h-10 group"
                         >
-                            <span className="text-xs font-medium text-muted-foreground w-12 text-right shrink-0">
+                            <span className="text-xs font-bold text-muted-foreground w-12 text-right shrink-0">
                                 {slot.time}
                             </span>
 
@@ -91,18 +91,16 @@ export function TimeSlotView({
                                     <Card
                                         className={cn(
                                             'h-full flex flex-col justify-between p-3 cursor-pointer hover:shadow-xl transition-all text-sm border-l-4 overflow-hidden group/card bg-white shadow-md',
-                                            slot.appointment.status === 'scheduled' && !isPast && 'bg-primary/5 border-l-primary',
+                                            slot.appointment.status === 'scheduled' && !isPast && 'bg-primary/10 border-l-primary',
                                             isPast && slot.appointment.status === 'scheduled' && 'bg-muted/30 border-l-muted-foreground/30',
-                                            slot.appointment.status === 'completed' && 'bg-green-50 border-l-green-500',
-                                            slot.appointment.status === 'no-show' && 'bg-red-50 border-l-red-500',
+                                            slot.appointment.status === 'completed' && 'bg-green-50 border-l-green-600',
+                                            slot.appointment.status === 'no-show' && 'bg-red-50 border-l-red-600',
                                         )}
                                         onClick={() => onAppointmentClick(slot.appointment)}
                                     >
                                         <div className="flex justify-between items-start gap-2">
                                             <div className="min-w-0">
-                                                <p className={cn("font-bold truncate text-base", 
-                                                    slot.appointment.status === 'scheduled' && !isPast ? "text-primary" : "text-slate-900"
-                                                )}>
+                                                <p className="font-bold truncate text-base text-slate-900">
                                                     {slot.appointment.clientName}
                                                 </p>
                                                 <p className="text-sm font-bold text-slate-700 truncate flex items-center gap-1 mt-0.5">
