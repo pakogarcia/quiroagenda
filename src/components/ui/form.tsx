@@ -110,7 +110,6 @@ const FormControl = React.forwardRef<
 >(({ children, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 
-  // Find the first valid React element to avoid errors with whitespace or strings
   const childArray = React.Children.toArray(children)
   const onlyChild = childArray.find(child => React.isValidElement(child))
 
