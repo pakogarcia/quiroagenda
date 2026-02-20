@@ -202,10 +202,10 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             )}
-                            <FormField control={form.control} name="logo" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel> <FormControl> <div> <Input type="file" accept=".jpg, .jpeg" className="hidden" ref={fileInputRef} onChange={handleFileChange} /> <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}> {logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'} </Button> </div> </FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel> <FormControl> <Input placeholder="p. ej., Centro de Masajes Zen" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="address" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel> <FormControl> <Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel> <FormControl> <Input placeholder="+34 987 654 321" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="logo" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel> <FormControl><div><Input type="file" accept=".jpg, .jpeg" className="hidden" ref={fileInputRef} onChange={handleFileChange} /><Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>{logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}</Button></div></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel> <FormControl><Input placeholder="p. ej., Centro de Masajes Zen" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="address" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel> <FormControl><Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel> <FormControl><Input placeholder="+34 987 654 321" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
                         </CardContent>
                     </Card>
                     
@@ -215,11 +215,11 @@ export default function ProfilePage() {
                         <CardDescription>Añade tus enlaces para que aparezcan en los mensajes.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <FormField control={form.control} name="website" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel> <FormControl> <Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="instagram" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel> <FormControl> <Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="facebook" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel> <FormControl> <Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="tiktok" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel> <FormControl> <Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/> </FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="youtube" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel> <FormControl> <Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/> </FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="website" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel> <FormControl><Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="instagram" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel> <FormControl><Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="facebook" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel> <FormControl><Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="tiktok" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel> <FormControl><Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="youtube" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel> <FormControl><Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/></FormControl> <FormMessage /> </FormItem> )}/>
                         </CardContent>
                     </Card>
 
@@ -267,31 +267,7 @@ export default function ProfilePage() {
 
                                     <div className="flex items-center gap-2 pt-2">
                                         <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    id="date"
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal",
-                                                        !newVacation && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar className="h-4 w-4" />
-                                                        <span>
-                                                            {newVacation?.from ? (
-                                                                newVacation.to ? (
-                                                                    `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}`
-                                                                ) : (
-                                                                    format(newVacation.from, "LLL dd, y", { locale: es })
-                                                                )
-                                                            ) : (
-                                                                "Elige un rango"
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </Button>
-                                            </PopoverTrigger>
+                                            <PopoverTrigger asChild><Button id="date" variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}><div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` : format(newVacation.from, "LLL dd, y", { locale: es })) : "Elige un rango"}</span></div></Button></PopoverTrigger>
                                             <PopoverContent className="w-auto p-0" align="start">
                                                 <CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} />
                                             </PopoverContent>

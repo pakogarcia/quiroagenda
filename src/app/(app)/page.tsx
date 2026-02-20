@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -84,7 +82,7 @@ export default function Home() {
     const { openingHours } = profile;
     const { morning, afternoon } = openingHours || { 
         morning: { start: '08:00', end: '21:00' }, 
-        afternoon: { start: '21:00', end: '21:00' } // effectively empty
+        afternoon: { start: '21:00', end: '21:00' }
     };
 
     const generateSlotsForPeriod = (startStr: string, endStr: string) => {
@@ -107,7 +105,7 @@ export default function Home() {
         if (apt.status === 'scheduled') {
             const aptStart = apt.dateTime;
             const service = services.find(s => s.id === apt.serviceId);
-            const duration = service?.duration || 60; // default duration 60 mins
+            const duration = service?.duration || 60;
             
             const startIndex = slots.findIndex(s => s.time === format(aptStart, 'HH:mm'));
 
@@ -121,7 +119,6 @@ export default function Home() {
                             slots[slotIndex].appointment = apt;
                             slots[slotIndex].duration = duration;
                         } else {
-                            // These slots are covered by an appointment, so we can remove them
                             slots[slotIndex].isBooked = true; 
                         }
                     }
@@ -129,7 +126,6 @@ export default function Home() {
             }
         }
     });
-    // Filter out the slots that are covered by an appointment but are not the starting slot
     return slots.filter((slot, index, self) => 
         !slot.isBooked || (slot.isBooked && slot.appointment)
     );
@@ -146,7 +142,7 @@ export default function Home() {
         return apt.status === 'scheduled' && !isDayBlocked(aptDay) && (isSameDay(aptDay, today) || (isBefore(aptDay, nextWeek) && !isBefore(aptDay, today)));
       })
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
-      .slice(0, 7); // To ensure we only show a limited number
+      .slice(0, 7);
   }, [appointments, isDayBlocked]);
 
   const appointmentsByDay = React.useMemo(() => {
@@ -273,29 +269,6 @@ export default function Home() {
   };
 
 
-  const getStatusBadge = (status: Appointment['status'], payment?: Appointment['payment']) => {
-    switch (status) {
-      case 'completed': 
-        return payment 
-            ? <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" />Completada</Badge>
-            : <Badge variant="outline" className="flex items-center gap-1 border-yellow-500 text-yellow-600"><AlertCircle className="w-3 h-3" />Pendiente Pago</Badge>;
-      case 'no-show': 
-        return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" />No Presentado</Badge>;
-      case 'scheduled':
-      default:
-        return null;
-    }
-  }
-  
-  const handleSlotClick = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const newSelectedDate = set(selectedDate!, { hours, minutes });
-    setSelectedDate(newSelectedDate);
-    setEditingAppointment(undefined);
-    setIsFormOpen(true);
-  };
-
-
   if (isLoading) {
     return <SplashScreen />;
   }
@@ -356,9 +329,7 @@ export default function Home() {
                         {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
                     </h2>
                      <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button>
-                        </DialogTrigger>
+                        <DialogTrigger asChild><Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button></DialogTrigger>
                         <DialogContent className="w-auto p-0 pt-0">
                            <Calendar
                                 mode="single"
@@ -424,7 +395,13 @@ export default function Home() {
           ) : (
             <TimeSlotView
                 slots={timeSlots}
-                onSlotClick={handleSlotClick}
+                onSlotClick={(time) => {
+                    const [hours, minutes] = time.split(':').map(Number);
+                    const newSelectedDate = set(selectedDate!, { hours, minutes });
+                    setSelectedDate(newSelectedDate);
+                    setEditingAppointment(undefined);
+                    setIsFormOpen(true);
+                }}
                 onAppointmentClick={(apt) => {
                     if (apt) {
                         const today = startOfToday();
@@ -434,7 +411,8 @@ export default function Home() {
                             setFinishingAppointment(apt);
                         } else {
                             if (apt.status === 'scheduled') {
-                                openEditForm(apt);
+                                setEditingAppointment(apt);
+                                setIsFormOpen(true);
                             } else {
                                 setFinishingAppointment(apt);
                             }
@@ -497,5 +475,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

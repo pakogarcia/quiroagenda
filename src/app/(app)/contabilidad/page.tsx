@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -230,30 +228,7 @@ export default function ContabilidadPage() {
                         </CardHeader>
                         <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                             <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        id="date"
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-full sm:w-[300px] justify-start text-left font-normal",
-                                            !dateRange && "text-muted-foreground"
-                                        )}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {dateRange?.from ? (
-                                            dateRange.to ? (
-                                                <>
-                                                    {format(dateRange.from, "LLL dd, y", { locale: es })} -{" "}
-                                                    {format(dateRange.to, "LLL dd, y", { locale: es })}
-                                                </>
-                                            ) : (
-                                                format(dateRange.from, "LLL dd, y", { locale: es })
-                                            )
-                                        ) : (
-                                            <span>Elige un rango de fechas</span>
-                                        )}
-                                    </Button>
-                                </PopoverTrigger>
+                                <PopoverTrigger asChild><Button id="date" variant="outline" className={cn("w-full sm:w-[300px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{dateRange?.from ? (dateRange.to ? <>{format(dateRange.from, "LLL dd, y", { locale: es })} - {format(dateRange.to, "LLL dd, y", { locale: es })}</> : format(dateRange.from, "LLL dd, y", { locale: es })) : <span>Elige un rango de fechas</span>}</Button></PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                     <Calendar
                                         initialFocus
