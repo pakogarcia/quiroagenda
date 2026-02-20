@@ -109,10 +109,9 @@ const FormControl = React.forwardRef<
 >(({ children, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 
-  // Robust children handling to avoid React.Children.only errors due to whitespace
-  const onlyChild = React.Children.toArray(children).find(
-    (child) => typeof child !== "string" || child.trim() !== ""
-  )
+  // Find the first valid React element to avoid errors with whitespace or strings
+  const childArray = React.Children.toArray(children)
+  const onlyChild = childArray.find(child => React.isValidElement(child))
 
   return (
     <Slot
@@ -126,7 +125,7 @@ const FormControl = React.forwardRef<
       aria-invalid={!!error}
       {...props}
     >
-      {onlyChild}
+      {onlyChild || children}
     </Slot>
   )
 })

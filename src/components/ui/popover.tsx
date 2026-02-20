@@ -11,12 +11,11 @@ const PopoverTrigger = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>
 >(({ children, ...props }, ref) => {
-  const onlyChild = React.Children.toArray(children).find(
-    (child) => typeof child !== "string" || child.trim() !== ""
-  )
+  const childArray = React.Children.toArray(children)
+  const onlyChild = childArray.find(child => React.isValidElement(child))
   return (
     <PopoverPrimitive.Trigger ref={ref} {...props}>
-      {onlyChild}
+      {onlyChild || children}
     </PopoverPrimitive.Trigger>
   )
 })
