@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -228,6 +229,9 @@ export default function Home() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="w-auto p-0 pt-0">
+                           <DialogHeader className="sr-only">
+                             <DialogTitle>Seleccionar Fecha</DialogTitle>
+                           </DialogHeader>
                            <Calendar mode="single" selected={selectedDate} onSelect={(date) => { if (!date) return; const nd = new Date(date); nd.setHours(selectedDate.getHours(), selectedDate.getMinutes()); setSelectedDate(nd); setIsCalendarOpen(false); }} initialFocus locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
                         </DialogContent>
                     </Dialog>
@@ -254,7 +258,9 @@ export default function Home() {
       
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle>
+            </DialogHeader>
             <AppointmentForm onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment} appointment={editingAppointment} selectedDate={selectedDate} />
         </DialogContent>
       </Dialog>

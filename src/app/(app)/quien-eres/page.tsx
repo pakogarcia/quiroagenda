@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { BusinessProfile, Vacation } from '@/lib/types';
+import type { BusinessProfile } from '@/lib/types';
 import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle, KeyRound, Save, Clock, CalendarDays, Trash2, CalendarIcon as Calendar, Plus } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -27,6 +27,7 @@ import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
+import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
@@ -187,12 +188,12 @@ export default function ProfilePage() {
     <>
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <AppHeader />
-      <main className="flex-1 p-4 md:p-8 flex justify-center">
-        <div className="w-full max-w-5xl">
+      <main className="flex-1 p-4 md:p-8 flex flex-col items-center">
+        <div className="w-full max-w-5xl space-y-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                    <Card className="shadow-lg">
+                    <Card className="shadow-lg h-full">
                         <CardHeader>
                         <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
                         <CardDescription>Información básica de tu negocio.</CardDescription>
@@ -236,7 +237,7 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
                     
-                    <Card className="shadow-lg">
+                    <Card className="shadow-lg h-full">
                         <CardHeader>
                         <CardTitle className="text-2xl font-bold font-headline text-primary">Redes Sociales</CardTitle>
                         <CardDescription>Enlaces para mensajes de WhatsApp.</CardDescription>
@@ -280,7 +281,7 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
 
-                     <Card className="shadow-lg">
+                     <Card className="shadow-lg h-full">
                         <CardHeader>
                             <CardTitle className="text-2xl font-bold font-headline text-primary">Horario y Vacaciones</CardTitle>
                             <CardDescription>Días laborables y descansos.</CardDescription>
@@ -352,7 +353,17 @@ export default function ProfilePage() {
                                     ) : <p className="text-sm text-muted-foreground text-center py-2">Sin vacaciones.</p>}
                                     <Separator className="my-2"/>
                                     <div className="flex flex-col gap-2">
-                                        <Popover><PopoverTrigger asChild><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}><Calendar className="h-4 w-4 mr-2" />{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd", { locale: es })}` : format(newVacation.from, "LLL dd", { locale: es })) : "Elige un rango"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} /></PopoverContent></Popover>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}>
+                                              <Calendar className="h-4 w-4 mr-2" />
+                                              {newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd", { locale: es })}` : format(newVacation.from, "LLL dd", { locale: es })) : "Elige un rango"}
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-auto p-0" align="start">
+                                            <CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} />
+                                          </PopoverContent>
+                                        </Popover>
                                         <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="w-full"><Plus className="w-4 h-4 mr-2"/> Añadir</Button>
                                     </div>
                                 </div>
@@ -361,8 +372,8 @@ export default function ProfilePage() {
                     </Card>
                 </div>
                 
-                <div className="flex flex-col gap-8">
-                      <Card className="shadow-lg">
+                <div className="flex flex-col gap-8 items-center w-full">
+                      <Card className="shadow-lg w-full">
                           <CardHeader>
                               <CardTitle className="text-2xl font-bold font-headline text-primary">Gestión de Datos y Seguridad</CardTitle>
                               <CardDescription>Administra tus copias de seguridad y acceso local.</CardDescription>
@@ -378,7 +389,7 @@ export default function ProfilePage() {
                           </CardContent>
                       </Card>
                       
-                      <div className="flex justify-center pb-12">
+                      <div className="flex justify-center w-full pb-12">
                          <Button type="submit" size="lg" className="px-12 h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform" disabled={!form.formState.isDirty}>
                             <Save className="mr-2 h-6 w-6" />
                             Guardar Todos los Cambios
