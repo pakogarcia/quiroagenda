@@ -1,8 +1,7 @@
-
 'use client';
 
 import * as React from 'react';
-import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, set, addMinutes, isWithinInterval, parseISO } from 'date-fns';
+import { addDays, format, isSameDay, isBefore, startOfToday, set, addMinutes, isWithinInterval, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon, Plus, Lock, Unlock, Ban } from 'lucide-react';
 import type { Appointment, TimeSlot } from '@/lib/types';
@@ -73,8 +72,6 @@ export default function Home() {
     const slots: TimeSlot[] = [];
     const interval = 15;
     const { openingHours } = profile;
-    
-    // Default values if no profile hours
     const morning = openingHours?.morning || { start: '08:00', end: '14:00', enabled: true };
     const afternoon = openingHours?.afternoon || { start: '16:00', end: '21:00', enabled: true };
 
@@ -119,12 +116,24 @@ export default function Home() {
     return slots;
   }, [selectedDate, dailyAppointments, services, profile]);
   
-  const modifierClassNames = { blocked: 'blocked-day', vacation: 'vacation-day', oneAppointment: 'one-appointment', twoAppointments: 'two-appointments', threeOrMoreAppointments: 'three-or-more-appointments' };
+  const modifierClassNames = { 
+    blocked: 'blocked-day', 
+    vacation: 'vacation-day', 
+    loadLow: 'load-low', 
+    loadMedium: 'load-medium', 
+    loadHigh: 'load-high',
+    loadMax: 'load-max'
+  };
 
   const modifiers = React.useMemo(() => {
     const today = startOfToday();
     const counts: Record<string, number> = {};
-    appointments.forEach(apt => { if (apt.status === 'scheduled') { const d = format(apt.dateTime, 'yyyy-MM-dd'); counts[d] = (counts[d] || 0) + 1; }});
+    appointments.forEach(apt => { 
+      if (apt.status === 'scheduled' || apt.status === 'completed') { 
+        const d = format(apt.dateTime, 'yyyy-MM-dd'); 
+        counts[d] = (counts[d] || 0) + 1; 
+      }
+    });
     const vacationDays = (profile?.vacations || []).reduce((acc, vac) => {
         let current = parseISO(vac.from);
         const end = parseISO(vac.to);
@@ -134,9 +143,22 @@ export default function Home() {
     return {
       blocked: (date: Date) => blockedDays.includes(format(date, 'yyyy-MM-dd')),
       vacation: vacationDays,
-      oneAppointment: (date: Date) => !isBefore(date, today) && !isDayBlocked(date) && counts[format(date, 'yyyy-MM-dd')] === 1,
-      twoAppointments: (date: Date) => !isBefore(date, today) && !isDayBlocked(date) && counts[format(date, 'yyyy-MM-dd')] === 2,
-      threeOrMoreAppointments: (date: Date) => !isBefore(date, today) && !isDayBlocked(date) && counts[format(date, 'yyyy-MM-dd')] >= 3,
+      loadLow: (date: Date) => {
+        const c = counts[format(date, 'yyyy-MM-dd')] || 0;
+        return !isBefore(date, today) && !isDayBlocked(date) && c >= 1 && c <= 2;
+      },
+      loadMedium: (date: Date) => {
+        const c = counts[format(date, 'yyyy-MM-dd')] || 0;
+        return !isBefore(date, today) && !isDayBlocked(date) && c >= 3 && c <= 4;
+      },
+      loadHigh: (date: Date) => {
+        const c = counts[format(date, 'yyyy-MM-dd')] || 0;
+        return !isBefore(date, today) && !isDayBlocked(date) && c >= 5 && c <= 6;
+      },
+      loadMax: (date: Date) => {
+        const c = counts[format(date, 'yyyy-MM-dd')] || 0;
+        return !isBefore(date, today) && !isDayBlocked(date) && c >= 7;
+      },
     };
   }, [appointments, isDayBlocked, blockedDays, profile?.vacations]);
 

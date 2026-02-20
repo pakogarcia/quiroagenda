@@ -33,72 +33,32 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 122 30% 55%;
-    --primary-foreground: 122 30% 95%;
-    --secondary: 122 39% 25%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 176 21% 34%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 122 30% 55%;
-    --chart-1: 194 71% 61%;
-    --chart-2: 350 71% 71%;
-    --chart-3: 111 61% 71%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
 }
 
-.rdp-button.one-appointment {
-  background-color: #22c55e !important;
+/* Nuevos colores del calendario para mayor volumen de citas */
+.rdp-button.load-low {
+  background-color: #22c55e !important; /* Verde */
   color: white !important;
   border-radius: var(--radius) !important;
 }
-.rdp-button.two-appointments {
-  background-color: #f59e0b !important;
+.rdp-button.load-medium {
+  background-color: #f59e0b !important; /* Naranja */
   color: white !important;
   border-radius: var(--radius) !important;
 }
-.rdp-button.three-or-more-appointments {
-  background-color: #ef4444 !important;
+.rdp-button.load-high {
+  background-color: #ef4444 !important; /* Rojo */
+  color: white !important;
+  border-radius: var(--radius) !important;
+}
+.rdp-button.load-max {
+  background-color: #7f1d1d !important; /* Granate Oscuro */
   color: white !important;
   border-radius: var(--radius) !important;
 }
@@ -109,34 +69,10 @@ body {
   text-decoration: line-through;
   opacity: 0.7;
 }
-.rdp-button.vacation-day {
-  opacity: 0.9;
-}
-
 
 @media print {
-  body {
-    background-color: white !important;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-  
-  .contabilidad-page-container {
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  main {
-    overflow: visible !important;
-    padding: 1rem 0; /* Add some padding for the printout */
-  }
-
-  .printable-area .printable-content {
-    display: block !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-  
+  body { background-color: white !important; }
+  .no-print { display: none !important; }
+  .contabilidad-page-container { height: auto !important; overflow: visible !important; }
+  main { overflow: visible !important; padding: 1rem 0; }
 }
