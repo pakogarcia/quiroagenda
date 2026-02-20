@@ -188,21 +188,20 @@ export default function ProfilePage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <AppHeader />
       <main className="flex-1 p-4 md:p-8 flex justify-center">
-        <div className="w-full max-w-7xl">
+        <div className="w-full max-w-5xl">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                     <Card className="shadow-lg">
                         <CardHeader>
                         <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
-                        <CardDescription>Completa la información de tu negocio.</CardDescription>
+                        <CardDescription>Información básica de tu negocio.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {logoPreview && (
                                 <div className="flex flex-col items-center">
-                                    <FormLabel>Vista previa del Logotipo</FormLabel>
-                                    <div className="mt-2 relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
-                                        <Image src={logoPreview} alt="Vista previa del logo" layout="fill" style={{ objectFit: 'cover' }} />
+                                    <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
+                                        <Image src={logoPreview} alt="Logo" layout="fill" style={{ objectFit: 'cover' }} />
                                     </div>
                                 </div>
                             )}
@@ -216,21 +215,21 @@ export default function ProfilePage() {
                             <FormField control={form.control} name="name" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
-                                    <FormControl><Input placeholder="p. ej., Centro de Masajes Zen" {...field} /></FormControl>
+                                    <FormControl><Input placeholder="Nombre" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="address" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
-                                    <FormControl><Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} /></FormControl>
+                                    <FormControl><Input placeholder="Dirección" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="phone" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
-                                    <FormControl><Input placeholder="+34 987 654 321" {...field} /></FormControl>
+                                    <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono</FormLabel>
+                                    <FormControl><Input placeholder="+34" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
@@ -239,42 +238,42 @@ export default function ProfilePage() {
                     
                     <Card className="shadow-lg">
                         <CardHeader>
-                        <CardTitle className="text-2xl font-bold font-headline text-primary">Web y Redes Sociales</CardTitle>
-                        <CardDescription>Añade tus enlaces para que aparezcan en los mensajes.</CardDescription>
+                        <CardTitle className="text-2xl font-bold font-headline text-primary">Redes Sociales</CardTitle>
+                        <CardDescription>Enlaces para mensajes de WhatsApp.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <FormField control={form.control} name="website" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
-                                    <FormControl><Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} /></FormControl>
+                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="instagram" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
-                                    <FormControl><Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} /></FormControl>
+                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="facebook" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
-                                    <FormControl><Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} /></FormControl>
+                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="tiktok" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
-                                    <FormControl><Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/></FormControl>
+                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''}/></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="youtube" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
-                                    <FormControl><Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/></FormControl>
+                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''}/></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
@@ -283,8 +282,8 @@ export default function ProfilePage() {
 
                      <Card className="shadow-lg">
                         <CardHeader>
-                            <CardTitle className="text-2xl font-bold font-headline text-primary">Horario Laboral y Vacaciones</CardTitle>
-                            <CardDescription>Define tus horas de trabajo y días libres.</CardDescription>
+                            <CardTitle className="text-2xl font-bold font-headline text-primary">Horario y Vacaciones</CardTitle>
+                            <CardDescription>Días laborables y descansos.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div>
@@ -339,7 +338,7 @@ export default function ProfilePage() {
                             </div>
                             <Separator />
                             <div>
-                                <FormLabel className="text-base font-medium flex items-center gap-2 mb-2"><CalendarDays className="w-5 h-5"/>Períodos Vacacionales</FormLabel>
+                                <FormLabel className="text-base font-medium flex items-center gap-2 mb-2"><CalendarDays className="w-5 h-5"/>Vacaciones</FormLabel>
                                 <div className="space-y-2 rounded-md border p-4">
                                     {vacations.length > 0 ? (
                                         <ul className="space-y-2">
@@ -350,22 +349,11 @@ export default function ProfilePage() {
                                                 </li>
                                             ))}
                                         </ul>
-                                    ) : <p className="text-sm text-muted-foreground text-center py-2">No hay vacaciones definidas.</p>}
-                                    
+                                    ) : <p className="text-sm text-muted-foreground text-center py-2">Sin vacaciones.</p>}
                                     <Separator className="my-2"/>
-
-                                    <div className="flex flex-col gap-2 pt-2">
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}>
-                                                    <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` : format(newVacation.from, "LLL dd, y", { locale: es })) : "Elige un rango"}</span></div>
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="w-full"><Plus className="w-4 h-4 mr-2"/> Añadir Vacaciones</Button>
+                                    <div className="flex flex-col gap-2">
+                                        <Popover><PopoverTrigger asChild><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}><Calendar className="h-4 w-4 mr-2" />{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd", { locale: es })}` : format(newVacation.from, "LLL dd", { locale: es })) : "Elige un rango"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} /></PopoverContent></Popover>
+                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="w-full"><Plus className="w-4 h-4 mr-2"/> Añadir</Button>
                                     </div>
                                 </div>
                             </div>
@@ -373,35 +361,36 @@ export default function ProfilePage() {
                     </Card>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-8">
                       <Card className="shadow-lg">
                           <CardHeader>
-                              <CardTitle className="text-2xl font-bold font-headline text-primary">Gestión de Datos</CardTitle>
-                              <CardDescription>Crea o restaura una copia de seguridad y gestiona tu contraseña.</CardDescription>
+                              <CardTitle className="text-2xl font-bold font-headline text-primary">Gestión de Datos y Seguridad</CardTitle>
+                              <CardDescription>Administra tus copias de seguridad y acceso local.</CardDescription>
                           </CardHeader>
-                          <CardContent className="flex flex-col gap-4">
-                              <div className="flex flex-col md:flex-row gap-4">
+                          <CardContent className="space-y-6">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                   <Button type="button" variant="outline" className="w-full" onClick={() => setIsExportConfirmOpen(true)}><Download className="mr-2 h-4 w-4" />Exportar Copia</Button>
                                   <Button type="button" variant="outline" className="w-full" onClick={() => importInputRef.current?.click()}><Upload className="mr-2 h-4 w-4" />Importar Copia</Button>
-                                  <Input type="file" accept=".json" className="hidden" ref={importInputRef} onChange={handleImportData}/>
                                   <Button type="button" variant="secondary" className="w-full" onClick={() => setIsChangePasswordOpen(true)}><KeyRound className="mr-2 h-4 w-4" />Cambiar Contraseña</Button>
+                                  <Input type="file" accept=".json" className="hidden" ref={importInputRef} onChange={handleImportData}/>
                               </div>
-                              <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>¡Atención!</AlertTitle><AlertDescription>El archivo de copia de seguridad contiene datos sensibles no encriptados. Guárdalo en un lugar seguro y privado.</AlertDescription></Alert>
+                              <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>¡Atención!</AlertTitle><AlertDescription>Las copias de seguridad contienen tus datos sin cifrar. Guárdalas en un lugar seguro.</AlertDescription></Alert>
                           </CardContent>
                       </Card>
-                      <div className="flex items-center justify-center">
-                         <Button type="submit" className="w-full lg:w-auto h-12 px-10" disabled={!form.formState.isDirty}>
-                            <Save className="mr-2 h-5 w-5" />
+                      
+                      <div className="flex justify-center pb-12">
+                         <Button type="submit" size="lg" className="px-12 h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform" disabled={!form.formState.isDirty}>
+                            <Save className="mr-2 h-6 w-6" />
                             Guardar Todos los Cambios
                         </Button>
                       </div>
-                    </div>
+                </div>
               </form>
             </Form>
         </div>
       </main>
     </div>
-    <PasswordConfirmationDialog isOpen={isExportConfirmOpen} onOpenChange={setIsExportConfirmOpen} onConfirm={handleExportConfirmed} title="Confirmar Exportación" description="Por seguridad, introduce tu contraseña para descargar la copia de seguridad."/>
+    <PasswordConfirmationDialog isOpen={isExportConfirmOpen} onOpenChange={setIsExportConfirmOpen} onConfirm={handleExportConfirmed} title="Confirmar Exportación" description="Introduce tu contraseña para descargar la copia."/>
     <ChangePasswordDialog isOpen={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}/>
     </>
   );

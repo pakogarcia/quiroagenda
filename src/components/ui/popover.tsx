@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -11,7 +12,9 @@ const PopoverTrigger = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>
 >(({ children, ...props }, ref) => {
-  const childArray = React.Children.toArray(children)
+  const childArray = React.Children.toArray(children).filter(child => {
+    return !(typeof child === 'string' && child.trim() === '');
+  });
   const onlyChild = childArray.find(child => React.isValidElement(child))
   return (
     <PopoverPrimitive.Trigger ref={ref} {...props}>

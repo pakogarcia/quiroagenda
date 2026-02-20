@@ -13,7 +13,9 @@ const DialogTrigger = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger>
 >(({ children, ...props }, ref) => {
-  const childArray = React.Children.toArray(children)
+  const childArray = React.Children.toArray(children).filter(child => {
+    return !(typeof child === 'string' && child.trim() === '');
+  });
   const onlyChild = childArray.find(child => React.isValidElement(child))
   return (
     <DialogPrimitive.Trigger ref={ref} {...props}>
@@ -56,7 +58,9 @@ const DialogContent = React.forwardRef<
       )}
       {...props}
     >
-      {children}
+      <div className="max-h-[85vh] overflow-y-auto px-1">
+        {children}
+      </div>
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
