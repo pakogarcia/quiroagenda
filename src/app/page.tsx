@@ -8,7 +8,7 @@ import type { Appointment, TimeSlot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointment-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AppHeader } from '@/components/layout/header';
@@ -319,7 +319,11 @@ export default function Home() {
                         {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
                     </h2>
                      <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                        <Button variant="outline" size="icon" className="md:hidden" asChild><DialogTrigger><CalendarIcon className="h-4 w-4" /></DialogTrigger></Button>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="md:hidden">
+                                <CalendarIcon className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
                         <DialogContent className="w-auto p-0 pt-0">
                            <Calendar
                                 mode="single"
