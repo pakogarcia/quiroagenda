@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -42,7 +43,7 @@ export function TimeSlotView({
           case 'completed': 
             return payment 
                 ? <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800 border-green-200"><CheckCircle className="w-3 h-3" />Pagado</Badge>
-                : <Badge variant="outline" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 border-yellow-500"><AlertCircle className="w-3 h-3" />Pendiente</Badge>;
+                : <Badge variant="outline" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 border-yellow-500 font-bold"><AlertCircle className="w-3 h-3" />PENDIENTE</Badge>;
           case 'no-show': 
             return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" />No Presentado</Badge>;
           default:
@@ -90,21 +91,23 @@ export function TimeSlotView({
                                 >
                                     <Card
                                         className={cn(
-                                            'h-full flex flex-col justify-between p-3 cursor-pointer hover:shadow-lg transition-all text-sm border-l-4 overflow-hidden group/card',
-                                            slot.appointment.status === 'scheduled' && !isPast && 'bg-primary/10 border-l-primary text-primary-foreground',
-                                            isPast && slot.appointment.status === 'scheduled' && 'bg-muted border-l-muted-foreground/30 text-muted-foreground',
-                                            slot.appointment.status === 'completed' && 'bg-green-50 border-l-green-500 text-green-900',
-                                            slot.appointment.status === 'no-show' && 'bg-red-50 border-l-red-500 text-red-900',
+                                            'h-full flex flex-col justify-between p-3 cursor-pointer hover:shadow-lg transition-all text-sm border-l-4 overflow-hidden group/card bg-white',
+                                            slot.appointment.status === 'scheduled' && !isPast && 'bg-primary/5 border-l-primary',
+                                            isPast && slot.appointment.status === 'scheduled' && 'bg-muted/30 border-l-muted-foreground/30',
+                                            slot.appointment.status === 'completed' && 'bg-green-50 border-l-green-500',
+                                            slot.appointment.status === 'no-show' && 'bg-red-50 border-l-red-500',
                                         )}
                                         onClick={() => onAppointmentClick(slot.appointment)}
                                     >
                                         <div className="flex justify-between items-start gap-2">
                                             <div className="min-w-0">
-                                                <p className={cn("font-bold truncate", slot.appointment.status === 'scheduled' && !isPast && "text-primary")}>
+                                                <p className={cn("font-bold truncate text-base", 
+                                                    slot.appointment.status === 'scheduled' && !isPast ? "text-primary" : "text-foreground"
+                                                )}>
                                                     {slot.appointment.clientName}
                                                 </p>
-                                                <p className="text-xs opacity-80 truncate flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" /> {slot.appointment.serviceName || 'Cita'} ({slot.duration} min)
+                                                <p className="text-sm font-medium text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                                                    <Clock className="w-3.5 h-3.5" /> {slot.appointment.serviceName || 'Cita'} ({slot.duration} min)
                                                 </p>
                                             </div>
                                             <div className="shrink-0">
@@ -112,15 +115,13 @@ export function TimeSlotView({
                                             </div>
                                         </div>
 
-                                        {/* Botones de acción flotantes/inferiores */}
-                                        <div className="flex items-center justify-end gap-1 mt-auto pt-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                        <div className="flex items-center justify-end gap-2 mt-auto pt-1 opacity-100 md:opacity-0 md:group-hover/card:opacity-100 transition-opacity">
                                             {isUnpaid && (
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <Button 
                                                             size="icon" 
-                                                            variant="secondary" 
-                                                            className="h-7 w-7 bg-yellow-500 hover:bg-yellow-600 text-white"
+                                                            className="h-8 w-8 bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
                                                             onClick={(e) => { e.stopPropagation(); onFinishAppointment(slot.appointment!); }}
                                                         >
                                                             <Euro className="h-4 w-4" />
@@ -133,8 +134,7 @@ export function TimeSlotView({
                                                 <TooltipTrigger asChild>
                                                     <Button 
                                                         size="icon" 
-                                                        variant="ghost" 
-                                                        className="h-7 w-7"
+                                                        className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                                                         onClick={(e) => { e.stopPropagation(); onEditAppointment(slot.appointment!); }}
                                                     >
                                                         <Edit className="h-4 w-4" />
@@ -146,8 +146,7 @@ export function TimeSlotView({
                                                 <TooltipTrigger asChild>
                                                     <Button 
                                                         size="icon" 
-                                                        variant="ghost" 
-                                                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        className="h-8 w-8 bg-red-600 hover:bg-red-700 text-white shadow-sm"
                                                         onClick={(e) => { e.stopPropagation(); onDeleteAppointment(slot.appointment!.id); }}
                                                     >
                                                         <Trash2 className="h-4 w-4" />

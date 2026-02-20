@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -205,10 +206,34 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             )}
-                            <FormField control={form.control} name="logo" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel> <FormControl><div><Input type="file" accept=".jpg, .jpeg" className="hidden" ref={fileInputRef} onChange={handleFileChange} /><Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>{logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}</Button></div></FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel> <FormControl><Input placeholder="p. ej., Centro de Masajes Zen" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="address" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel> <FormControl><Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel> <FormControl><Input placeholder="+34 987 654 321" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="logo" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
+                                    <FormControl><div className="flex flex-col gap-2"><Input type="file" accept=".jpg, .jpeg" className="hidden" ref={fileInputRef} onChange={handleFileChange}/><Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>{logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}</Button></div></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="name" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4" />Nombre del Negocio</FormLabel>
+                                    <FormControl><Input placeholder="p. ej., Centro de Masajes Zen" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="address" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
+                                    <FormControl><Input placeholder="p. ej., Calle Falsa 123, Ciudad" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="phone" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4" />Teléfono de Contacto</FormLabel>
+                                    <FormControl><Input placeholder="+34 987 654 321" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
                         </CardContent>
                     </Card>
                     
@@ -218,11 +243,41 @@ export default function ProfilePage() {
                         <CardDescription>Añade tus enlaces para que aparezcan en los mensajes.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <FormField control={form.control} name="website" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel> <FormControl><Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="instagram" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel> <FormControl><Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="facebook" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel> <FormControl><Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="tiktok" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel> <FormControl><Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/></FormControl> <FormMessage /> </FormItem> )}/>
-                            <FormField control={form.control} name="youtube" render={({ field }) => ( <FormItem> <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel> <FormControl><Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/></FormControl> <FormMessage /> </FormItem> )}/>
+                            <FormField control={form.control} name="website" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
+                                    <FormControl><Input placeholder="https://tu-pagina-web.com" {...field} value={field.value ?? ''} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="instagram" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
+                                    <FormControl><Input placeholder="https://instagram.com/tu_usuario" {...field} value={field.value ?? ''} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="facebook" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
+                                    <FormControl><Input placeholder="https://facebook.com/tu_pagina" {...field} value={field.value ?? ''} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="tiktok" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
+                                    <FormControl><Input placeholder="https://tiktok.com/@tu_usuario" {...field} value={field.value ?? ''}/></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="youtube" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
+                                    <FormControl><Input placeholder="https://youtube.com/c/tu_canal" {...field} value={field.value ?? ''}/></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
                         </CardContent>
                     </Card>
 
@@ -238,22 +293,46 @@ export default function ProfilePage() {
                                     <div className={cn("space-y-2", !morningEnabled && "opacity-50")}>
                                         <div className="flex items-center justify-between">
                                             <p className="font-medium text-sm text-muted-foreground">Mañanas</p>
-                                            <FormField control={form.control} name="openingHours.morning.enabled" render={({ field }) => ( <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.morning.enabled" render={({ field }) => (
+                                                <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                                            )}/>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <FormField control={form.control} name="openingHours.morning.start" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Desde</FormLabel> <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl> </FormItem> )}/>
-                                            <FormField control={form.control} name="openingHours.morning.end" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Hasta</FormLabel> <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl> </FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.morning.start" render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel className="text-xs">Desde</FormLabel>
+                                                    <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl>
+                                                </FormItem>
+                                            )}/>
+                                            <FormField control={form.control} name="openingHours.morning.end" render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel className="text-xs">Hasta</FormLabel>
+                                                    <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl>
+                                                </FormItem>
+                                            )}/>
                                         </div>
                                     </div>
                                     <Separator />
                                     <div className={cn("space-y-2", !afternoonEnabled && "opacity-50")}>
                                         <div className="flex items-center justify-between">
                                             <p className="font-medium text-sm text-muted-foreground">Tardes</p>
-                                            <FormField control={form.control} name="openingHours.afternoon.enabled" render={({ field }) => ( <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.afternoon.enabled" render={({ field }) => (
+                                                <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                                            )}/>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <FormField control={form.control} name="openingHours.afternoon.start" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Desde</FormLabel> <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl> </FormItem> )}/>
-                                            <FormField control={form.control} name="openingHours.afternoon.end" render={({ field }) => ( <FormItem className="flex-1"> <FormLabel className="text-xs">Hasta</FormLabel> <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl> </FormItem> )}/>
+                                            <FormField control={form.control} name="openingHours.afternoon.start" render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel className="text-xs">Desde</FormLabel>
+                                                    <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl>
+                                                </FormItem>
+                                            )}/>
+                                            <FormField control={form.control} name="openingHours.afternoon.end" render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel className="text-xs">Hasta</FormLabel>
+                                                    <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl>
+                                                </FormItem>
+                                            )}/>
                                         </div>
                                     </div>
                                 </div>
@@ -275,14 +354,18 @@ export default function ProfilePage() {
                                     
                                     <Separator className="my-2"/>
 
-                                    <div className="flex items-center gap-2 pt-2">
+                                    <div className="flex flex-col gap-2 pt-2">
                                         <Popover>
-                                            <PopoverTrigger asChild><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}><div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` : format(newVacation.from, "LLL dd, y", { locale: es })) : "Elige un rango"}</span></div></Button></PopoverTrigger>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newVacation && "text-muted-foreground")}>
+                                                    <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{newVacation?.from ? (newVacation.to ? `${format(newVacation.from, "LLL dd", { locale: es })} - ${format(newVacation.to, "LLL dd, y", { locale: es })}` : format(newVacation.from, "LLL dd, y", { locale: es })) : "Elige un rango"}</span></div>
+                                                </Button>
+                                            </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0" align="start">
                                                 <CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} />
                                             </PopoverContent>
                                         </Popover>
-                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to}><Plus className="w-4 h-4"/> Añadir</Button>
+                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="w-full"><Plus className="w-4 h-4 mr-2"/> Añadir Vacaciones</Button>
                                     </div>
                                 </div>
                             </div>
