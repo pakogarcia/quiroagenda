@@ -3,12 +3,12 @@
 import * as React from 'react';
 import { addDays, format, isSameDay, isBefore, startOfToday, startOfDay, set, addMinutes, isWithinInterval, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Clock, Plus, Lock, Unlock, Ban } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Lock, Unlock, Ban } from 'lucide-react';
 import type { Appointment, TimeSlot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointment-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AppHeader } from '@/components/layout/header';
@@ -30,7 +30,7 @@ export default function Home() {
     isLoading 
   } = useAppData();
   
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const { toast } = useToast();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   
@@ -42,6 +42,10 @@ export default function Home() {
 
   const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
+
+  React.useEffect(() => {
+    setSelectedDate(new Date());
+  }, []);
 
   const isDayBlocked = React.useCallback((date: Date): boolean => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -233,6 +237,11 @@ export default function Home() {
     setDeletingAppointmentId(null);
   };
 
+  const handleFinishAppointment = (updatedAppointment: Appointment) => {
+    setAppointments(prev => prev.map(apt => apt.id === updatedAppointment.id ? updatedAppointment : apt));
+    setFinishingAppointment(null);
+  };
+
   const handleToggleBlockDay = () => {
     if (!selectedDate) return;
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -250,7 +259,7 @@ export default function Home() {
   };
 
 
-  if (isLoading) {
+  if (isLoading || !selectedDate) {
     return <SplashScreen />;
   }
 
@@ -310,7 +319,7 @@ export default function Home() {
                         {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
                     </h2>
                      <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                        <DialogTrigger asChild><Button variant="outline" size="icon" className="md:hidden"><CalendarIcon className="h-4 w-4" /></Button></DialogTrigger>
+                        <Button variant="outline" size="icon" className="md:hidden" asChild><DialogTrigger><CalendarIcon className="h-4 w-4" /></DialogTrigger></Button>
                         <DialogContent className="w-auto p-0 pt-0">
                            <Calendar
                                 mode="single"

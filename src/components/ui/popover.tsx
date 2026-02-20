@@ -10,13 +10,16 @@ const Popover = PopoverPrimitive.Root
 const PopoverTrigger = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>
->(({ children, ...props }, ref) => (
-  <PopoverPrimitive.Trigger ref={ref} {...props}>
-    {React.Children.toArray(children).find(
-      (child) => typeof child !== "string" || child.trim() !== ""
-    )}
-  </PopoverPrimitive.Trigger>
-))
+>(({ children, ...props }, ref) => {
+  const onlyChild = React.Children.toArray(children).find(
+    (child) => typeof child !== "string" || child.trim() !== ""
+  )
+  return (
+    <PopoverPrimitive.Trigger ref={ref} {...props}>
+      {onlyChild}
+    </PopoverPrimitive.Trigger>
+  )
+})
 PopoverTrigger.displayName = "PopoverTrigger"
 
 const PopoverContent = React.forwardRef<
