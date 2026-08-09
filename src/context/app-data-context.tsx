@@ -175,7 +175,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         };
 
         syncCalBookings();
-        const interval = setInterval(syncCalBookings, 15000);
+        // Check every 5 minutes (300,000 ms) while app is open
+        const interval = setInterval(syncCalBookings, 300000);
         return () => clearInterval(interval);
     }, []);
     
