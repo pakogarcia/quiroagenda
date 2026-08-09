@@ -141,7 +141,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         const syncCalBookings = async () => {
             try {
-                const res = await fetch('/api/webhooks/cal');
+                const res = await fetch('/api/webhooks/cal?sync=1');
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.bookings && data.bookings.length > 0) {
