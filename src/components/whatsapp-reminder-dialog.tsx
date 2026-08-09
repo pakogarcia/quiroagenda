@@ -16,6 +16,7 @@ import { useAppData } from '@/context/app-data-context';
 import { ScrollArea } from './ui/scroll-area';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Label } from '@/components/ui/label';
 
 
 type WhatsappReminderDialogProps = {

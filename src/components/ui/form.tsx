@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -47,11 +46,11 @@ const useFormField = () => {
   const itemContext = React.useContext(FormItemContext)
   const { getFieldState, formState } = useFormContext()
 
-  const fieldState = getFieldState(fieldContext.name, formState)
-
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
+
+  const fieldState = getFieldState(fieldContext.name, formState)
 
   const { id } = itemContext
 
@@ -109,11 +108,8 @@ const FormControl = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof Slot>
 >(({ children, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
-
-  const childArray = React.Children.toArray(children).filter(child => {
-    return !(typeof child === 'string' && child.trim() === '');
-  });
-  const onlyChild = childArray.find(child => React.isValidElement(child))
+  const childrenArray = React.Children.toArray(children).filter(Boolean);
+  const onlyChild = childrenArray.length === 1 ? childrenArray[0] : childrenArray;
 
   return (
     <Slot
@@ -127,7 +123,7 @@ const FormControl = React.forwardRef<
       aria-invalid={!!error}
       {...props}
     >
-      {onlyChild || children}
+      {onlyChild as any}
     </Slot>
   )
 })

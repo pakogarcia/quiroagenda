@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -13,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Link as LinkIcon, Youtube, Image as ImageIcon, Globe, Download, Upload, AlertTriangle, KeyRound, Save, Clock, CalendarDays, Trash2, CalendarIcon as Calendar, Plus } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Globe, Download, Upload, AlertTriangle, KeyRound, Save, Clock, CalendarDays, Trash2, CalendarIcon as Calendar, Plus, Image as ImageIcon } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useAppData } from '@/context/app-data-context';
@@ -27,7 +26,6 @@ import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
-import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
@@ -168,7 +166,7 @@ export default function ProfilePage() {
             toast({
                 variant: 'destructive',
                 title: 'Error de importación',
-                description: 'El archivo de copia de seguridad no es válido o está corrupto.'
+                description: 'El archivo de copia de seguridad no es válido.'
             });
         }
     };
@@ -188,28 +186,37 @@ export default function ProfilePage() {
     <>
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <AppHeader />
-      <main className="flex-1 p-4 md:p-8 flex flex-col items-center">
-        <div className="w-full max-w-5xl space-y-8">
+      <main className="flex-1 p-4 md:p-8 flex flex-col items-center overflow-y-auto">
+        <div className="w-full max-w-2xl space-y-8">
+            <header className="text-center">
+                <h1 className="text-3xl font-bold font-headline text-primary">Configuración del Gabinete</h1>
+                <p className="text-muted-foreground">Gestiona tu identidad, horarios y seguridad.</p>
+            </header>
+
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-                    <Card className="shadow-lg h-full">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-20">
+                    <Card className="shadow-lg border-primary/10">
                         <CardHeader>
-                        <CardTitle className="text-2xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
+                        <CardTitle className="text-xl font-bold font-headline text-primary">¿Quién eres?</CardTitle>
                         <CardDescription>Información básica de tu negocio.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {logoPreview && (
                                 <div className="flex flex-col items-center">
-                                    <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50">
-                                        <Image src={logoPreview} alt="Logo" layout="fill" style={{ objectFit: 'cover' }} />
+                                    <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary/50 shadow-md">
+                                        <Image src={logoPreview} alt="Logo" fill style={{ objectFit: 'cover' }} />
                                     </div>
                                 </div>
                             )}
                             <FormField control={form.control} name="logo" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center justify-center gap-2"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
-                                    <FormControl><div className="flex flex-col gap-2"><Input type="file" accept=".jpg, .jpeg" className="hidden" ref={fileInputRef} onChange={handleFileChange}/><Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>{logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}</Button></div></FormControl>
+                                    <FormLabel className="flex items-center justify-center gap-2 cursor-pointer"><ImageIcon className="w-4 h-4" />Logotipo (.jpg)</FormLabel>
+                                    <FormControl>
+                                      <div className="flex flex-col gap-2">
+                                        <input type="file" accept=".jpg, .jpeg" className="hidden" ref={fileInputRef} onChange={handleFileChange}/>
+                                        <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>{logoPreview ? 'Cambiar Logotipo' : 'Seleccionar Logotipo'}</Button>
+                                      </div>
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
@@ -222,8 +229,8 @@ export default function ProfilePage() {
                             )}/>
                             <FormField control={form.control} name="address" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Situación</FormLabel>
-                                    <FormControl><Input placeholder="Dirección" {...field} /></FormControl>
+                                    <FormLabel className="flex items-center gap-2"><MapPin className="w-4 h-4" />Dirección</FormLabel>
+                                    <FormControl><Input placeholder="Dirección física" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
@@ -237,62 +244,45 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
                     
-                    <Card className="shadow-lg h-full">
+                    <Card className="shadow-lg border-primary/10">
                         <CardHeader>
-                        <CardTitle className="text-2xl font-bold font-headline text-primary">Redes Sociales</CardTitle>
+                        <CardTitle className="text-xl font-bold font-headline text-primary">Redes Sociales</CardTitle>
                         <CardDescription>Enlaces para mensajes de WhatsApp.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-4">
                             <FormField control={form.control} name="website" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Página Web</FormLabel>
+                                    <FormLabel className="flex items-center gap-2"><Globe className="w-4 h-4" />Web</FormLabel>
                                     <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} /></FormControl>
-                                    <FormMessage />
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="instagram" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</FormLabel>
-                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} /></FormControl>
-                                    <FormMessage />
+                                    <FormControl><Input placeholder="https://instagram.com/..." {...field} value={field.value ?? ''} /></FormControl>
                                 </FormItem>
                             )}/>
                             <FormField control={form.control} name="facebook" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
-                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}/>
-                            <FormField control={form.control} name="tiktok" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><LinkIcon className="w-4 h-4" />TikTok</FormLabel>
-                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''}/></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}/>
-                            <FormField control={form.control} name="youtube" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</FormLabel>
-                                    <FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''}/></FormControl>
-                                    <FormMessage />
+                                    <FormControl><Input placeholder="https://facebook.com/..." {...field} value={field.value ?? ''} /></FormControl>
                                 </FormItem>
                             )}/>
                         </CardContent>
                     </Card>
 
-                     <Card className="shadow-lg h-full">
+                     <Card className="shadow-lg border-primary/10">
                         <CardHeader>
-                            <CardTitle className="text-2xl font-bold font-headline text-primary">Horario y Vacaciones</CardTitle>
-                            <CardDescription>Días laborables y descansos.</CardDescription>
+                            <CardTitle className="text-xl font-bold font-headline text-primary">Horarios y Vacaciones</CardTitle>
+                            <CardDescription>Define tu disponibilidad para la agenda.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div>
-                                <FormLabel className="text-base font-medium flex items-center gap-2 mb-2"><Clock className="w-5 h-5"/>Horario Laboral</FormLabel>
-                                <div className="space-y-4 rounded-md border p-4">
+                        <CardContent className="space-y-8">
+                            <div className="space-y-4">
+                                <FormLabel className="text-base font-bold flex items-center gap-2"><Clock className="w-5 h-5"/>Turnos de Trabajo</FormLabel>
+                                <div className="space-y-4 rounded-md border p-4 bg-muted/30">
                                     <div className={cn("space-y-2", !morningEnabled && "opacity-50")}>
                                         <div className="flex items-center justify-between">
-                                            <p className="font-medium text-sm text-muted-foreground">Mañanas</p>
+                                            <p className="font-bold text-sm text-slate-900">Turno Mañana</p>
                                             <FormField control={form.control} name="openingHours.morning.enabled" render={({ field }) => (
                                                 <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
                                             )}/>
@@ -300,13 +290,12 @@ export default function ProfilePage() {
                                         <div className="flex items-center gap-2">
                                             <FormField control={form.control} name="openingHours.morning.start" render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel className="text-xs">Desde</FormLabel>
                                                     <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl>
                                                 </FormItem>
                                             )}/>
+                                            <span className="text-muted-foreground">-</span>
                                             <FormField control={form.control} name="openingHours.morning.end" render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel className="text-xs">Hasta</FormLabel>
                                                     <FormControl><Input type="time" {...field} disabled={!morningEnabled} /></FormControl>
                                                 </FormItem>
                                             )}/>
@@ -315,7 +304,7 @@ export default function ProfilePage() {
                                     <Separator />
                                     <div className={cn("space-y-2", !afternoonEnabled && "opacity-50")}>
                                         <div className="flex items-center justify-between">
-                                            <p className="font-medium text-sm text-muted-foreground">Tardes</p>
+                                            <p className="font-bold text-sm text-slate-900">Turno Tarde</p>
                                             <FormField control={form.control} name="openingHours.afternoon.enabled" render={({ field }) => (
                                                 <FormItem><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
                                             )}/>
@@ -323,13 +312,12 @@ export default function ProfilePage() {
                                         <div className="flex items-center gap-2">
                                             <FormField control={form.control} name="openingHours.afternoon.start" render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel className="text-xs">Desde</FormLabel>
                                                     <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl>
                                                 </FormItem>
                                             )}/>
+                                            <span className="text-muted-foreground">-</span>
                                             <FormField control={form.control} name="openingHours.afternoon.end" render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel className="text-xs">Hasta</FormLabel>
                                                     <FormControl><Input type="time" {...field} disabled={!afternoonEnabled} /></FormControl>
                                                 </FormItem>
                                             )}/>
@@ -337,21 +325,21 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             </div>
-                            <Separator />
-                            <div>
-                                <FormLabel className="text-base font-medium flex items-center gap-2 mb-2"><CalendarDays className="w-5 h-5"/>Vacaciones</FormLabel>
-                                <div className="space-y-2 rounded-md border p-4">
+                            
+                            <div className="space-y-4">
+                                <FormLabel className="text-base font-bold flex items-center gap-2"><CalendarDays className="w-5 h-5"/>Períodos de Vacaciones</FormLabel>
+                                <div className="space-y-4 rounded-md border p-4 bg-muted/30">
                                     {vacations.length > 0 ? (
                                         <ul className="space-y-2">
                                             {vacations.map((vac, index) => (
-                                                <li key={index} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded-md">
-                                                    <span>{format(parseISO(vac.from), 'dd/MM/yy', {locale: es})} - {format(parseISO(vac.to), 'dd/MM/yy', {locale: es})}</span>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveVacation(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                                <li key={index} className="flex items-center justify-between text-sm p-2 bg-background border rounded-md shadow-sm">
+                                                    <span className="font-medium text-slate-900">{format(parseISO(vac.from), 'dd/MM/yy', {locale: es})} - {format(parseISO(vac.to), 'dd/MM/yy', {locale: es})}</span>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveVacation(index)} className="h-8 w-8"><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                                 </li>
                                             ))}
                                         </ul>
-                                    ) : <p className="text-sm text-muted-foreground text-center py-2">Sin vacaciones.</p>}
-                                    <Separator className="my-2"/>
+                                    ) : <p className="text-sm text-muted-foreground text-center py-4">Sin vacaciones configuradas.</p>}
+                                    <Separator />
                                     <div className="flex flex-col gap-2">
                                         <Popover>
                                           <PopoverTrigger asChild>
@@ -364,44 +352,45 @@ export default function ProfilePage() {
                                             <CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} />
                                           </PopoverContent>
                                         </Popover>
-                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="w-full"><Plus className="w-4 h-4 mr-2"/> Añadir</Button>
+                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="w-full"><Plus className="w-4 h-4 mr-2"/> Añadir Vacaciones</Button>
                                     </div>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
-                </div>
-                
-                <div className="flex flex-col gap-8 items-center w-full">
-                      <Card className="shadow-lg w-full">
+
+                    <Card className="shadow-lg border-primary/10">
                           <CardHeader>
-                              <CardTitle className="text-2xl font-bold font-headline text-primary">Gestión de Datos y Seguridad</CardTitle>
-                              <CardDescription>Administra tus copias de seguridad y acceso local.</CardDescription>
+                              <CardTitle className="text-xl font-bold font-headline text-primary">Gestión de Datos y Seguridad</CardTitle>
+                              <CardDescription>Cifrado y copias de seguridad locales.</CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-6">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                  <Button type="button" variant="outline" className="w-full" onClick={() => setIsExportConfirmOpen(true)}><Download className="mr-2 h-4 w-4" />Exportar Copia</Button>
-                                  <Button type="button" variant="outline" className="w-full" onClick={() => importInputRef.current?.click()}><Upload className="mr-2 h-4 w-4" />Importar Copia</Button>
-                                  <Button type="button" variant="secondary" className="w-full" onClick={() => setIsChangePasswordOpen(true)}><KeyRound className="mr-2 h-4 w-4" />Cambiar Contraseña</Button>
-                                  <Input type="file" accept=".json" className="hidden" ref={importInputRef} onChange={handleImportData}/>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <Button type="button" variant="outline" onClick={() => setIsExportConfirmOpen(true)} className="h-12"><Download className="mr-2 h-4 w-4" />Exportar Datos</Button>
+                                  <Button type="button" variant="outline" onClick={() => importInputRef.current?.click()} className="h-12"><Upload className="mr-2 h-4 w-4" />Importar Datos</Button>
+                                  <Button type="button" variant="secondary" onClick={() => setIsChangePasswordOpen(true)} className="h-12 sm:col-span-2"><KeyRound className="mr-2 h-4 w-4" />Cambiar Contraseña</Button>
+                                  <input type="file" accept=".json" className="hidden" ref={importInputRef} onChange={handleImportData}/>
                               </div>
-                              <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>¡Atención!</AlertTitle><AlertDescription>Las copias de seguridad contienen tus datos sin cifrar. Guárdalas en un lugar seguro.</AlertDescription></Alert>
+                              <Alert variant="destructive" className="bg-destructive/5">
+                                  <AlertTriangle className="h-4 w-4" />
+                                  <AlertTitle>¡Atención!</AlertTitle>
+                                  <AlertDescription>Las copias de seguridad contienen tus datos completos. Guárdalas en un lugar seguro.</AlertDescription>
+                              </Alert>
                           </CardContent>
-                      </Card>
-                      
-                      <div className="flex justify-center w-full pb-12">
-                         <Button type="submit" size="lg" className="px-12 h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform" disabled={!form.formState.isDirty}>
-                            <Save className="mr-2 h-6 w-6" />
-                            Guardar Todos los Cambios
-                        </Button>
-                      </div>
+                    </Card>
+                
+                <div className="flex justify-center pt-8 pb-12">
+                     <Button type="submit" size="lg" className="w-full max-w-sm h-14 text-lg font-bold shadow-2xl hover:scale-105 transition-transform" disabled={!form.formState.isDirty}>
+                        <Save className="mr-2 h-6 w-6" />
+                        Guardar Configuración
+                    </Button>
                 </div>
               </form>
             </Form>
         </div>
       </main>
     </div>
-    <PasswordConfirmationDialog isOpen={isExportConfirmOpen} onOpenChange={setIsExportConfirmOpen} onConfirm={handleExportConfirmed} title="Confirmar Exportación" description="Introduce tu contraseña para descargar la copia."/>
+    <PasswordConfirmationDialog isOpen={isExportConfirmOpen} onOpenChange={setIsExportConfirmOpen} onConfirm={handleExportConfirmed} title="Seguridad de Exportación" description="Confirma tu contraseña para autorizar la descarga."/>
     <ChangePasswordDialog isOpen={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}/>
     </>
   );

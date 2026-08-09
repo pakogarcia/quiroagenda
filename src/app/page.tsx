@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -73,8 +72,8 @@ export default function Home() {
     const slots: TimeSlot[] = [];
     const interval = 15;
     const { openingHours } = profile;
-    const morning = openingHours?.morning || { start: '08:00', end: '14:00', enabled: true };
-    const afternoon = openingHours?.afternoon || { start: '16:00', end: '21:00', enabled: true };
+    const morning = openingHours?.morning || { start: '09:00', end: '14:00', enabled: true };
+    const afternoon = openingHours?.afternoon || { start: '16:00', end: '20:00', enabled: true };
 
     const generateSlotsForPeriod = (startStr: string, endStr: string, isEnabled: boolean) => {
         if (!isEnabled || !startStr || !endStr || startStr === endStr) return;
@@ -212,25 +211,25 @@ export default function Home() {
       <AppHeader />
       <main className="flex-1 grid md:grid-cols-[auto_1fr] gap-8 p-4 md:p-8">
         <aside className="hidden md:flex flex-col gap-8 items-center w-full max-w-sm">
-          <Card className="shadow-lg w-full">
+          <Card className="shadow-lg w-full border-primary/10">
             <CardContent className="p-0">
-              <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="rounded-md" fixedWeeks locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
+              <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="rounded-md w-full" fixedWeeks locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
             </CardContent>
           </Card>
         </aside>
-        <section className="flex flex-col gap-4 overflow-y-auto">
+        <section className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                      <h2 className="text-2xl md:text-3xl font-bold font-headline text-primary">{format(selectedDate, 'PPP', { locale: es })}</h2>
                      <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="md:hidden">
+                            <Button variant="outline" size="icon" className="md:hidden shadow-sm">
                                 <CalendarIcon className="h-4 w-4" />
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-[95vw] sm:max-w-[400px] p-0 pt-0">
-                           <DialogHeader className="sr-only">
-                             <DialogTitle>Seleccionar Fecha</DialogTitle>
+                           <DialogHeader>
+                             <DialogTitle className="sr-only">Seleccionar Fecha</DialogTitle>
                            </DialogHeader>
                            <div className="flex justify-center p-2">
                              <Calendar mode="single" selected={selectedDate} onSelect={(date) => { if (!date) return; const nd = new Date(date); nd.setHours(selectedDate.getHours(), selectedDate.getMinutes()); setSelectedDate(nd); setIsCalendarOpen(false); }} initialFocus locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
@@ -239,16 +238,16 @@ export default function Home() {
                     </Dialog>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }} disabled={isCurrentDayBlocked}><Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Nueva Cita</span></Button>
-                    <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay}>{isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}<span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear' : 'Bloquear'}</span></Button>
+                    <Button onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }} disabled={isCurrentDayBlocked} className="shadow-md"><Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Nueva Cita</span></Button>
+                    <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay} className="shadow-sm">{isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}<span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear' : 'Bloquear'}</span></Button>
                 </div>
             </div>
           {isCurrentDayBlocked ? (
-             <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg bg-muted/50"><Ban className="w-16 h-16 text-muted-foreground/50 mb-4" /><h3 className="text-xl font-semibold text-muted-foreground">Día no disponible</h3></div>
+             <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg bg-muted/30 border-primary/20"><Ban className="w-16 h-16 text-primary/30 mb-4" /><h3 className="text-xl font-semibold text-muted-foreground">Día no disponible</h3></div>
           ) : (
             <TimeSlotView 
                 slots={timeSlots} 
-                onSlotClick={(time) => { const [h, m] = time.split(':').map(Number); setSelectedDate(set(selectedDate, { hours: h, minutes: m })); setEditingAppointment(undefined); setIsFormOpen(true); }} 
+                onSlotClick={(time) => { const [h, m] = time.split(':').map(Number); const nd = set(selectedDate, { hours: h, minutes: m }); setSelectedDate(nd); setEditingAppointment(undefined); setIsFormOpen(true); }} 
                 onAppointmentClick={(apt) => { if (apt) { const today = startOfToday(); const isPast = isBefore(apt.dateTime, today) && !isSameDay(apt.dateTime, today); if (isPast || apt.status !== 'scheduled') setFinishingAppointment(apt); else { setEditingAppointment(apt); setIsFormOpen(true); } } }}
                 onEditAppointment={(apt) => { setEditingAppointment(apt); setIsFormOpen(true); }}
                 onDeleteAppointment={(id) => { setDeletingAppointmentId(id); setIsDeleteConfirmOpen(true); }}

@@ -1,10 +1,9 @@
-
 'use client';
 
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX, CalendarOff, Megaphone } from 'lucide-react';
+import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX, CalendarOff, Megaphone, ShoppingCart } from 'lucide-react';
 import { CampaignDialog, CampaignType } from '@/components/campaign-dialog';
 
 const campaignOptions = [
@@ -15,22 +14,22 @@ const campaignOptions = [
     icon: Bell,
   },
   {
+    type: 'voucherPurchase',
+    title: 'Agradecer Compra de Bono',
+    description: 'Notifica al cliente la compra exitosa y sus sesiones disponibles.',
+    icon: ShoppingCart,
+  },
+  {
     type: 'pendingPayments',
     title: 'Notificar Pagos Pendientes',
     description: 'Contacta a clientes con citas completadas pero no abonadas.',
     icon: AlertCircle,
   },
-    {
+  {
     type: 'noShow',
     title: 'Contactar por Ausencia (No Show)',
     description: 'Envía un mensaje a clientes que no se presentaron a su cita.',
     icon: UserX,
-  },
-  {
-    type: 'cancellation',
-    title: 'Anulación/Modificación de Cita',
-    description: 'Envía un mensaje para cancelar o proponer un cambio en una cita por un imprevisto.',
-    icon: CalendarOff,
   },
   {
     type: 'voucherStatus',
@@ -57,15 +56,21 @@ const campaignOptions = [
     icon: Users,
   },
   {
+    type: 'cancellation',
+    title: 'Anulación / Modificación de Citas',
+    description: 'Informa sobre cambios o cancelaciones de citas por motivos personales o de fuerza mayor.',
+    icon: CalendarOff,
+  },
+  {
     type: 'offer',
     title: 'Campaña de Oferta',
-    description: 'Lanza una promoción especial para todos o algunos de tus clientes.',
+    description: 'Envía promociones y descuentos especiales a tus clientes.',
     icon: Gift,
   },
   {
     type: 'generalMessage',
     title: 'Comunicado General',
-    description: 'Envía un mensaje personalizado a un grupo de clientes (vacaciones, noticias, etc.).',
+    description: 'Envía un aviso o comunicado general por WhatsApp a tus clientes.',
     icon: Megaphone,
   },
 ] as const;
@@ -80,7 +85,7 @@ export default function CommunicationsPage() {
         <main className="flex-1 p-4 md:p-8">
           <header className="mb-8">
             <h1 className="text-3xl font-bold font-headline text-primary">Centro de Comunicaciones</h1>
-            <p className="text-muted-foreground mt-1">Selecciona una plantilla para empezar a crear tu campaña de mensajería.</p>
+            <p className="text-muted-foreground mt-1">Selecciona una plantilla para crear tu mensaje de WhatsApp.</p>
           </header>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

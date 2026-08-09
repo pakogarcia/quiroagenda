@@ -28,7 +28,7 @@ const getRemoteConfigInstance = (): RemoteConfig => {
         // Set a very low fetch interval to ensure fresh values are fetched, bypassing cache.
         remoteConfigInstance.settings.minimumFetchIntervalMillis = 0;
         remoteConfigInstance.defaultConfig = {
-            "license_key_valid": false, // Default to false
+            "license_key_valid": true, // Default to true so app starts reliably
         };
     }
     return remoteConfigInstance;

@@ -15,28 +15,29 @@ import { Separator } from './ui/separator';
 import { useAppData } from '@/context/app-data-context';
 import { Textarea } from './ui/textarea';
 
-type DialogMode = 'newAppointment' | 'voucherUpdate';
+type DialogMode = 'newAppointment' | 'voucherUpdate' | 'voucherPurchase';
 
 type NewAppointmentConfirmationDialogProps = {
   appointment?: Appointment | null;
   voucherUpdateData?: { client: Client; remainingSessions: number; informativeOnly?: boolean } | null;
+  voucherPurchaseData?: { client: Client; sessions: number; totalSessions: number } | null;
   onOpenChange: (isOpen: boolean) => void;
 };
 
 
-export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateData, onOpenChange }: NewAppointmentConfirmationDialogProps) {
+export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateData, voucherPurchaseData, onOpenChange }: NewAppointmentConfirmationDialogProps) {
   const [generatedMessage, setGeneratedMessage] = React.useState('');
   const [editedMessage, setEditedMessage] = React.useState('');
   const [socials, setSocials] = React.useState({ website: false, instagram: false, facebook: false, tiktok: false, youtube: false });
   const { profile: businessProfile, services } = useAppData();
 
-  const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : null;
+  const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : voucherPurchaseData ? 'voucherPurchase' : null;
   
   const generateMessage = React.useCallback(() => {
     if (!mode || !businessProfile) return;
 
     let finalMessage = '';
-    const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
+    const clientData = mode === 'newAppointment' ? appointment : mode === 'voucherUpdate' ? voucherUpdateData?.client : voucherPurchaseData?.client;
     
     if (mode === 'newAppointment' && appointment) {
         const serviceLine = appointment.serviceName ? `💆 *Servicio:* ${appointment.serviceName}\n` : '';
@@ -52,7 +53,8 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
 
         finalMessage = `¡Hola ${appointment.clientName.split(' ')[0]}!\n\nTe confirmo tu cita en *${businessProfile.name}*.\n\nAquí tienes los detalles:\n🗓️ *Fecha:* ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ *Hora:* ${format(appointment.dateTime, "p", { locale: es })}\n${serviceLine}\nNos vemos en:\n📍 ${businessProfile.address}\n\n*Recuerda, el pago es siempre en efectivo.*\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Muchas gracias!\n${businessProfile.name}${socialBlock}`;
     } else if (mode === 'voucherUpdate' && voucherUpdateData && clientData) {
-        const clientName = clientData.name.split(' ')[0];
+        const rawName = 'name' in clientData ? clientData.name : clientData.clientName;
+        const clientName = rawName.split(' ')[0];
         const remaining = voucherUpdateData.remainingSessions;
         if (remaining > 1) {
             finalMessage = `¡Hola ${clientName}! Te informamos que, tras tu última sesión, a tu bono le quedan *${remaining} sesiones*. ¡Esperamos verte pronto para la siguiente! Un saludo, ${businessProfile.name}.`;
@@ -61,26 +63,31 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
         } else {
             finalMessage = `¡Hola ${clientName}! Te informamos que has agotado las sesiones de tu bono. ¡Ha sido un placer! Si quieres renovarlo o probar otro servicio, no dudes en consultarnos. Un saludo, ${businessProfile.name}.`;
         }
+    } else if (mode === 'voucherPurchase' && voucherPurchaseData && clientData) {
+        const rawName = 'name' in clientData ? clientData.name : clientData.clientName;
+        const clientName = rawName.split(' ')[0];
+        const total = voucherPurchaseData.totalSessions;
+        finalMessage = `¡Hola ${clientName}!\n\nMuchísimas gracias por adquirir tu nuevo bono de *${total} sesiones* en ${businessProfile.name}.\n\nEs un placer seguir cuidando de tu bienestar. Puedes solicitar tu próxima cita cuando prefieras.\n\n¡Nos vemos pronto!\n\nUn saludo,\n${businessProfile.name}`;
     }
 
     setGeneratedMessage(finalMessage);
     setEditedMessage(finalMessage);
 
-  }, [mode, businessProfile, appointment, voucherUpdateData, services, socials]);
+  }, [mode, businessProfile, appointment, voucherUpdateData, voucherPurchaseData, services, socials]);
 
 
   React.useEffect(() => {
-    if (businessProfile && (appointment || voucherUpdateData)) {
+    if (businessProfile && (appointment || voucherUpdateData || voucherPurchaseData)) {
         generateMessage();
     }
-  }, [businessProfile, appointment, voucherUpdateData, generateMessage]);
+  }, [businessProfile, appointment, voucherUpdateData, voucherPurchaseData, generateMessage]);
   
   // Effect to regenerate message when socials change
   React.useEffect(() => {
-      if (businessProfile && (appointment || voucherUpdateData)) {
+      if (businessProfile && (appointment || voucherUpdateData || voucherPurchaseData)) {
           generateMessage();
       }
-  }, [socials, generateMessage, businessProfile, appointment, voucherUpdateData]);
+  }, [socials, generateMessage, businessProfile, appointment, voucherUpdateData, voucherPurchaseData]);
   
   const handleClose = () => {
     onOpenChange(false);
@@ -91,17 +98,19 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   }
 
   const getDialogTitle = () => {
+    if (mode === 'voucherPurchase') return "¡Nuevo Bono Adquirido!";
     if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Notificar Sesiones Restantes" : "Bono Actualizado";
     return appointment?.id === 'new-client-welcome' ? "Mensaje de Bienvenida" : "Cita Confirmada";
   }
   
   const getDialogDescription = () => {
+      if (mode === 'voucherPurchase') return "Se ha registrado la compra del bono. Puedes enviar un mensaje de agradecimiento al cliente por WhatsApp.";
       if (mode === 'voucherUpdate') return voucherUpdateData?.informativeOnly ? "Envía un mensaje a tu cliente para informarle de las sesiones que le quedan." : "Se ha descontado una sesión del bono. Puedes enviar una notificación por WhatsApp.";
       return appointment?.id === 'new-client-welcome' ? "Envía un mensaje de presentación con tus servicios y datos de contacto a este nuevo cliente potencial." : "La cita ha sido creada/actualizada. Puedes enviar una confirmación por WhatsApp.";
   }
   
-  const clientData = mode === 'newAppointment' ? appointment : voucherUpdateData?.client;
-  const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : voucherUpdateData?.client.phone;
+  const clientData = mode === 'newAppointment' ? appointment : mode === 'voucherUpdate' ? voucherUpdateData?.client : voucherPurchaseData?.client;
+  const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : mode === 'voucherUpdate' ? voucherUpdateData?.client.phone : voucherPurchaseData?.client.phone;
   const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(editedMessage)}` : '';
 
   const showSocials = businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
@@ -125,7 +134,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
              </div>
           ) : (
             <div className="p-4 bg-muted rounded-md text-sm">
-              <p className='font-semibold text-primary flex items-center gap-2 mb-2'><Smartphone className="w-4 h-4"/>{clientData?.clientName || clientData?.name}</p>
+              <p className='font-semibold text-primary flex items-center gap-2 mb-2'><Smartphone className="w-4 h-4"/>{clientData ? ('clientName' in clientData ? clientData.clientName : clientData.name) : ''}</p>
                <Textarea 
                   value={editedMessage}
                   onChange={(e) => setEditedMessage(e.target.value)}

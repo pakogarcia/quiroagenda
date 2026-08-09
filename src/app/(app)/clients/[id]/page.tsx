@@ -40,6 +40,7 @@ export default function ClientDetailPage() {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
     const [editingAppointment, setEditingAppointment] = React.useState<Appointment | null>(null);
     const [editingVoucherSale, setEditingVoucherSale] = React.useState<VoucherSale | null>(null);
+    const [voucherPurchaseData, setVoucherPurchaseData] = React.useState<{ client: Client; sessions: number; totalSessions: number } | null>(null);
     
 
     React.useEffect(() => {
@@ -236,9 +237,14 @@ export default function ClientDetailPage() {
                                 </div>
                             )}
                             {client.voucher && client.voucher.sessions > 0 && (
-                                <div className="p-3 bg-muted/50 rounded-md max-w-sm">
-                                    <p className="font-semibold text-sm flex items-center gap-2 text-primary"><Gift className="w-4 h-4" /> Bono Activo</p>
-                                    <p className="text-muted-foreground text-sm mt-1">Sesiones restantes: <span className="font-bold">{client.voucher.sessions} de {client.voucher.totalSessions}</span></p>
+                                <div className="p-3 bg-muted/50 rounded-md max-w-sm flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="font-semibold text-sm flex items-center gap-2 text-primary"><Gift className="w-4 h-4" /> Bono Activo</p>
+                                        <p className="text-muted-foreground text-sm mt-1">Sesiones restantes: <span className="font-bold">{client.voucher.sessions} de {client.voucher.totalSessions}</span></p>
+                                    </div>
+                                    <Button variant="outline" size="sm" onClick={() => setVoucherPurchaseData({ client, sessions: client.voucher!.sessions, totalSessions: client.voucher!.totalSessions })} title="Enviar mensaje de agradecimiento/confirmación de bono por WhatsApp">
+                                        <MessageSquare className="w-4 h-4 mr-1 text-green-600" /> Notificar
+                                    </Button>
                                 </div>
                             )}
                         </CardContent>
@@ -434,6 +440,11 @@ export default function ClientDetailPage() {
                 sale={editingVoucherSale}
                 onOpenChange={() => setEditingVoucherSale(null)}
                 onVoucherSaleUpdated={handleVoucherSaleUpdated}
+            />
+
+            <NewAppointmentConfirmationDialog
+                voucherPurchaseData={voucherPurchaseData}
+                onOpenChange={() => setVoucherPurchaseData(null)}
             />
 
         </div>

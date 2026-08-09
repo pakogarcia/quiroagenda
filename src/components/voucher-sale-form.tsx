@@ -26,9 +26,10 @@ type VoucherSaleFormValues = z.infer<typeof voucherSaleSchema>;
 
 type VoucherSaleFormProps = {
   closeDialog: () => void;
+  onVoucherSold?: (client: Client, sessions: number, totalSessions: number) => void;
 };
 
-export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
+export function VoucherSaleForm({ closeDialog, onVoucherSold }: VoucherSaleFormProps) {
   const { clients, setClients, voucherSales, setVoucherSales } = useAppData();
   const { toast } = useToast();
   const [pendingSale, setPendingSale] = React.useState<VoucherSaleFormValues | null>(null);
@@ -81,6 +82,10 @@ export function VoucherSaleForm({ closeDialog }: VoucherSaleFormProps) {
     });
     
     closeDialog();
+
+    if (onVoucherSold) {
+        onVoucherSold(updatedClient, values.sessions, newTotalSessions);
+    }
   };
 
   const handleSubmit = (values: VoucherSaleFormValues) => {

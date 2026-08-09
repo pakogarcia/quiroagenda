@@ -10,9 +10,9 @@ body {
   :root {
     --background: 120 50% 97%;
     --foreground: 222.2 84% 4.9%;
-    --card: 120 50% 97%;
+    --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-    --popover: 120 50% 97%;
+    --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 122 30% 45%;
     --primary-foreground: 120 50% 97%;
@@ -41,33 +41,74 @@ body {
   body { @apply bg-background text-foreground; }
 }
 
-/* Nuevos colores del calendario para mayor volumen de citas */
+/* Lógica de colores del calendario por volumen de citas */
 .rdp-button.load-low {
-  background-color: #22c55e !important; /* Verde */
+  background-color: #22c55e !important; /* Verde (1-2) */
   color: white !important;
   border-radius: var(--radius) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 .rdp-button.load-medium {
-  background-color: #f59e0b !important; /* Naranja */
+  background-color: #f59e0b !important; /* Naranja (3-4) */
   color: white !important;
   border-radius: var(--radius) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 .rdp-button.load-high {
-  background-color: #ef4444 !important; /* Rojo */
+  background-color: #ef4444 !important; /* Rojo (5-6) */
   color: white !important;
   border-radius: var(--radius) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 .rdp-button.load-max {
-  background-color: #7f1d1d !important; /* Granate Oscuro */
+  background-color: #7f1d1d !important; /* Granate Oscuro (7+) */
   color: white !important;
   border-radius: var(--radius) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .rdp-button.blocked-day, .rdp-button.vacation-day {
   background-color: hsl(var(--muted)) !important;
   color: hsl(var(--muted-foreground)) !important;
   text-decoration: line-through;
-  opacity: 0.7;
+  opacity: 0.5;
+}
+
+/* Fix para calendario fluido y amplio en móvil vertical */
+.rdp {
+  --rdp-cell-size: 45px;
+  width: 100% !important;
+  margin: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.rdp-months {
+  width: 100% !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 640px) {
+  .rdp {
+    --rdp-cell-size: calc(100vw / 8); /* Ocupar el máximo ancho posible */
+    padding: 0 !important;
+  }
+  .rdp-months {
+    width: 100% !important;
+  }
+  .rdp-table {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .rdp-cell {
+    width: auto !important;
+    padding: 2px !important;
+  }
+  .rdp-button {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 45px !important;
+  }
 }
 
 @media print {

@@ -18,14 +18,14 @@ const HASH_KEY = 'quiroagenda_pwd_hash';
 // --- Crypto Helper Functions (using browser's SubtleCrypto) ---
 
 // Converts a string to an ArrayBuffer
-function str2ab(str: string): ArrayBuffer {
+function str2ab(str: string): Uint8Array {
   return new TextEncoder().encode(str);
 }
 
 // Creates a SHA-256 hash of a string
 export async function createHash(password: string): Promise<string> {
-  const data = str2ab(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const data = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data.buffer as ArrayBuffer);
   // Convert buffer to hex string
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');

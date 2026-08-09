@@ -5,13 +5,15 @@ import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { VoucherSaleForm } from './voucher-sale-form';
 import { ShoppingCart } from 'lucide-react';
+import type { Client } from '@/lib/types';
 
 type VoucherSaleDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  onVoucherSold?: (client: Client, sessions: number, totalSessions: number) => void;
 };
 
-export function VoucherSaleDialog({ isOpen, onOpenChange }: VoucherSaleDialogProps) {
+export function VoucherSaleDialog({ isOpen, onOpenChange, onVoucherSold }: VoucherSaleDialogProps) {
   if (!isOpen) return null;
 
   return (
@@ -26,6 +28,7 @@ export function VoucherSaleDialog({ isOpen, onOpenChange }: VoucherSaleDialogPro
         <div className="py-4">
           <VoucherSaleForm 
             closeDialog={() => onOpenChange(false)} 
+            onVoucherSold={onVoucherSold}
           />
         </div>
       </DialogContent>

@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { type DateRange } from 'react-day-picker';
 import { format, startOfYear, subDays, subMonths, isWithinInterval, endOfDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Appointment, VoucherSale } from '@/lib/types';
+import type { Appointment, VoucherSale, Client, Expense } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart, AlertCircle, BarChart } from 'lucide-react';
+import { CalendarIcon, Calculator, Printer, Euro, FileText, Gift, CreditCard, ShoppingCart, AlertCircle, BarChart, Receipt, TrendingDown, Trash2, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -17,15 +17,22 @@ import { SplashScreen } from '@/components/layout/splash-screen';
 import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { VoucherSaleDialog } from '@/components/voucher-sale-dialog';
+import { ExpenseDialog } from '@/components/expense-dialog';
+import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
 import { useAppData } from '@/context/app-data-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-type Transaction = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
+type Transaction = 
+    | (Appointment & { type: 'appointment' }) 
+    | (VoucherSale & { type: 'voucher_sale' })
+    | (Expense & { type: 'expense' });
 
 export default function ContabilidadPage() {
-    const { appointments, voucherSales, isLoading, loadData } = useAppData();
+    const { appointments, voucherSales, expenses, setExpenses, isLoading, loadData } = useAppData();
     const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
     const [isVoucherSaleDialogOpen, setIsVoucherSaleDialogOpen] = React.useState(false);
+    const [isExpenseDialogOpen, setIsExpenseDialogOpen] = React.useState(false);
+    const [voucherPurchaseData, setVoucherPurchaseData] = React.useState<{ client: Client; sessions: number; totalSessions: number } | null>(null);
     const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
     
     const filteredAppointments = React.useMemo(() => {
@@ -54,14 +61,18 @@ export default function ContabilidadPage() {
             .filter(sale => isWithinInterval(new Date(sale.date), { start, end }))
             .map(sale => ({ ...sale, type: 'voucher_sale' }));
 
-        return [...completedAppointmentsInRange, ...voucherSalesInRange]
+        const expensesInRange: Transaction[] = expenses
+            .filter(exp => isWithinInterval(new Date(exp.date), { start, end }))
+            .map(exp => ({ ...exp, type: 'expense' }));
+
+        return [...completedAppointmentsInRange, ...voucherSalesInRange, ...expensesInRange]
             .sort((a, b) => {
                 const dateA = new Date(a.type === 'appointment' ? a.dateTime : a.date);
                 const dateB = new Date(b.type === 'appointment' ? b.dateTime : b.date);
                 return dateB.getTime() - new Date(dateA).getTime();
             });
             
-    }, [filteredAppointments, voucherSales, dateRange]);
+    }, [filteredAppointments, voucherSales, expenses, dateRange]);
     
      const groupedTransactions = React.useMemo(() => {
         return filteredTransactions.reduce((acc, transaction) => {
@@ -78,6 +89,8 @@ export default function ContabilidadPage() {
     const financialSummary = React.useMemo(() => {
         const summary = {
             totalRevenue: 0,
+            totalExpenses: 0,
+            netProfit: 0,
             cashRevenue: 0,
             bizumRevenue: 0,
             paypalRevenue: 0,
@@ -119,8 +132,16 @@ export default function ContabilidadPage() {
              }
         }
 
+        for (const exp of expenses) {
+             if (dateRange?.from && dateRange?.to && isWithinInterval(new Date(exp.date), { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) {
+                summary.totalExpenses += exp.amount;
+             }
+        }
+
+        summary.netProfit = summary.totalRevenue - summary.totalExpenses;
+
         return summary;
-    }, [filteredAppointments, voucherSales, dateRange]);
+    }, [filteredAppointments, voucherSales, expenses, dateRange]);
     
     const paymentChartData = [
         { name: 'Efectivo', value: financialSummary.cashRevenue, fill: 'hsl(var(--chart-1))' },
@@ -209,6 +230,10 @@ export default function ContabilidadPage() {
                     <div className="flex justify-between items-center mb-6 no-print">
                         <h1 className="text-3xl font-bold font-headline text-primary">Contabilidad</h1>
                         <div className="flex items-center gap-2">
+                            <Button variant="destructive" onClick={() => setIsExpenseDialogOpen(true)}>
+                                <Receipt className="h-4 w-4 md:mr-2" />
+                                <span className="hidden md:inline">Registrar Gasto</span>
+                            </Button>
                             <Button variant="outline" onClick={() => setIsVoucherSaleDialogOpen(true)}>
                                 <ShoppingCart className="h-4 w-4 md:mr-2" />
                                 <span className="hidden md:inline">Vender Bono</span>
@@ -252,41 +277,56 @@ export default function ContabilidadPage() {
                     {dateRange?.from && dateRange?.to ? (
                         <>
                             <div className="space-y-6 printable-area">
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 no-print">
-                                    <Card className="bg-primary text-primary-foreground">
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 no-print">
+                                    <Card className="bg-primary text-primary-foreground shadow-sm">
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+                                            <CardTitle className="text-xs font-medium">Ingresos Totales</CardTitle>
                                             <Euro className="h-4 w-4 text-primary-foreground/70" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{financialSummary.totalRevenue.toFixed(2)}€</div>
+                                            <div className="text-xl font-bold">{financialSummary.totalRevenue.toFixed(2)}€</div>
                                         </CardContent>
                                     </Card>
-                                    <Card>
+
+                                    <Card className="bg-destructive/10 border-destructive/30 shadow-sm">
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Citas Completadas</CardTitle>
+                                            <CardTitle className="text-xs font-medium text-destructive">Gastos Totales</CardTitle>
+                                            <TrendingDown className="h-4 w-4 text-destructive" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-xl font-bold text-destructive">-{financialSummary.totalExpenses.toFixed(2)}€</div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className={cn("shadow-sm", financialSummary.netProfit >= 0 ? "bg-green-500/10 border-green-500/30" : "bg-destructive/20 border-destructive")}>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-xs font-medium">Beneficio Neto</CardTitle>
+                                            <Calculator className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className={cn("text-xl font-bold", financialSummary.netProfit >= 0 ? "text-green-700 dark:text-green-400" : "text-destructive")}>
+                                                {financialSummary.netProfit.toFixed(2)}€
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="shadow-sm">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-xs font-medium">Citas Completadas</CardTitle>
                                             <FileText className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{financialSummary.completedAppointments}</div>
+                                            <div className="text-xl font-bold">{financialSummary.completedAppointments}</div>
                                         </CardContent>
                                     </Card>
-                                    <Card>
+
+                                    <Card className="shadow-sm">
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Bonos Usados</CardTitle>
+                                            <CardTitle className="text-xs font-medium">Bonos Usados</CardTitle>
                                             <Gift className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{financialSummary.vouchersUsed}</div>
-                                        </CardContent>
-                                    </Card>
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
-                                            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{financialSummary.pendingPayments}</div>
+                                            <div className="text-xl font-bold">{financialSummary.vouchersUsed}</div>
                                         </CardContent>
                                     </Card>
                                 </div>
@@ -318,15 +358,56 @@ export default function ContabilidadPage() {
                                                                     </TableHeader>
                                                                     <TableBody>
                                                                         {transactions.map(item => (
-                                                                            <TableRow key={item.id}>
-                                                                                <TableCell className="font-medium">{format(new Date(item.type === 'appointment' ? item.dateTime : item.date), "P", { locale: es })}</TableCell>
-                                                                                <TableCell>{item.clientName}</TableCell>
-                                                                                <TableCell className='flex items-center gap-2'>
-                                                                                    {item.type === 'appointment' ? <CreditCard className="w-4 h-4 text-muted-foreground"/> : <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
-                                                                                    {item.type === 'appointment' ? (item.serviceName || 'Cita') : `Bono ${item.sessions} sesiones`}
+                                                                            <TableRow 
+                                                                                key={item.id}
+                                                                                className={cn(item.type === 'expense' && "bg-destructive/5 hover:bg-destructive/10")}
+                                                                            >
+                                                                                <TableCell className="font-medium">
+                                                                                    {format(new Date(item.type === 'appointment' ? item.dateTime : item.date), "P", { locale: es })}
                                                                                 </TableCell>
-                                                                                <TableCell className="capitalize">{getPaymentMethodName(item.type === 'appointment' ? item.payment?.method : item.paymentMethod)}</TableCell>
-                                                                                <TableCell className="text-right">{(item.type === 'appointment' ? item.payment?.amount : item.amount) ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` : 'N/A'}</TableCell>
+                                                                                <TableCell>
+                                                                                    {item.type === 'expense' ? (
+                                                                                        <span className="text-muted-foreground text-xs italic">N/A</span>
+                                                                                    ) : item.clientName}
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        {item.type === 'appointment' && <CreditCard className="w-4 h-4 text-muted-foreground"/>}
+                                                                                        {item.type === 'voucher_sale' && <ShoppingCart className="w-4 h-4 text-muted-foreground"/>}
+                                                                                        {item.type === 'expense' && <TrendingDown className="w-4 h-4 text-destructive"/>}
+                                                                                        
+                                                                                        {item.type === 'appointment' && (item.serviceName || 'Cita')}
+                                                                                        {item.type === 'voucher_sale' && `Bono ${item.sessions} sesiones`}
+                                                                                        {item.type === 'expense' && (
+                                                                                            <span className="font-semibold text-destructive">
+                                                                                                {item.concept}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell className="capitalize">
+                                                                                    {item.type === 'expense' ? '-' : getPaymentMethodName(item.type === 'appointment' ? item.payment?.method : item.paymentMethod)}
+                                                                                </TableCell>
+                                                                                <TableCell className="text-right">
+                                                                                    {item.type === 'expense' ? (
+                                                                                        <div className="flex items-center justify-end gap-2">
+                                                                                            <span className="font-bold text-destructive">-{item.amount.toFixed(2)}€</span>
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="icon"
+                                                                                                className="h-6 w-6 text-muted-foreground hover:text-destructive no-print"
+                                                                                                onClick={() => setExpenses(prev => prev.filter(e => e.id !== item.id))}
+                                                                                                title="Eliminar gasto"
+                                                                                            >
+                                                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                                                            </Button>
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        (item.type === 'appointment' ? item.payment?.amount : item.amount) 
+                                                                                            ? `${(item.type === 'appointment' ? item.payment?.amount ?? 0 : item.amount).toFixed(2)}€` 
+                                                                                            : 'N/A'
+                                                                                    )}
+                                                                                </TableCell>
                                                                             </TableRow>
                                                                         ))}
                                                                     </TableBody>
@@ -338,14 +419,24 @@ export default function ContabilidadPage() {
                                             ) : (
                                                 <div className="h-24 text-center flex items-center justify-center">No se encontraron movimientos en este período.</div>
                                             )}
-                                             <Table>
-                                                <TableFooter>
-                                                    <TableRow>
-                                                        <TableCell colSpan={4} className="font-bold text-lg">Total Ingresos</TableCell>
-                                                        <TableCell className="text-right font-bold text-lg">{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
-                                                    </TableRow>
-                                                </TableFooter>
-                                            </Table>
+                                              <Table>
+                                                 <TableFooter>
+                                                     <TableRow>
+                                                         <TableCell colSpan={4} className="font-bold text-base text-green-700">Total Ingresos (+)</TableCell>
+                                                         <TableCell className="text-right font-bold text-base text-green-700">+{financialSummary.totalRevenue.toFixed(2)}€</TableCell>
+                                                     </TableRow>
+                                                     <TableRow>
+                                                         <TableCell colSpan={4} className="font-bold text-base text-destructive">Total Gastos (-)</TableCell>
+                                                         <TableCell className="text-right font-bold text-base text-destructive">-{financialSummary.totalExpenses.toFixed(2)}€</TableCell>
+                                                     </TableRow>
+                                                     <TableRow className="bg-muted/80">
+                                                         <TableCell colSpan={4} className="font-bold text-lg">Beneficio Neto</TableCell>
+                                                         <TableCell className={cn("text-right font-bold text-lg", financialSummary.netProfit >= 0 ? "text-primary" : "text-destructive")}>
+                                                             {financialSummary.netProfit.toFixed(2)}€
+                                                         </TableCell>
+                                                     </TableRow>
+                                                 </TableFooter>
+                                             </Table>
                                         </CardContent>
                                     </Card>
                                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6 no-print">
@@ -432,9 +523,18 @@ export default function ContabilidadPage() {
                     )}
                 </main>
             </div>
+            <ExpenseDialog
+                isOpen={isExpenseDialogOpen}
+                onOpenChange={setIsExpenseDialogOpen}
+            />
             <VoucherSaleDialog
                 isOpen={isVoucherSaleDialogOpen}
                 onOpenChange={setIsVoucherSaleDialogOpen}
+                onVoucherSold={(client, sessions, totalSessions) => setVoucherPurchaseData({ client, sessions, totalSessions })}
+            />
+            <NewAppointmentConfirmationDialog
+                voucherPurchaseData={voucherPurchaseData}
+                onOpenChange={() => setVoucherPurchaseData(null)}
             />
         </>
     );

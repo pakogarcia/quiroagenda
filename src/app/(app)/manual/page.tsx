@@ -4,7 +4,7 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Globe, ShieldCheck, Download, Upload, KeyRound, Clock, Cake, Bell, Edit2, CheckCircle, Trash2, Edit } from 'lucide-react';
+import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Globe, Clock, Cake, Bell, CheckCircle, Trash2, Edit, ShieldCheck, KeyRound, Receipt, TrendingDown, CalendarOff, Megaphone } from 'lucide-react';
 
 export default function ManualPage() {
   return (
@@ -17,38 +17,38 @@ export default function ManualPage() {
             Manual Maestro de QuiroAgenda
           </h1>
           <p className="text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Tu guía completa para dominar la gestión de tu gabinete de masajes y estética.
+            Tu guía completa para dominar la gestión integral de tu gabinete de masajes y bienestar.
           </p>
         </header>
 
-        <div className="max-w-5xl mx-auto space-y-8 pb-12">
+        <div className="max-w-5xl mx-auto space-y-8 pb-20">
           
           {/* SECCIÓN 1: IDENTIDAD Y HORARIOS */}
-          <Card className="shadow-lg border-l-4 border-l-primary">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog className="w-6 h-6"/> Perfil y Configuración ("Quién Eres")</CardTitle>
-              <CardDescription>Establece tu marca y tu disponibilidad laboral.</CardDescription>
+          <Card className="shadow-lg border-l-4 border-l-primary overflow-hidden">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog className="w-6 h-6"/> Perfil y Configuración</CardTitle>
+              <CardDescription>Establece tu marca, tus datos del negocio y tu disponibilidad laboral.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="horarios">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Clock className="w-4 h-4 text-primary" />Gestión Flexible de Turnos</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Configura tu jornada laboral con total precisión:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Interruptores de Turno:</strong> Activa o desactiva de forma independiente el turno de mañana y tarde. Si no trabajas una mañana, la agenda ocultará esas horas automáticamente.</li>
-                      <li><strong>Horas de Inicio/Fin:</strong> Define exactamente cuándo empieza y termina cada bloque para que la rejilla de la agenda sea única para ti.</li>
-                      <li><strong>Vacaciones:</strong> Añade rangos de fechas. Durante estos días, la agenda se bloqueará por completo para evitar citas accidentales.</li>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><Clock className="w-4 h-4 text-primary" />Gestión Flexible de Turnos</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Configura tu jornada laboral para que la agenda solo muestre tus horas reales de trabajo:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Interruptores de Turno:</strong> Activa o desactiva de forma independiente el turno de mañana y tarde en "Quién Eres". Si una mañana no trabajas, la agenda ocultará ese bloque automáticamente.</li>
+                      <li><strong>Personalización Horaria:</strong> Define las horas exactas de inicio y fin para cada turno. Tu rejilla de citas se ajustará a estos límites.</li>
+                      <li><strong>Vacaciones:</strong> Añade rangos de fechas de descanso. Durante estos días, la agenda mostrará un mensaje de "Día no disponible" y bloqueará cualquier intento de cita.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="marca">
-                  <AccordionTrigger><div className='flex items-center gap-2'><ImageIcon className="w-4 h-4 text-primary" />Identidad Visual y Redes Sociales</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Haz que tu negocio sea reconocible:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Logotipo:</strong> Sube tu logo en formato JPG. Aparecerá en la pantalla de carga y en la cabecera de la app.</li>
-                      <li><strong>Conexión Social:</strong> Enlaza tu Web, Instagram, Facebook y TikTok. Estos enlaces se pueden incluir opcionalmente en los mensajes de confirmación de cita para tus clientes.</li>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><ImageIcon className="w-4 h-4 text-primary" />Identidad Visual y Redes</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Haz que tu negocio sea reconocible y profesional:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Logotipo Personalizado:</strong> Sube tu logo en formato JPG/PNG. Se utilizará en la pantalla de carga y en la cabecera de la aplicación.</li>
+                      <li><strong>Conexión Social:</strong> Enlaza tu Web, Instagram, Facebook y TikTok. Estos datos se incorporan automáticamente en las plantillas de comunicación enviadas a tus clientes.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -56,45 +56,44 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 2: LA AGENDA (DIETARIO) */}
-          <Card className="shadow-lg border-l-4 border-l-accent">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><CalendarDays className="w-6 h-6"/> Agenda Inteligente (El Dietario)</CardTitle>
-              <CardDescription>El corazón de tu día a día, diseñado para la eficiencia.</CardDescription>
+          {/* SECCIÓN 2: LA AGENDA (EL DIETARIO PRO) */}
+          <Card className="shadow-lg border-l-4 border-l-accent overflow-hidden">
+            <CardHeader className="bg-accent/5">
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><CalendarDays className="w-6 h-6"/> Agenda Profesional (El Dietario)</CardTitle>
+              <CardDescription>El corazón de tu día a día, diseñado para la máxima eficiencia visual.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="rejilla">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Eye className="w-4 h-4 text-primary" />Rejilla Fija de 15 Minutos</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>La agenda funciona como un dietario físico profesional:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Espacio Físico Real:</strong> Cada hora tiene su lugar exacto. Las citas se posicionan y escalan según su duración real (por ejemplo, una cita de 60 min ocupa 4 bloques).</li>
-                      <li><strong>Creación Rápida:</strong> Haz clic en cualquier hueco vacío para abrir el formulario de cita ya pre-configurado a esa hora.</li>
-                      <li><strong>Control de Solapamientos:</strong> El sistema te avisará si intentas agendar una cita que choca con otra existente.</li>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><Eye className="w-4 h-4 text-primary" />Rejilla Fija de 15 Minutos</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>La agenda imita un dietario físico profesional para que nunca pierdas la noción del tiempo:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Espacio Físico Real:</strong> Cada cita se posiciona y escala según la duración del servicio (30 min, 60 min, etc.).</li>
+                      <li><strong>Creación Instantánea:</strong> Haz clic en cualquier hueco vacío para abrir el formulario de cita con la hora ya pre-configurada.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="colores">
-                  <AccordionTrigger><div className='flex items-center gap-2'><BarChart className="w-4 h-4 text-primary" />Escala de Colores (Volumen de Citas)</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>El calendario mensual te indica tu carga de trabajo de un vistazo:</p>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-green-500"></span> <strong>Verde:</strong> 1-2 citas (Carga Baja)</div>
-                      <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-orange-500"></span> <strong>Naranja:</strong> 3-4 citas (Carga Media)</div>
-                      <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-red-500"></span> <strong>Rojo:</strong> 5-6 citas (Carga Alta)</div>
-                      <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-red-900"></span> <strong>Granate:</strong> 7+ citas (Máxima Capacidad)</div>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><BarChart className="w-4 h-4 text-primary" />Escala de Colores (Carga de Trabajo)</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>El calendario mensual te indica tu volumen de trabajo diario mediante un código de colores intuitivo:</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                      <div className="flex items-center gap-2 p-2 bg-green-50 rounded-md border border-green-200"><span className="w-4 h-4 rounded-full bg-green-500"></span> <span className='text-slate-900 font-bold'>Verde:</span> 1-2 citas (Carga Baja)</div>
+                      <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-md border border-orange-200"><span className="w-4 h-4 rounded-full bg-orange-500"></span> <span className='text-slate-900 font-bold'>Naranja:</span> 3-4 citas (Carga Media)</div>
+                      <div className="flex items-center gap-2 p-2 bg-red-50 rounded-md border border-red-200"><span className="w-4 h-4 rounded-full bg-red-500"></span> <span className='text-slate-900 font-bold'>Rojo:</span> 5-6 citas (Carga Alta)</div>
+                      <div className="flex items-center gap-2 p-2 bg-red-900/10 rounded-md border border-red-900"><span className="w-4 h-4 rounded-full bg-red-900"></span> <span className='text-slate-900 font-bold'>Granate:</span> 7+ citas (Máxima Capacidad)</div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="acciones">
-                  <AccordionTrigger><div className='flex items-center gap-2'><CheckCircle className="w-4 h-4 text-primary" />Acciones Rápidas en Citas</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Gestiona cada sesión sin salir de la agenda principal mediante los botones de alto contraste:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong><Edit className="inline h-3 w-3 text-blue-600" /> Editar:</strong> Cambia fecha, hora o servicio en segundos.</li>
-                      <li><strong><Trash2 className="inline h-3 w-3 text-red-600" /> Eliminar:</strong> Borra citas si hay cancelaciones.</li>
-                      <li><strong><Euro className="inline h-3 w-3 text-amber-500" /> Registrar Pago:</strong> Finaliza la cita, marca el estado como pagado y envía el registro directamente a tu contabilidad.</li>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><CheckCircle className="w-4 h-4 text-primary" />Botones de Acción Rápida</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Gestiona tus sesiones con iconos de alto contraste diseñados para no fallar:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Azul (Editar):</strong> Modifica los datos o desplaza la cita de hora.</li>
+                      <li><strong>Rojo (Eliminar):</strong> Cancela y borra la cita permanentemente.</li>
+                      <li><strong>Ámbar (€):</strong> Finaliza y cobra la cita registrando el importe en contabilidad.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -102,33 +101,34 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 3: CLIENTES Y SERVICIOS */}
-          <Card className="shadow-lg border-l-4 border-l-primary">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Users className="w-6 h-6"/> Fichero de Clientes y Servicios</CardTitle>
-              <CardDescription>Control total sobre tu cartera y tu catálogo de precios.</CardDescription>
+          {/* SECCIÓN 3: CONTABILIDAD Y GASTOS */}
+          <Card className="shadow-lg border-l-4 border-l-destructive overflow-hidden">
+            <CardHeader className="bg-destructive/5">
+              <CardTitle className="text-2xl text-destructive flex items-center gap-3"><Calculator className="w-6 h-6"/> Contabilidad, Gastos y Balances</CardTitle>
+              <CardDescription>Control financiero completo con registro de ingresos, egresos y facturación.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="ficha">
-                  <AccordionTrigger><div className='flex items-center gap-2'><History className="w-4 h-4 text-primary" />Ficha Detallada del Cliente</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Accede a la radiografía completa de cada cliente:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Historial:</strong> Todas las citas pasadas, cancelaciones y compras de bonos organizadas por meses.</li>
-                      <li><strong>Estadísticas:</strong> Total invertido en tu negocio y cuáles son sus servicios favoritos.</li>
-                      <li><strong>Notas y Detalles:</strong> Espacio para alergias, preferencias o patologías importantes.</li>
-                      <li><strong>Cumpleaños:</strong> La app te avisa de quién cumple años para que puedas enviarle una felicitación.</li>
+                <AccordionItem value="gastos">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-destructive'><Receipt className="w-4 h-4 text-destructive" />Registro de Gastos (Egresos en Rojo)</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Registra cualquier desembolso del negocio para mantener tus cuentas reales:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Botón "Registrar Gasto":</strong> Introduce el concepto (Alquiler, Luz, Materiales), el importe y la fecha del gasto.</li>
+                      <li><strong>Resaltado en Rojo:</strong> Los gastos aparecen destacados en rojo con signo negativo (ej. <span className="text-destructive font-bold">-50.00€</span>) tanto en el listado de movimientos como en la tarjeta de resumen.</li>
+                      <li><strong>Eliminación Fácil:</strong> Puedes borrar cualquier gasto registrado erróneamente usando el icono de papelera.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="servicios">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Tag className="w-4 h-4 text-primary" />Catálogo de Servicios</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Define tus tratamientos:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Personalización:</strong> Crea servicios con nombre, duración exacta (para la agenda) y precio base.</li>
-                      <li><strong>Flexibilidad:</strong> Al agendar una cita, puedes elegir cualquier servicio y el sistema ajustará automáticamente el hueco necesario en el dietario.</li>
+
+                <AccordionItem value="balance">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><Euro className="w-4 h-4 text-primary" />Balance Neto e Informes Impresos</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Obtén el resultado real de tu actividad en el período seleccionado:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Beneficio Neto:</strong> La aplicación calcula automáticamente <code className="text-primary font-bold">Ingresos Totales - Gastos Totales</code>.</li>
+                      <li><strong>Desglose por Métodos:</strong> Gráficos interactivos de cobros por Efectivo, Bizum y PayPal.</li>
+                      <li><strong>Impresión / Exportación PDF:</strong> El botón "Imprimir" genera un informe profesional preparado para imprimir o guardar en PDF con todos tus movimientos del período.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -136,67 +136,61 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 4: CONTABILIDAD Y BONOS */}
-          <Card className="shadow-lg border-l-4 border-l-accent">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Calculator className="w-6 h-6"/> Contabilidad y Gestión de Bonos</CardTitle>
-              <CardDescription>Tus finanzas y herramientas de fidelización bajo control.</CardDescription>
+          {/* SECCIÓN 4: CENTRO DE COMUNICACIONES (WHATSAPP) */}
+          <Card className="shadow-lg border-l-4 border-l-green-600 overflow-hidden">
+            <CardHeader className="bg-green-600/5">
+              <CardTitle className="text-2xl text-green-700 dark:text-green-400 flex items-center gap-3"><MessageSquare className="w-6 h-6"/> Centro de Comunicaciones WhatsApp</CardTitle>
+              <CardDescription>Envío automatizado de recordatorios, promociones y notificaciones a clientes.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="contabilidad">
-                  <AccordionTrigger><div className='flex items-center gap-2'><BarChart className="w-4 h-4 text-primary" />Resumen Financiero e Impresión</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Analiza la salud de tu negocio:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Filtros por Fecha:</strong> Visualiza ingresos de hoy, de la semana, del mes o de cualquier período personalizado.</li>
-                      <li><strong>Gráficos Visuales:</strong> Mira qué servicios te generan más beneficio y qué métodos de pago (Efectivo, Bizum, PayPal) usan más tus clientes.</li>
-                      <li><strong>Impresión:</strong> Genera un reporte limpio para tu gestoría o para tu control personal con un solo clic.</li>
+                <AccordionItem value="plantillas">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><Send className="w-4 h-4 text-green-600" />Plantillas de WhatsApp de 1 Clic</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Dispones de 11 plantillas especializadas para automatizar la atención a tus clientes:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Recordatorios de Cita:</strong> Envía un aviso por WhatsApp a los clientes con citas futuras.</li>
+                      <li><strong>Agradecer Compra de Bono:</strong> Envía automáticamente un agradecimiento y confirma las sesiones adquiridas al vender un bono.</li>
+                      <li><strong>Notificar Pagos Pendientes:</strong> Contacta respetuosamente a clientes con servicios realizados aún no cobrados.</li>
+                      <li><strong>Ausencias (No Show):</strong> Escribe a clientes que no acudieron a su cita para invitarles a reagendar.</li>
+                      <li><strong>Anulación / Modificación por Fuerza Mayor:</strong> Avisa de forma urgente y educada sobre la necesidad de cambiar una cita por imprevistos personales.</li>
+                      <li><strong>Comunicado General:</strong> Redacta y difunde avisos a todos los clientes.</li>
+                      <li><strong>Campaña de Ofertas:</strong> Lanza promociones y descuentos especiales.</li>
+                      <li><strong>Cumpleaños, Inactivos y Bienvenidos:</strong> Felicitaciones, recuperación de clientes antiguos y mensaje de bienvenida a nuevos registros.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 5: CLIENTES, BONOS Y RESPALDOS */}
+          <Card className="shadow-lg border-l-4 border-l-primary overflow-hidden">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Users className="w-6 h-6"/> Fichero de Clientes, Bonos y Copias de Seguridad</CardTitle>
+              <CardDescription>Gestión completa de fichas, bonos de sesiones y resguardo de datos.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="bonos">
-                  <AccordionTrigger><div className='flex items-center gap-2'><Gift className="w-4 h-4 text-primary" />Gestión Inteligente de Bonos</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Fideliza con bonos de sesiones:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Venta de Bonos:</strong> Registra la venta de un bono desde la ficha del cliente o contabilidad.</li>
-                      <li><strong>Consumo Automático:</strong> Al pagar una cita con el método "Bono", el sistema descuenta automáticamente una sesión y te avisa de cuántas le quedan al cliente.</li>
-                      <li><strong>Notificaciones:</strong> Envía un mensaje de WhatsApp informando al cliente de sus sesiones restantes tras su visita.</li>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><Gift className="w-4 h-4 text-primary" />Venta y Descuento de Bonos</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Gestiona bonos de sesiones con actualización en tiempo real:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Venta de Bono:</strong> Registra la compra de un bono asignando el número de sesiones e importe.</li>
+                      <li><strong>WhatsApp Automático:</strong> Al vender el bono, la app ofrece abrir la ventana emergente para enviar la confirmación por WhatsApp al cliente.</li>
+                      <li><strong>Boton Notificar:</strong> En la ficha del cliente, dispones de un botón directo de WhatsApp junto a las sesiones restantes para informar del saldo de bono en cualquier momento.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
 
-          {/* SECCIÓN 5: COMUNICACIONES Y SEGURIDAD */}
-          <Card className="shadow-lg border-l-4 border-l-primary">
-            <CardHeader>
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><Send className="w-6 h-6"/> Comunicaciones y Seguridad de Datos</CardTitle>
-              <CardDescription>Plantillas de WhatsApp y protección de tu información.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="comunicaciones">
-                  <AccordionTrigger><div className='flex items-center gap-2'><MessageSquare className="w-4 h-4 text-primary" />Centro de Comunicaciones WhatsApp</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Ahorra horas de redacción con plantillas profesionales:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Recordatorios:</strong> Envía recordatorios masivos de las citas de mañana. La app detecta quién no lo ha recibido aún.</li>
-                      <li><strong>Citas y Bienvenida:</strong> Confirmaciones automáticas al agendar y mensajes de bienvenida para nuevos contactos.</li>
-                      <li><strong>Recuperación:</strong> Mensajes para clientes inactivos, felicitaciones de cumpleaños y notificaciones de pagos pendientes.</li>
-                      <li><strong>Control Total:</strong> Todos los mensajes se pueden editar antes de enviarlos por WhatsApp.</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="seguridad">
-                  <AccordionTrigger><div className='flex items-center gap-2'><ShieldCheck className="w-4 h-4 text-primary" />Seguridad y Copias</div></AccordionTrigger>
-                  <AccordionContent className="space-y-2">
-                    <p>Tus datos son tuyos y están protegidos:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Contraseña Local:</strong> Tu app está protegida por una contraseña que tú eliges. Nadie más puede entrar desde ese navegador.</li>
-                      <li><strong>Backups:</strong> Exporta toda tu base de datos a un archivo JSON en cualquier momento. Puedes restaurar tus datos en otro dispositivo importando ese archivo.</li>
+                <AccordionItem value="copias">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><ShieldCheck className="w-4 h-4 text-primary" />Copias de Seguridad (Exportar / Importar JSON)</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Mantén tus datos respaldados y portables entre dispositivos:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Exportar Copia de Seguridad:</strong> Desde la pestaña "Quién Eres", descarga un archivo <code>.json</code> con todos tus clientes, citas, bonos, gastos y servicios.</li>
+                      <li><strong>Restaurar Datos:</strong> Selecciona un archivo <code>.json</code> previamente guardado para restaurar o trasladar tus datos a otro ordenador o dispositivo.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -206,7 +200,7 @@ export default function ManualPage() {
 
           <footer className="text-center text-sm text-muted-foreground pt-12 border-t mt-12">
             <p>QuiroAgenda - La herramienta definitiva para profesionales del bienestar.</p>
-            <p className="mt-1 font-semibold">Versión 2.5 "Dietario Pro"</p>
+            <p className="mt-1 font-semibold">Versión 3.0 "Gestión Integral y Comunicaciones Pro"</p>
           </footer>
         </div>
       </main>

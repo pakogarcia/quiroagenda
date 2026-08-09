@@ -172,7 +172,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
     } else {
         const payment: Payment = { method: data.paymentMethod, amount: data.amount || 0 };
-        const updatedAppointment = { ...appointment, status: 'completed', payment };
+        const updatedAppointment: Appointment = { ...appointment, status: 'completed', payment };
         onAppointmentFinished(updatedAppointment);
         toast({
           title: isEditing ? 'Pago actualizado' : 'Pago registrado',

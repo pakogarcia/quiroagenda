@@ -75,6 +75,14 @@ export type Service = {
   price: number;
 };
 
+export type Expense = {
+  id: string;
+  concept: string;
+  amount: number;
+  date: Date;
+  notes?: string;
+};
+
 export type TimeSlot = {
     time: string;
     isBooked: boolean;

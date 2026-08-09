@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -8,21 +7,7 @@ import { cn } from "@/lib/utils"
 
 const Popover = PopoverPrimitive.Root
 
-const PopoverTrigger = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>
->(({ children, ...props }, ref) => {
-  const childArray = React.Children.toArray(children).filter(child => {
-    return !(typeof child === 'string' && child.trim() === '');
-  });
-  const onlyChild = childArray.find(child => React.isValidElement(child))
-  return (
-    <PopoverPrimitive.Trigger ref={ref} {...props}>
-      {onlyChild || children}
-    </PopoverPrimitive.Trigger>
-  )
-})
-PopoverTrigger.displayName = "PopoverTrigger"
+const PopoverTrigger = PopoverPrimitive.Trigger
 
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,

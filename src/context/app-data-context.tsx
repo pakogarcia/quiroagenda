@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { getInitialAppointments } from '@/lib/data';
-import type { Appointment, Client, Service, BusinessProfile, VoucherSale } from '@/lib/types';
+import type { Appointment, Client, Service, BusinessProfile, VoucherSale, Expense } from '@/lib/types';
 import { format } from 'date-fns';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
@@ -11,13 +11,15 @@ const SERVICES_STORAGE_KEY = 'quiroagenda_services';
 const BLOCKED_DAYS_STORAGE_KEY = 'quiroagenda_blocked_days';
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 const VOUCHER_SALES_STORAGE_KEY = 'quiroagenda_voucher_sales';
+const EXPENSES_STORAGE_KEY = 'quiroagenda_expenses';
 const STORAGE_KEYS = [
     APPOINTMENTS_STORAGE_KEY,
     CLIENTS_STORAGE_KEY,
     SERVICES_STORAGE_KEY,
     BLOCKED_DAYS_STORAGE_KEY,
     PROFILE_STORAGE_KEY,
-    VOUCHER_SALES_STORAGE_KEY
+    VOUCHER_SALES_STORAGE_KEY,
+    EXPENSES_STORAGE_KEY
 ];
 
 const getInitialServices = (): Service[] => {
@@ -40,6 +42,8 @@ type AppDataContextType = {
     setProfile: React.Dispatch<React.SetStateAction<BusinessProfile | null>>;
     voucherSales: VoucherSale[];
     setVoucherSales: React.Dispatch<React.SetStateAction<VoucherSale[]>>;
+    expenses: Expense[];
+    setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
     isLoading: boolean;
     loadData: () => void;
     exportData: () => void;
@@ -55,15 +59,29 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     const [blockedDays, setBlockedDays] = React.useState<string[]>([]);
     const [profile, setProfile] = React.useState<BusinessProfile | null>(null);
     const [voucherSales, setVoucherSales] = React.useState<VoucherSale[]>([]);
+    const [expenses, setExpenses] = React.useState<Expense[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     
     const loadData = React.useCallback(() => {
         setIsLoading(true);
         try {
+            if (typeof window === 'undefined') return;
+
+            // Helper for safe JSON parsing
+            const safeParse = (key: string, fallback: any) => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : fallback;
+                } catch (e) {
+                    console.warn(`Failed to parse localStorage key ${key}:`, e);
+                    return fallback;
+                }
+            };
+
             // Appointments
-            const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-            const initialAppointments = storedAppointments
-                ? JSON.parse(storedAppointments)
+            const rawAppointments = safeParse(APPOINTMENTS_STORAGE_KEY, null);
+            const initialAppointments = rawAppointments && Array.isArray(rawAppointments)
+                ? rawAppointments
                     .map((apt: any) => ({
                         ...apt,
                         dateTime: new Date(apt.dateTime),
@@ -75,30 +93,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             setAppointments(initialAppointments);
 
             // Clients
-            const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-            if (storedClients) {
-                const parsedClients = JSON.parse(storedClients);
-                const migratedClients = parsedClients.map((client: any) => ({
-                    ...client,
-                    lastName: client.lastName || '',
-                    voucher: client.voucher || undefined,
-                }));
-                setClients(migratedClients);
-            }
+            const rawClients = safeParse(CLIENTS_STORAGE_KEY, []);
+            setClients(Array.isArray(rawClients) ? rawClients : []);
 
             // Services
-            const storedServices = localStorage.getItem(SERVICES_STORAGE_KEY);
-            const initialServices = storedServices ? JSON.parse(storedServices) : getInitialServices();
-            setServices(initialServices);
+            const rawServices = safeParse(SERVICES_STORAGE_KEY, null);
+            setServices(rawServices && Array.isArray(rawServices) ? rawServices : getInitialServices());
 
             // Blocked Days
-            const storedBlockedDays = localStorage.getItem(BLOCKED_DAYS_STORAGE_KEY);
-            if (storedBlockedDays) {
-                setBlockedDays(JSON.parse(storedBlockedDays));
-            }
+            const rawBlockedDays = safeParse(BLOCKED_DAYS_STORAGE_KEY, []);
+            setBlockedDays(Array.isArray(rawBlockedDays) ? rawBlockedDays : []);
 
             // Profile
-            const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
             const defaultProfile = {
                 name: 'QuiroAgenda',
                 address: '',
@@ -109,28 +115,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 },
                 vacations: [],
             };
-            if (storedProfile) {
-                 const parsed = JSON.parse(storedProfile);
-                 setProfile({ ...defaultProfile, ...parsed });
-            } else {
-                setProfile(defaultProfile);
-            }
+            const rawProfile = safeParse(PROFILE_STORAGE_KEY, null);
+            setProfile(rawProfile ? { ...defaultProfile, ...rawProfile } : defaultProfile);
             
             // Voucher Sales
-            const storedVoucherSales = localStorage.getItem(VOUCHER_SALES_STORAGE_KEY);
-            if (storedVoucherSales) {
-                const parsedVoucherSales = JSON.parse(storedVoucherSales)
-                    .map((sale: any) => ({
-                        ...sale,
-                        date: new Date(sale.date),
-                    }));
-                setVoucherSales(parsedVoucherSales);
-            }
+            const rawVoucherSales = safeParse(VOUCHER_SALES_STORAGE_KEY, []);
+            setVoucherSales(Array.isArray(rawVoucherSales) ? rawVoucherSales.map((s:any) => ({...s, date: new Date(s.date)})) : []);
+
+            // Expenses
+            const rawExpenses = safeParse(EXPENSES_STORAGE_KEY, []);
+            setExpenses(Array.isArray(rawExpenses) ? rawExpenses.map((e:any) => ({...e, date: new Date(e.date)})) : []);
 
         } catch (error) {
-            console.error("Failed to load data, using initial data.", error);
-            setAppointments(getInitialAppointments(new Date()));
-            setServices(getInitialServices());
+            console.error("Error loading data:", error);
         } finally {
             setIsLoading(false);
         }
@@ -140,81 +137,55 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         loadData();
     }, [loadData]);
     
-    // Save to localStorage whenever data changes
+    // Auto-save logic
     React.useEffect(() => {
-        if (!isLoading) localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
-    }, [appointments, isLoading]);
-
-    React.useEffect(() => {
-        if (!isLoading) localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
-    }, [clients, isLoading]);
-
-    React.useEffect(() => {
-        if (!isLoading) localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
-    }, [services, isLoading]);
-
-    React.useEffect(() => {
-        if (!isLoading) localStorage.setItem(BLOCKED_DAYS_STORAGE_KEY, JSON.stringify(blockedDays));
-    }, [blockedDays, isLoading]);
-    
-    React.useEffect(() => {
-        if (!isLoading) localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
-         window.dispatchEvent(new Event('storage'));
-    }, [profile, isLoading]);
-    
-    React.useEffect(() => {
-        if (!isLoading) localStorage.setItem(VOUCHER_SALES_STORAGE_KEY, JSON.stringify(voucherSales));
-    }, [voucherSales, isLoading]);
+        if (!isLoading) {
+            localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
+            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
+            localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
+            localStorage.setItem(BLOCKED_DAYS_STORAGE_KEY, JSON.stringify(blockedDays));
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+            localStorage.setItem(VOUCHER_SALES_STORAGE_KEY, JSON.stringify(voucherSales));
+            localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(expenses));
+            window.dispatchEvent(new Event('storage'));
+        }
+    }, [appointments, clients, services, blockedDays, profile, voucherSales, expenses, isLoading]);
     
     const exportData = () => {
         const dataToExport: { [key: string]: any } = {};
         STORAGE_KEYS.forEach(key => {
             const data = localStorage.getItem(key);
-            if (data) {
-                dataToExport[key] = JSON.parse(data);
-            }
+            if (data) dataToExport[key] = JSON.parse(data);
         });
-
-        const jsonString = JSON.stringify(dataToExport, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
-        link.href = url;
-        const date = format(new Date(), 'yyyy-MM-dd');
-        link.download = `quiroagenda_backup_${date}.json`;
-        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = `quiroagenda_backup_${format(new Date(), 'yyyy-MM-dd')}.json`;
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
     };
 
     const importData = (jsonString: string) => {
         const data = JSON.parse(jsonString);
-        STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
-        Object.keys(data).forEach(key => {
-            if (STORAGE_KEYS.includes(key)) {
-                localStorage.setItem(key, JSON.stringify(data[key]));
-            }
+        STORAGE_KEYS.forEach(key => {
+            if (data[key]) localStorage.setItem(key, JSON.stringify(data[key]));
         });
-        loadData(); // Reload data into context state
-    };
-
-
-    const value = {
-        appointments, setAppointments,
-        clients, setClients,
-        services, setServices,
-        blockedDays, setBlockedDays,
-        profile, setProfile,
-        voucherSales, setVoucherSales,
-        isLoading,
-        loadData,
-        exportData,
-        importData,
+        loadData();
     };
 
     return (
-        <AppDataContext.Provider value={value}>
+        <AppDataContext.Provider value={{
+            appointments, setAppointments,
+            clients, setClients,
+            services, setServices,
+            blockedDays, setBlockedDays,
+            profile, setProfile,
+            voucherSales, setVoucherSales,
+            expenses, setExpenses,
+            isLoading,
+            loadData,
+            exportData,
+            importData,
+        }}>
             {children}
         </AppDataContext.Provider>
     );
@@ -222,8 +193,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
 export function useAppData() {
     const context = React.useContext(AppDataContext);
-    if (context === undefined) {
-        throw new Error('useAppData must be used within an AppDataProvider');
-    }
+    if (context === undefined) throw new Error('useAppData must be used within an AppDataProvider');
     return context;
 }
