@@ -43,3 +43,8 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# backups and sensitive data
+*_backup_*.json
+quiroagenda_backup*.json
+*.backup.json
