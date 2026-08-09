@@ -271,6 +271,49 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
 
+                    <Card className="shadow-lg border-primary/10">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-bold font-headline text-primary flex items-center gap-2">
+                                <Globe className="w-5 h-5 text-primary" /> Sincronización con Cal.com (Reservas Online)
+                            </CardTitle>
+                            <CardDescription>
+                                Conecta tu agenda de <strong>cal.eu/pakogarcia</strong> para que las citas reservadas por tus clientes ocupen su hueco automáticamente en QuiroAgenda.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <FormLabel className="text-sm font-bold">Tu URL de Webhook para Cal.com</FormLabel>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        readOnly 
+                                        value={typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/cal` : 'https://studio--quiroagenda.us-central1.hosted.app/api/webhooks/cal'} 
+                                        className="font-mono text-xs bg-muted"
+                                    />
+                                    <Button 
+                                        type="button" 
+                                        variant="outline"
+                                        onClick={() => {
+                                            const url = typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/cal` : 'https://studio--quiroagenda.us-central1.hosted.app/api/webhooks/cal';
+                                            navigator.clipboard.writeText(url);
+                                            toast({ title: 'Copiado al portapapeles', description: 'Pega esta URL en tu panel de Cal.com (Settings > Webhooks).' });
+                                        }}
+                                    >
+                                        Copiar URL
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground bg-primary/5 p-4 rounded-md space-y-2 border">
+                                <p className="font-bold text-slate-900">Pasos para conectar en Cal.com:</p>
+                                <ol className="list-decimal pl-4 space-y-1">
+                                    <li>Entra en tu panel de <strong>Cal.com</strong> en <a href="https://app.cal.com" target="_blank" rel="noreferrer" className="text-primary underline">app.cal.com</a>.</li>
+                                    <li>Ve a <strong>Settings (Configuración) &gt; Webhooks &gt; Add Webhook</strong>.</li>
+                                    <li>Pega la URL copiada en el campo <strong>Subscriber URL</strong>.</li>
+                                    <li>Marca el evento <strong>Booking Created</strong> (Cita Creada) y pulsa <strong>Save</strong>.</li>
+                                </ol>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                      <Card className="shadow-lg border-primary/10">
                         <CardHeader>
                             <CardTitle className="text-xl font-bold font-headline text-primary">Horarios y Vacaciones</CardTitle>

@@ -136,6 +136,48 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         loadData();
     }, [loadData]);
+
+    // Cal.com Online Booking Auto-Sync
+    React.useEffect(() => {
+        const syncCalBookings = async () => {
+            try {
+                const res = await fetch('/api/webhooks/cal');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.bookings && data.bookings.length > 0) {
+                    setAppointments((prev) => {
+                        const newApts = [...prev];
+                        let updated = false;
+                        for (const item of data.bookings) {
+                            const itemDate = new Date(item.dateTime);
+                            const exists = newApts.some(
+                                (apt) =>
+                                    apt.clientName === item.clientName &&
+                                    Math.abs(new Date(apt.dateTime).getTime() - itemDate.getTime()) < 60000
+                            );
+                            if (!exists) {
+                                newApts.push({
+                                    ...item,
+                                    dateTime: itemDate,
+                                });
+                                updated = true;
+                            }
+                        }
+                        if (updated) {
+                            localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(newApts));
+                        }
+                        return updated ? newApts : prev;
+                    });
+                }
+            } catch (e) {
+                console.warn('Error en sincronización Cal.com:', e);
+            }
+        };
+
+        syncCalBookings();
+        const interval = setInterval(syncCalBookings, 15000);
+        return () => clearInterval(interval);
+    }, []);
     
     // Auto-save logic
     React.useEffect(() => {
