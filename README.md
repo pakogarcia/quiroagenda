@@ -1,7 +1,7 @@
 # 🌿 QuiroAgenda - Manual Maestro & Guía de Uso
 
 > **Tu guía completa para dominar la gestión integral de tu gabinete de masajes y bienestar.**
-> Versión 3.0 *"Gestión Integral y Comunicaciones Pro"*
+> Versión 3.0 *"Gestión Integral y Comunicaciones Pro con Sincronización Cal.com"*
 
 ---
 
@@ -9,10 +9,11 @@
 
 1. [👤 Perfil y Configuración](#1-perfil-y-configuración)
 2. [📅 Agenda Profesional (El Dietario)](#2-agenda-profesional-el-dietario)
-3. [📊 Contabilidad, Gastos y Balances](#3-contabilidad-gastos-y-balances)
-4. [💬 Centro de Comunicaciones (WhatsApp)](#4-centro-de-comunicaciones-whatsapp)
-5. [👥 Clientes, Bonos y Copias de Seguridad](#5-clientes-bonos-y-copias-de-seguridad)
-6. [🚀 Instrucciones de Inicio y Despliegue](#6-instrucciones-de-inicio-y-despliegue)
+3. [🌐 Sincronización con Cal.com (Reservas Online)](#3-sincronización-con-calcom-reservas-online)
+4. [📊 Contabilidad, Gastos y Balances](#4-contabilidad-gastos-y-balances)
+5. [💬 Centro de Comunicaciones (WhatsApp)](#5-centro-de-comunicaciones-whatsapp)
+6. [👥 Clientes, Bonos y Copias de Seguridad](#6-clientes-bonos-y-copias-de-seguridad)
+7. [🚀 Instrucciones de Inicio y Despliegue](#7-instrucciones-de-inicio-y-despliegue)
 
 ---
 
@@ -57,7 +58,16 @@ Gestiona tus sesiones con iconos de alto contraste diseñados para no fallar:
 
 ---
 
-## 3. 📊 Contabilidad, Gastos y Balances
+## 3. 🌐 Sincronización con Cal.com (Reservas Online)
+
+Conexión automática en tiempo real con tu página de reservas externas:
+- **Recepción Webhook:** QuiroAgenda dispone de una API dedicada (`/api/webhooks/cal`) compatible con los Webhooks de Cal.com.
+- **Ocupación Automática de Citas:** Cuando un cliente solicita una cita desde `https://www.cal.eu/pakogarcia`, el sistema la procesa al instante y la posiciona en el dietario de QuiroAgenda.
+- **Fácil Configuración:** Desde *"Quién Eres"* puedes copiar tu URL de suscripción y seguir las instrucciones de 4 pasos para vincular tu cuenta de Cal.com.
+
+---
+
+## 4. 📊 Contabilidad, Gastos y Balances
 
 Control financiero completo con registro de ingresos, egresos en rojo y facturación.
 
@@ -75,7 +85,7 @@ Obtén el resultado real de tu actividad en el período seleccionado:
 
 ---
 
-## 4. 💬 Centro de Comunicaciones (WhatsApp)
+## 5. 💬 Centro de Comunicaciones (WhatsApp)
 
 Envío automatizado de recordatorios, promociones y notificaciones a clientes con 11 plantillas especializadas:
 
@@ -93,7 +103,7 @@ Envío automatizado de recordatorios, promociones y notificaciones a clientes co
 
 ---
 
-## 5. 👥 Clientes, Bonos y Copias de Seguridad
+## 6. 👥 Clientes, Bonos y Copias de Seguridad
 
 Gestión completa de fichas, bonos de sesiones y resguardo de datos.
 
@@ -109,7 +119,7 @@ Mantén tus datos respaldados y portables entre dispositivos:
 
 ---
 
-## 6. 🚀 Instrucciones de Inicio y Despliegue
+## 7. 🚀 Instrucciones de Inicio y Despliegue
 
 ### 💻 Ejecutar Localmente
 ```bash
