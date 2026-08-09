@@ -1,6 +1,0 @@
-{
-  "name": "nextn-internal",
-  "version": "0.1.0",
-  "private": true,
-  "description": "This file is inactive to prevent conflicts with the root package.json"
-}
