@@ -145,6 +145,48 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.bookings && data.bookings.length > 0) {
+                    // 1. Process new clients
+                    setClients((prevClients) => {
+                        const updatedClients = [...prevClients];
+                        let clientsChanged = false;
+
+                        for (const item of data.bookings) {
+                            if (!item.clientPhone || item.clientPhone === 'Sin teléfono') continue;
+                            
+                            const cleanPhone = item.clientPhone.replace(/\D/g, '');
+                            const phoneLast9 = cleanPhone.slice(-9);
+
+                            const clientExists = updatedClients.some((c) => {
+                                const cPhoneClean = (c.phone || '').replace(/\D/g, '');
+                                return (
+                                    (phoneLast9 && cPhoneClean.endsWith(phoneLast9)) ||
+                                    `${c.name} ${c.lastName}`.trim().toLowerCase() === (item.clientName || '').trim().toLowerCase()
+                                );
+                            });
+
+                            if (!clientExists && item.clientName) {
+                                const nameParts = item.clientName.trim().split(' ');
+                                const firstName = nameParts[0] || 'Cliente';
+                                const lastName = nameParts.slice(1).join(' ') || '';
+
+                                updatedClients.push({
+                                    id: 'client_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                                    name: firstName,
+                                    lastName: lastName,
+                                    phone: item.clientPhone,
+                                    details: 'Registrado automáticamente desde reserva online Cal.com',
+                                });
+                                clientsChanged = true;
+                            }
+                        }
+
+                        if (clientsChanged) {
+                            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(updatedClients));
+                        }
+                        return clientsChanged ? updatedClients : prevClients;
+                    });
+
+                    // 2. Process appointments
                     setAppointments((prev) => {
                         const newApts = [...prev];
                         let updated = false;
