@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Leaf, Users, Calculator, Info, BookOpen, Tag, Send } from 'lucide-react';
+import { CalendarDays, Leaf, Users, Calculator, Info, BookOpen, Tag, Send, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { BusinessProfile } from '@/lib/types';
@@ -59,6 +59,12 @@ export function AppHeader({ className }: { className?: string }) {
         <h1 className="text-xl md:text-2xl font-bold font-headline">{profile?.name || 'QuiroAgenda'}</h1>
       </Link>
       <nav className="flex items-center gap-1 md:gap-2 flex-wrap justify-start md:justify-end">
+        <Link href="/reservas">
+          <Button variant="default" size="sm" className="bg-gradient-to-r from-amber-700 to-rose-700 hover:from-amber-800 hover:to-rose-800 text-white font-bold shadow-sm">
+            <Sparkles className="h-4 w-4 md:mr-1.5" />
+            <span className="hidden md:inline">Reservas Online</span>
+          </Button>
+        </Link>
         <Link href="/quien-eres">
           <Button variant="outline" size="sm">
             <Info className="h-4 w-4 md:mr-2" />
