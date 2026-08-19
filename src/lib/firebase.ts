@@ -1,16 +1,15 @@
-
 'use client';
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getRemoteConfig, type RemoteConfig } from 'firebase/remote-config';
 
 const firebaseConfig = {
-  projectId: 'quiroagenda',
-  appId: '1:77325796753:web:cb45dc3cfee137f83f8630',
-  storageBucket: 'quiroagenda.firebasestorage.app',
-  apiKey: 'AIzaSyBR921D3tLf0QfeBS4d6uhdzCxasd3mV4I',
-  authDomain: 'quiroagenda.firebaseapp.com',
-  messagingSenderId: '77325796753',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'quiroagenda',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:77325796753:web:cb45dc3cfee137f83f8630',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'quiroagenda.firebasestorage.app',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'quiroagenda.firebaseapp.com',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '77325796753',
 };
 
 // Initialize Firebase
