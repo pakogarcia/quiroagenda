@@ -13,6 +13,8 @@ import { SplashScreen } from './layout/splash-screen';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 
+import { usePathname } from 'next/navigation';
+
 const HASH_KEY = 'quiroagenda_pwd_hash';
 
 // --- Crypto Helper Functions (using browser's SubtleCrypto) ---
@@ -60,10 +62,18 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 // --- Main PasswordGate Component ---
 
 export function PasswordGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [status, setStatus] = React.useState<'loading' | 'unlocked' | 'locked' | 'setup'>('loading');
   const [storedHash, setStoredHash] = React.useState<string | null>(null);
 
+  // Public client routes (e.g. /reservas, /api/webhooks/cal) bypass administrative password
+  const isPublicRoute = pathname?.startsWith('/reservas') || pathname?.startsWith('/api');
+
   React.useEffect(() => {
+    if (isPublicRoute) {
+      setStatus('unlocked');
+      return;
+    }
     try {
       const hash = localStorage.getItem(HASH_KEY);
       setStoredHash(hash);
@@ -74,12 +84,13 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Could not access localStorage', error);
-      // If localStorage is unavailable, we can't proceed.
-      // In a real app, you might show an error message.
-      // For now, we'll just unlock to not block development.
       setStatus('unlocked');
     }
-  }, []);
+  }, [isPublicRoute]);
+
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
 
   const handlePasswordSet = (hash: string) => {
     localStorage.setItem(HASH_KEY, hash);

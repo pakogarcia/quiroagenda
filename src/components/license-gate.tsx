@@ -6,20 +6,29 @@ import { fetchAndActivate, getBoolean } from "firebase/remote-config"
 import { SplashScreen } from "./layout/splash-screen"
 import { InvalidLicense } from "./invalid-license"
 
+import { usePathname } from "next/navigation"
+
 const LICENSE_KEY_STORAGE = "quiroagenda_license_key"
 
 export function LicenseGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
   const [licenseStatus, setLicenseStatus] = React.useState<"loading" | "valid" | "invalid">("loading")
   const [licenseKey, setLicenseKey] = React.useState<string | null>(null)
 
+  const isPublicRoute = pathname?.startsWith('/reservas') || pathname?.startsWith('/api')
+
   React.useEffect(() => {
+    if (isPublicRoute) {
+      setLicenseStatus("valid")
+      return
+    }
     let key = localStorage.getItem(LICENSE_KEY_STORAGE)
     if (!key || key.includes("-")) {
       key = `key_${crypto.randomUUID().replace(/-/g, "")}`
       localStorage.setItem(LICENSE_KEY_STORAGE, key)
     }
     setLicenseKey(key)
-  }, [])
+  }, [isPublicRoute])
 
   React.useEffect(() => {
     if (!licenseKey) return
@@ -66,6 +75,10 @@ export function LicenseGate({ children }: { children: React.ReactNode }) {
 
     checkLicense();
   }, [licenseKey])
+
+  if (isPublicRoute) {
+    return <>{children}</>
+  }
 
   if (licenseStatus === "loading") {
     return <SplashScreen />
