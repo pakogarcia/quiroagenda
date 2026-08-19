@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -205,7 +204,7 @@ export default function OnlineBookingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fdfbf7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-body">
-      <AppHeader />
+
 
       {/* HERO SECTION CON COLORES CÁLIDOS Y ELEGANTE LOGOTIPO */}
       <section className="relative overflow-hidden bg-gradient-to-b from-amber-500/10 via-rose-500/5 to-[#fdfbf7] dark:to-slate-950 py-12 md:py-16 border-b border-amber-500/10">
