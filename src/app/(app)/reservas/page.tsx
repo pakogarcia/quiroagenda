@@ -106,7 +106,7 @@ const SERVICES: ServiceLink[] = [
     categoryLabel: 'Bienestar Global',
     url: 'https://cal.eu/pakogarcia/masaje-integral',
     duration: '60 min',
-    mainPrice: '25€',
+    mainPrice: '40€',
     icon: Sun,
     tagline: 'Cuidado completo de cabeza a pies',
     popular: true,
