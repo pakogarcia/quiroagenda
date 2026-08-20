@@ -506,33 +506,24 @@ export default function OnlineBookingPage() {
         )}
       </main>
 
-      {/* SECCIÓN DE CONTACTO, REDES SOCIALES Y UBICACIÓN */}
-      <section className="bg-gradient-to-b from-amber-50 to-amber-100/60 dark:from-slate-900 dark:to-slate-950 py-12 border-t border-amber-200/60">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold font-headline text-amber-950 dark:text-amber-100 mb-2">
-              Contacto, Redes Sociales & Ubicación
-            </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              Sígueme en redes sociales para consejos de salud, novedades y atención directa.
-            </p>
-          </div>
+      {/* SECCIÓN DISCRETA Y ELEGANTE DE REDES SOCIALES Y UBICACIÓN */}
+      <section className="bg-gradient-to-b from-amber-50/40 to-amber-100/30 dark:from-slate-900/60 dark:to-slate-950 py-8 border-t border-amber-200/40">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <p className="text-xs font-bold uppercase tracking-wider text-amber-900/70 dark:text-amber-300/70 mb-4">
+            Encuéntrame en Redes Sociales & Ubicación
+          </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* UBICACIÓN GOOGLE MAPS */}
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            {/* UBICACIÓN */}
             <a 
               href="https://maps.app.goo.gl/jjvfQfMha33JFKVB9" 
               target="_blank" 
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-amber-200/60 shadow-sm hover:shadow-md hover:border-amber-400 transition-all group"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 rounded-full border border-amber-200/80 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-amber-100/50 hover:border-amber-400 hover:scale-105 transition-all"
+              title="Ver ubicación en Google Maps"
             >
-              <div className="p-3 rounded-xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ubicación</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">Cómo Llegar (Maps)</p>
-              </div>
+              <MapPin className="w-4 h-4 text-red-500" />
+              <span>Ubicación</span>
             </a>
 
             {/* WHATSAPP */}
@@ -540,15 +531,11 @@ export default function OnlineBookingPage() {
               href="https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20consultar%20sobre%20tus%20masajes%20y%20citas" 
               target="_blank" 
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-amber-200/60 shadow-sm hover:shadow-md hover:border-emerald-400 transition-all group"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 rounded-full border border-amber-200/80 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 hover:border-emerald-400 hover:scale-105 transition-all"
+              title="Escribir por WhatsApp"
             >
-              <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                <MessageCircle className="w-5 h-5 fill-emerald-600 dark:fill-emerald-400" />
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">WhatsApp</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">+34 634 43 24 87</p>
-              </div>
+              <MessageCircle className="w-4 h-4 text-emerald-600 fill-emerald-600" />
+              <span>WhatsApp</span>
             </a>
 
             {/* INSTAGRAM */}
@@ -556,15 +543,11 @@ export default function OnlineBookingPage() {
               href="https://www.instagram.com/pako_garcia_quiromasajes" 
               target="_blank" 
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-amber-200/60 shadow-sm hover:shadow-md hover:border-pink-400 transition-all group"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 rounded-full border border-amber-200/80 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-pink-50 hover:border-pink-400 hover:scale-105 transition-all"
+              title="Ver Instagram"
             >
-              <div className="p-3 rounded-xl bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 group-hover:scale-110 transition-transform">
-                <Instagram className="w-5 h-5" />
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Instagram</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">@pako_garcia_quiromasajes</p>
-              </div>
+              <Instagram className="w-4 h-4 text-pink-600" />
+              <span>Instagram</span>
             </a>
 
             {/* TIKTOK */}
@@ -572,15 +555,11 @@ export default function OnlineBookingPage() {
               href="https://www.tiktok.com/@pako.garcia.quiro" 
               target="_blank" 
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-amber-200/60 shadow-sm hover:shadow-md hover:border-slate-400 transition-all group"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 rounded-full border border-amber-200/80 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 hover:border-slate-400 hover:scale-105 transition-all"
+              title="Ver TikTok"
             >
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white group-hover:scale-110 transition-transform">
-                <Video className="w-5 h-5" />
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">TikTok</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">@pako.garcia.quiro</p>
-              </div>
+              <Video className="w-4 h-4 text-slate-800 dark:text-slate-200" />
+              <span>TikTok</span>
             </a>
 
             {/* TELEGRAM */}
@@ -588,15 +567,11 @@ export default function OnlineBookingPage() {
               href="https://t.me/quiromasajescordoba" 
               target="_blank" 
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-amber-200/60 shadow-sm hover:shadow-md hover:border-sky-400 transition-all group"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 rounded-full border border-amber-200/80 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-sky-50 hover:border-sky-400 hover:scale-105 transition-all"
+              title="Ver Telegram"
             >
-              <div className="p-3 rounded-xl bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 group-hover:scale-110 transition-transform">
-                <Send className="w-5 h-5" />
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Telegram</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">@quiromasajescordoba</p>
-              </div>
+              <Send className="w-4 h-4 text-sky-500" />
+              <span>Telegram</span>
             </a>
           </div>
         </div>
@@ -625,36 +600,23 @@ export default function OnlineBookingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* BOTÓN FLOTANTE DE CONTACTO DIRECTO POR WHATSAPP (+34 634 43 24 87) */}
+      {/* BOTÓN FLOTANTE DE CONTACTO DIRECTO POR WHATSAPP */}
       <a
         href="https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20consultar%20sobre%20tus%20masajes%20y%20citas"
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-6 right-6 z-50 bg-green-600 hover:bg-green-700 text-white p-3.5 rounded-full shadow-2xl transition-all hover:scale-110 flex items-center justify-center gap-2 font-bold text-sm"
-        title="Consultar por WhatsApp (+34 634 43 24 87)"
+        title="Consultar por WhatsApp"
       >
         <MessageCircle className="w-6 h-6 fill-white" />
         <span className="hidden sm:inline">¿Dudas? Escríbeme al WhatsApp</span>
       </a>
 
       {/* FOOTER CÁLIDO */}
-      <footer className="bg-amber-950 text-amber-100 py-8 border-t border-amber-900 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 text-center space-y-3">
-          <p className="font-headline text-lg font-bold text-amber-200">Pako García Quiromasajes · Gabinete de Bienestar & Masajes</p>
-          <div className="flex items-center justify-center gap-4 text-xs text-amber-300/80 flex-wrap">
-            <a href="https://maps.app.goo.gl/jjvfQfMha33JFKVB9" target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5" /> Ubicación en Córdoba
-            </a>
-            <span>•</span>
-            <a href="https://wa.me/34634432487" target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1">
-              <MessageCircle className="w-3.5 h-3.5" /> +34 634 43 24 87
-            </a>
-            <span>•</span>
-            <a href="https://www.instagram.com/pako_garcia_quiromasajes" target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1">
-              <Instagram className="w-3.5 h-3.5" /> @pako_garcia_quiromasajes
-            </a>
-          </div>
-          <p className="text-[11px] text-amber-400/60 pt-2 border-t border-amber-900/60">Todas las reservas se confirman al instante y quedan agendadas en tiempo real.</p>
+      <footer className="bg-amber-950 text-amber-100 py-6 border-t border-amber-900 mt-auto">
+        <div className="max-w-6xl mx-auto px-4 text-center space-y-1.5">
+          <p className="font-headline text-base font-bold text-amber-200">Pako García Quiromasajes · Gabinete de Bienestar</p>
+          <p className="text-xs text-amber-300/70">Todas las reservas se confirman al instante y quedan agendadas en tiempo real.</p>
         </div>
       </footer>
     </div>
