@@ -21,11 +21,16 @@ import {
   Zap, 
   Droplets, 
   Search, 
-  ExternalLink, 
   MessageCircle,
   Star,
-  CheckCircle2
+  CheckCircle2,
+  Euro
 } from 'lucide-react';
+
+type PriceTier = {
+  duration: string;
+  price: string;
+};
 
 type ServiceLink = {
   id: string;
@@ -34,6 +39,8 @@ type ServiceLink = {
   categoryLabel: string;
   url: string;
   duration: string;
+  mainPrice: string;
+  priceTiers?: PriceTier[];
   icon: React.ElementType;
   tagline: string;
   description: string;
@@ -49,6 +56,7 @@ const SERVICES: ServiceLink[] = [
     categoryLabel: 'Salud & Vigor',
     url: 'https://cal.eu/pakogarcia/masaje-circulatorio',
     duration: '60 min',
+    mainPrice: '25€',
     icon: HeartPulse,
     tagline: 'Alivio de piernas pesadas y reactivación del flujo vascular',
     description: 'Técnica especializada con pases ascendentes envolventes que estimula el retorno venoso y linfático, aliviando la hinchazón y fatiga muscular acumulada.',
@@ -60,7 +68,12 @@ const SERVICES: ServiceLink[] = [
     category: 'relax',
     categoryLabel: 'Relajación Podal',
     url: 'https://cal.eu/pakogarcia/masaje-de-pies',
-    duration: '45 min',
+    duration: '15 min / 30 min',
+    mainPrice: 'Desde 8€',
+    priceTiers: [
+      { duration: '15 min', price: '8€' },
+      { duration: '30 min', price: '15€' }
+    ],
     icon: Footprints,
     tagline: 'Estimulación de puntos reflejos para un equilibrio completo',
     description: 'Presiones digitales en las zonas reflejas de la planta y dorso del pie. Desbloquea tensiones físicas y genera un estado orgánico de profunda calma.',
@@ -73,11 +86,12 @@ const SERVICES: ServiceLink[] = [
     categoryLabel: 'Experiencia Holística',
     url: 'https://cal.eu/pakogarcia/alquimia-massage',
     duration: '75 min',
+    mainPrice: '30€',
     icon: Sparkles,
-    tagline: 'Ritual sensorial exclusivo con aceites botánicos sagrados',
+    tagline: 'Crema alquímica especial que se transforma en un suntuoso aceite oriental',
     popular: true,
-    description: 'Tratamiento estrella multisensorial. Fusiona aromaterapia botánica pura, piedras energéticas y técnicas suaves para conectar cuerpo, mente y espíritu.',
-    benefits: ['Armonización emocional', 'Nutrición cutánea viva', 'Desconexión total']
+    description: 'Exclusiva experiencia sensorial elaborada con una crema alquímica especial que, al entrar en contacto con el calor del cuerpo, se transforma en un suntuoso aceite de fragancia oriental y tacto sedoso.',
+    benefits: ['Transformación en aceite sedoso', 'Fragancia oriental envolvente', 'Nutrición y paz profunda']
   },
   {
     id: 'masaje-integral',
@@ -86,6 +100,7 @@ const SERVICES: ServiceLink[] = [
     categoryLabel: 'Bienestar Global',
     url: 'https://cal.eu/pakogarcia/masaje-integral',
     duration: '60 min',
+    mainPrice: '25€',
     icon: Sun,
     tagline: 'Cuidado completo de cabeza a pies',
     popular: true,
@@ -99,6 +114,7 @@ const SERVICES: ServiceLink[] = [
     categoryLabel: 'Terapia Térmica',
     url: 'https://cal.eu/pakogarcia/vulcan-massage',
     duration: '60 min',
+    mainPrice: '35€',
     icon: Flame,
     tagline: 'Calor basáltico profundo para disolver rigideces musculares',
     description: 'Terapia térmica mediante piedras volcánicas lisas impregnadas en aceite tibio. El calor penetra hasta las capas musculares más profundas sin dolor.',
@@ -110,11 +126,12 @@ const SERVICES: ServiceLink[] = [
     category: 'relax',
     categoryLabel: 'Experiencias Compartidas',
     url: 'https://cal.eu/pakogarcia/masaje-pareja',
-    duration: '60 min',
+    duration: '120 min (2 horas)',
+    mainPrice: '43€ (2 personas)',
     icon: Users,
-    tagline: 'Momento íntimo y relajante para disfrutar simultáneamente',
-    description: 'Sesión compartida en ambiente cálido con velas, música suave y aceites esenciales. El regalo o plan idóneo para desconectar juntos.',
-    benefits: ['Cabina privada cálida', 'Conexión y descanso', 'Ambiente romántico']
+    tagline: 'Reserva especial para dos personas en sesiones consecutivas de 2 horas',
+    description: 'Experiencia pensada para dos personas en sesiones consecutivas de 2 horas en total (1 hora por persona), disfrutando de un ambiente relajante con un precio especial y ventajoso.',
+    benefits: ['2 Horas consecutivas totales', 'Tarifa especial en pareja', 'Ambiente cálido y acogedor']
   },
   {
     id: 'candle-massage',
@@ -123,6 +140,7 @@ const SERVICES: ServiceLink[] = [
     categoryLabel: 'Nutritivo & Sensorial',
     url: 'https://cal.eu/pakogarcia/candle-massage',
     duration: '60 min',
+    mainPrice: '35€',
     icon: Flame,
     tagline: 'Cera tibia derretida de karité rica en aceites florales',
     description: 'Suntuoso masaje con el bálsamo tibio que mana al encender velas ecológicas de manteca pura de karité y aceites esenciales aromáticos.',
@@ -134,7 +152,14 @@ const SERVICES: ServiceLink[] = [
     category: 'relax',
     categoryLabel: 'Relajación Absoluta',
     url: 'https://cal.eu/pakogarcia/masaje-relax',
-    duration: '60 min',
+    duration: '30 min a 90 min',
+    mainPrice: 'Desde 15€',
+    priceTiers: [
+      { duration: '30 min', price: '15€' },
+      { duration: '60 min', price: '25€' },
+      { duration: '75 min', price: '32€' },
+      { duration: '90 min', price: '38€' }
+    ],
     icon: Flower2,
     tagline: 'Pases suaves y envolventes para desacelerar la mente',
     popular: true,
@@ -147,7 +172,12 @@ const SERVICES: ServiceLink[] = [
     category: 'descontracturante',
     categoryLabel: 'Descontracturante Focal',
     url: 'https://cal.eu/pakogarcia/espalda-piernas',
-    duration: '50 min',
+    duration: '30 min / 60 min',
+    mainPrice: 'Desde 15€',
+    priceTiers: [
+      { duration: '30 min', price: '15€' },
+      { duration: '60 min', price: '25€' }
+    ],
     icon: Activity,
     tagline: 'Descarga intensiva para el eje posterior del cuerpo',
     description: 'Tratamiento enfocado en las zonas que mayor carga soportan a diario: zona lumbar, dorsal, glúteos e isquiotibiales. Ideal para deportistas o trabajos activos.',
@@ -159,7 +189,12 @@ const SERVICES: ServiceLink[] = [
     category: 'descontracturante',
     categoryLabel: 'Descontracturante Tensional',
     url: 'https://cal.eu/pakogarcia/espalda-cuello',
-    duration: '45 min',
+    duration: '30 min / 60 min',
+    mainPrice: 'Desde 15€',
+    priceTiers: [
+      { duration: '30 min', price: '15€' },
+      { duration: '60 min', price: '25€' }
+    ],
     icon: Zap,
     tagline: 'Foco en cervicales, trapecios y sobrecarga postural',
     popular: true,
@@ -172,7 +207,8 @@ const SERVICES: ServiceLink[] = [
     category: 'salud',
     categoryLabel: 'Salud & Depuración',
     url: 'https://cal.eu/pakogarcia/drenaje-linfatico',
-    duration: '60 min',
+    duration: '45 min',
+    mainPrice: '45€',
     icon: Droplets,
     tagline: 'Bombeos suaves e higiénicos para eliminar líquidos y toxinas',
     description: 'Técnica científica suave y precisa que acelera la eliminación de fluidos estancados, favoreciendo la recuperación tisular y fortaleciendo las defensas.',
@@ -205,7 +241,6 @@ export default function OnlineBookingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#fdfbf7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-body">
 
-
       {/* HERO SECTION CON COLORES CÁLIDOS Y ELEGANTE LOGOTIPO */}
       <section className="relative overflow-hidden bg-gradient-to-b from-amber-500/10 via-rose-500/5 to-[#fdfbf7] dark:to-slate-950 py-12 md:py-16 border-b border-amber-500/10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.15),transparent_50%)] pointer-events-none" />
@@ -223,7 +258,7 @@ export default function OnlineBookingPage() {
 
           <Badge variant="outline" className="mb-3 px-4 py-1 border-amber-500/30 bg-amber-100/50 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200 font-semibold tracking-wide uppercase text-xs">
             <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600 inline" />
-            Portal Oficial de Reservas Online
+            Pako García Quiromasajes · Portal de Citas
           </Badge>
 
           <h1 className="text-4xl md:text-6xl font-bold font-headline bg-gradient-to-r from-amber-900 via-rose-900 to-amber-700 dark:from-amber-200 dark:via-rose-200 dark:to-amber-100 bg-clip-text text-transparent mb-4">
@@ -350,10 +385,16 @@ export default function OnlineBookingPage() {
                       <div className="p-3 rounded-2xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 shadow-inner group-hover:scale-110 transition-transform">
                         <Icon className="w-6 h-6" />
                       </div>
-                      <Badge variant="outline" className="bg-amber-50 dark:bg-slate-800 border-amber-300/40 text-amber-900 dark:text-amber-300 flex items-center gap-1 font-semibold">
-                        <Clock className="w-3 h-3 text-amber-600" />
-                        {service.duration}
-                      </Badge>
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        <Badge variant="outline" className="bg-amber-50 dark:bg-slate-800 border-amber-300/40 text-amber-900 dark:text-amber-300 flex items-center gap-1 font-semibold">
+                          <Clock className="w-3 h-3 text-amber-600" />
+                          {service.duration}
+                        </Badge>
+                        <Badge className="bg-amber-700 text-white font-bold px-2.5 py-0.5 shadow-sm">
+                          <Euro className="w-3 h-3 mr-0.5" />
+                          {service.mainPrice}
+                        </Badge>
+                      </div>
                     </div>
 
                     <CardTitle className="text-xl font-bold font-headline text-slate-900 dark:text-white group-hover:text-amber-700 transition-colors">
@@ -370,6 +411,23 @@ export default function OnlineBookingPage() {
                       {service.description}
                     </CardDescription>
 
+                    {/* TARIFAS DE PRECIO SEGÚN DURACIÓN */}
+                    {service.priceTiers && (
+                      <div className="bg-amber-50/70 dark:bg-slate-800/60 p-2.5 rounded-xl border border-amber-200/50 dark:border-slate-700 space-y-1">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 mb-1">
+                          Opciones de Duración & Precio:
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {service.priceTiers.map((tier, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-white dark:bg-slate-900 px-2 py-1 rounded-lg border border-amber-200/40 text-xs">
+                              <span className="text-slate-600 dark:text-slate-400">{tier.duration}</span>
+                              <span className="font-bold text-amber-800 dark:text-amber-300">{tier.price}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-1.5 pt-2 border-t border-amber-100 dark:border-slate-800">
                       {service.benefits.map((benefit, idx) => (
                         <div key={idx} className="flex items-center text-xs text-slate-700 dark:text-slate-300 font-medium">
@@ -381,24 +439,13 @@ export default function OnlineBookingPage() {
                   </CardContent>
 
                   <CardFooter className="pt-4 border-t border-amber-100 dark:border-slate-800/80 bg-amber-50/30 dark:bg-slate-900/50">
-                    <div className="w-full flex gap-2">
-                      <Button 
-                        onClick={() => handleOpenBooking(service)}
-                        className="flex-1 bg-gradient-to-r from-amber-700 via-amber-800 to-rose-800 hover:from-amber-800 hover:to-rose-900 text-white font-bold h-11 rounded-xl shadow-md hover:shadow-lg transition-all"
-                      >
-                        <CalendarDays className="w-4 h-4 mr-2" />
-                        Pedir Cita Online
-                      </Button>
-                      <a 
-                        href={service.url} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center p-2.5 rounded-xl border border-amber-300/60 hover:bg-amber-100/50 dark:hover:bg-slate-800 text-amber-900 dark:text-amber-200 transition-colors"
-                        title="Abrir en pestaña nueva"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
+                    <Button 
+                      onClick={() => handleOpenBooking(service)}
+                      className="w-full bg-gradient-to-r from-amber-700 via-amber-800 to-rose-800 hover:from-amber-800 hover:to-rose-900 text-white font-bold h-11 rounded-xl shadow-md hover:shadow-lg transition-all"
+                    >
+                      <CalendarDays className="w-4 h-4 mr-2" />
+                      Pedir Cita Online
+                    </Button>
                   </CardFooter>
                 </Card>
               );
@@ -445,7 +492,7 @@ export default function OnlineBookingPage() {
       {/* FOOTER CÁLIDO */}
       <footer className="bg-amber-900 text-amber-100 py-8 border-t border-amber-800 mt-auto">
         <div className="max-w-6xl mx-auto px-4 text-center space-y-2">
-          <p className="font-headline text-lg font-bold text-amber-200">QuiroAgenda - Gabinete de Bienestar & Masajes</p>
+          <p className="font-headline text-lg font-bold text-amber-200">Pako García Quiromasajes · Gabinete de Bienestar</p>
           <p className="text-xs text-amber-300/80">Todas las reservas se confirman al instante y quedan agendadas en tiempo real.</p>
         </div>
       </footer>
