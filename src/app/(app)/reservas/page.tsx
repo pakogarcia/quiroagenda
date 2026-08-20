@@ -24,7 +24,8 @@ import {
   MessageCircle,
   Star,
   CheckCircle2,
-  Euro
+  Euro,
+  Gift
 } from 'lucide-react';
 
 type PriceTier = {
@@ -38,6 +39,7 @@ type ServiceLink = {
   category: 'relax' | 'descontracturante' | 'holistico' | 'salud';
   categoryLabel: string;
   url: string;
+  isWhatsApp?: boolean;
   duration: string;
   mainPrice: string;
   priceTiers?: PriceTier[];
@@ -119,6 +121,21 @@ const SERVICES: ServiceLink[] = [
     tagline: 'Calor basáltico profundo para disolver rigideces musculares',
     description: 'Terapia térmica mediante piedras volcánicas lisas impregnadas en aceite tibio. El calor penetra hasta las capas musculares más profundas sin dolor.',
     benefits: ['Descontracción profunda', 'Mejora del sueño', 'Calor reconfortante']
+  },
+  {
+    id: 'bonos-masajes',
+    title: 'Bonos de Masajes (5 o 10 Sesiones)',
+    category: 'holistico',
+    categoryLabel: 'Ahorro & Fidelidad',
+    url: 'https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20informaci%C3%B3n%20para%20contratar%20un%20bono%20de%205%20o%2010%20masajes',
+    isWhatsApp: true,
+    duration: '5 o 10 Sesiones',
+    mainPrice: 'Ahorro Especial',
+    icon: Gift,
+    tagline: 'Ahorra en tus sesiones de bienestar con bonos personalizados',
+    popular: true,
+    description: 'Disfruta de la máxima flexibilidad y un ahorro exclusivo adquiriendo tus bonos de 5 o 10 masajes. Ideal para tratamientos continuados de salud o regalo especial.',
+    benefits: ['Descuento acumulativo por paquete', 'Sin fecha límite de caducidad', 'Sesiones 100% transferibles']
   },
   {
     id: 'masaje-pareja',
@@ -234,6 +251,10 @@ export default function OnlineBookingPage() {
   }, [activeCategory, searchQuery]);
 
   const handleOpenBooking = (service: ServiceLink) => {
+    if (service.isWhatsApp) {
+      window.open(service.url, '_blank');
+      return;
+    }
     setSelectedServiceTitle(service.title);
     setSelectedIframeUrl(service.url);
   };
@@ -273,7 +294,7 @@ export default function OnlineBookingPage() {
             <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-amber-700/60" />
             <Input 
               type="text"
-              placeholder="Buscar masaje (ej. Relajante, Piedras, Cuello...)"
+              placeholder="Buscar masaje (ej. Relajante, Bonos, Cuello...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 bg-white/90 dark:bg-slate-900/90 border-amber-300/40 shadow-md rounded-full focus-visible:ring-amber-500"
@@ -333,7 +354,7 @@ export default function OnlineBookingPage() {
             }`}
           >
             <Flame className="w-4 h-4 mr-1.5 text-amber-600" />
-            Térmicos & Holísticos
+            Térmicos, Holísticos & Bonos
           </Button>
 
           <Button 
@@ -368,21 +389,29 @@ export default function OnlineBookingPage() {
                 <Card 
                   key={service.id} 
                   className={`group relative flex flex-col justify-between overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                    service.popular 
-                      ? 'border-amber-400/60 bg-gradient-to-b from-amber-500/5 via-white to-white dark:from-amber-900/20 dark:via-slate-900 dark:to-slate-900 shadow-md' 
-                      : 'border-amber-200/60 bg-white dark:bg-slate-900 shadow-sm'
+                    service.isWhatsApp
+                      ? 'border-emerald-400/60 bg-gradient-to-b from-emerald-500/10 via-white to-white dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-900 shadow-md ring-2 ring-emerald-500/20'
+                      : service.popular 
+                        ? 'border-amber-400/60 bg-gradient-to-b from-amber-500/5 via-white to-white dark:from-amber-900/20 dark:via-slate-900 dark:to-slate-900 shadow-md' 
+                        : 'border-amber-200/60 bg-white dark:bg-slate-900 shadow-sm'
                   }`}
                 >
                   {service.popular && (
-                    <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-600 to-rose-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wider uppercase flex items-center gap-1 shadow-sm">
+                    <div className={`absolute top-0 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wider uppercase flex items-center gap-1 shadow-sm ${
+                      service.isWhatsApp ? 'bg-gradient-to-l from-emerald-600 to-green-600' : 'bg-gradient-to-l from-amber-600 to-rose-600'
+                    }`}>
                       <Star className="w-3 h-3 fill-white" />
-                      Popular
+                      {service.isWhatsApp ? 'Destacado' : 'Popular'}
                     </div>
                   )}
 
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="p-3 rounded-2xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 shadow-inner group-hover:scale-110 transition-transform">
+                      <div className={`p-3 rounded-2xl shadow-inner group-hover:scale-110 transition-transform ${
+                        service.isWhatsApp
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
+                          : 'bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'
+                      }`}>
                         <Icon className="w-6 h-6" />
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap justify-end">
@@ -390,7 +419,9 @@ export default function OnlineBookingPage() {
                           <Clock className="w-3 h-3 text-amber-600" />
                           {service.duration}
                         </Badge>
-                        <Badge className="bg-amber-700 text-white font-bold px-2.5 py-0.5 shadow-sm">
+                        <Badge className={`font-bold px-2.5 py-0.5 shadow-sm text-white ${
+                          service.isWhatsApp ? 'bg-emerald-700' : 'bg-amber-700'
+                        }`}>
                           <Euro className="w-3 h-3 mr-0.5" />
                           {service.mainPrice}
                         </Badge>
@@ -401,7 +432,9 @@ export default function OnlineBookingPage() {
                       {service.title}
                     </CardTitle>
                     
-                    <p className="text-xs font-semibold text-rose-700 dark:text-rose-400 italic">
+                    <p className={`text-xs font-semibold italic ${
+                      service.isWhatsApp ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
+                    }`}>
                       {service.tagline}
                     </p>
                   </CardHeader>
@@ -431,7 +464,9 @@ export default function OnlineBookingPage() {
                     <div className="space-y-1.5 pt-2 border-t border-amber-100 dark:border-slate-800">
                       {service.benefits.map((benefit, idx) => (
                         <div key={idx} className="flex items-center text-xs text-slate-700 dark:text-slate-300 font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-amber-600 flex-shrink-0" />
+                          <CheckCircle2 className={`w-3.5 h-3.5 mr-1.5 flex-shrink-0 ${
+                            service.isWhatsApp ? 'text-emerald-600' : 'text-amber-600'
+                          }`} />
                           {benefit}
                         </div>
                       ))}
@@ -441,10 +476,23 @@ export default function OnlineBookingPage() {
                   <CardFooter className="pt-4 border-t border-amber-100 dark:border-slate-800/80 bg-amber-50/30 dark:bg-slate-900/50">
                     <Button 
                       onClick={() => handleOpenBooking(service)}
-                      className="w-full bg-gradient-to-r from-amber-700 via-amber-800 to-rose-800 hover:from-amber-800 hover:to-rose-900 text-white font-bold h-11 rounded-xl shadow-md hover:shadow-lg transition-all"
+                      className={`w-full font-bold h-11 rounded-xl shadow-md hover:shadow-lg transition-all text-white ${
+                        service.isWhatsApp
+                          ? 'bg-gradient-to-r from-emerald-700 to-green-700 hover:from-emerald-800 hover:to-green-800'
+                          : 'bg-gradient-to-r from-amber-700 via-amber-800 to-rose-800 hover:from-amber-800 hover:to-rose-900'
+                      }`}
                     >
-                      <CalendarDays className="w-4 h-4 mr-2" />
-                      Pedir Cita Online
+                      {service.isWhatsApp ? (
+                        <>
+                          <MessageCircle className="w-4 h-4 mr-2 fill-white" />
+                          Consultar / Contratar Bono
+                        </>
+                      ) : (
+                        <>
+                          <CalendarDays className="w-4 h-4 mr-2" />
+                          Pedir Cita Online
+                        </>
+                      )}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -477,23 +525,23 @@ export default function OnlineBookingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* BOTÓN FLOTANTE DE CONTACTO DIRECTO POR WHATSAPP */}
+      {/* BOTÓN FLOTANTE DE CONTACTO DIRECTO POR WHATSAPP (+34 634 43 24 87) */}
       <a
-        href="https://wa.me/34600000000?text=Hola,%20quisiera%20consultar%20sobre%20tus%20masajes"
+        href="https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20consultar%20sobre%20tus%20masajes%20y%20citas"
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-6 right-6 z-50 bg-green-600 hover:bg-green-700 text-white p-3.5 rounded-full shadow-2xl transition-all hover:scale-110 flex items-center justify-center gap-2 font-bold text-sm"
-        title="Consultar por WhatsApp"
+        title="Consultar por WhatsApp (+34 634 43 24 87)"
       >
         <MessageCircle className="w-6 h-6 fill-white" />
-        <span className="hidden sm:inline">¿Dudas? Escríbeme</span>
+        <span className="hidden sm:inline">¿Dudas? Escríbeme al WhatsApp</span>
       </a>
 
       {/* FOOTER CÁLIDO */}
       <footer className="bg-amber-900 text-amber-100 py-8 border-t border-amber-800 mt-auto">
         <div className="max-w-6xl mx-auto px-4 text-center space-y-2">
           <p className="font-headline text-lg font-bold text-amber-200">Pako García Quiromasajes · Gabinete de Bienestar</p>
-          <p className="text-xs text-amber-300/80">Todas las reservas se confirman al instante y quedan agendadas en tiempo real.</p>
+          <p className="text-xs text-amber-300/80">Atención directa por WhatsApp en el +34 634 43 24 87 · Todas las reservas se confirman al instante.</p>
         </div>
       </footer>
     </div>
