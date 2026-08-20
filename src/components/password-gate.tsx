@@ -66,8 +66,19 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = React.useState<'loading' | 'unlocked' | 'locked' | 'setup'>('loading');
   const [storedHash, setStoredHash] = React.useState<string | null>(null);
 
-  // Public client routes (e.g. /reservas, /api/webhooks/cal) bypass administrative password
-  const isPublicRoute = pathname?.startsWith('/reservas') || pathname?.startsWith('/api');
+  const [isClientDomain, setIsClientDomain] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname.toLowerCase();
+      if (host.includes('citas') || host.includes('masajes')) {
+        setIsClientDomain(true);
+      }
+    }
+  }, []);
+
+  // Public client routes and client subdomains (e.g. citas.pakogarcia.es, /reservas, /api) bypass administrative password
+  const isPublicRoute = isClientDomain || pathname?.startsWith('/reservas') || pathname?.startsWith('/api');
 
   React.useEffect(() => {
     if (isPublicRoute) {

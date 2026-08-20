@@ -15,7 +15,18 @@ export function LicenseGate({ children }: { children: React.ReactNode }) {
   const [licenseStatus, setLicenseStatus] = React.useState<"loading" | "valid" | "invalid">("loading")
   const [licenseKey, setLicenseKey] = React.useState<string | null>(null)
 
-  const isPublicRoute = pathname?.startsWith('/reservas') || pathname?.startsWith('/api')
+  const [isClientDomain, setIsClientDomain] = React.useState(false)
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname.toLowerCase();
+      if (host.includes('citas') || host.includes('masajes')) {
+        setIsClientDomain(true);
+      }
+    }
+  }, [])
+
+  const isPublicRoute = isClientDomain || pathname?.startsWith('/reservas') || pathname?.startsWith('/api')
 
   React.useEffect(() => {
     if (isPublicRoute) {

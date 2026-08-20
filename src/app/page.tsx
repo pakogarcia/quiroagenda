@@ -18,8 +18,22 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppData } from '@/context/app-data-context';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { TimeSlotView } from '@/components/timeslot-view';
+import OnlineBookingPage from '@/app/(app)/reservas/page';
 
 export default function Home() {
+  const [isClientDomain, setIsClientDomain] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname.toLowerCase();
+      if (host.includes('citas') || host.includes('masajes')) {
+        setIsClientDomain(true);
+      } else {
+        setIsClientDomain(false);
+      }
+    }
+  }, []);
+
   const { 
     appointments, 
     setAppointments, 
@@ -202,6 +216,8 @@ export default function Home() {
         toast({ title: 'Día Bloqueado' });
     }
   };
+
+  if (isClientDomain) return <OnlineBookingPage />;
 
   if (isLoading || !selectedDate) return <SplashScreen />;
   const isCurrentDayBlocked = isDayBlocked(selectedDate);
