@@ -143,7 +143,7 @@ const SERVICES: ServiceLink[] = [
   },
   {
     id: 'masaje-pareja',
-    title: 'Masaje en Pareja',
+    title: 'Masaje Parejas',
     category: 'relax',
     categoryLabel: 'Experiencias Compartidas',
     url: 'https://cal.eu/pakogarcia/masaje-pareja',
@@ -231,9 +231,9 @@ const SERVICES: ServiceLink[] = [
     duration: '45 min',
     mainPrice: '45€',
     icon: Droplets,
-    tagline: 'Bombeos suaves e higiénicos para eliminar líquidos y toxinas',
-    description: 'Técnica científica suave y precisa que acelera la eliminación de fluidos estancados, favoreciendo la recuperación tisular y fortaleciendo las defensas.',
-    benefits: ['Depuración profunda', 'Reducción de volumen', 'Sensación de ligereza']
+    tagline: 'Indicado en cirugías estéticas (antes y después), circulación y celulitis',
+    description: 'Masaje especialmente indicado en operaciones estéticas (antes y después), problemas de circulación y celulitis. Consiste en llevar la linfa hacia los ganglios linfáticos para la liberación de toxinas. Se suelen realizar entre 5 y 8 sesiones para notar sus efectos.',
+    benefits: ['Indicado en operaciones estéticas (antes/después)', 'Drenaje de linfa y toxinas hacia ganglios', 'Recomendado: 5 a 8 sesiones para notar efectos']
   }
 ];
 
