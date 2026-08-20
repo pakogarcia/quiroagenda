@@ -127,7 +127,7 @@ const SERVICES: ServiceLink[] = [
     title: 'Bonos de Masajes (5 o 10 Sesiones)',
     category: 'holistico',
     categoryLabel: 'Ahorro & Fidelidad',
-    url: 'https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20informaci%C3%B3n%20para%20contratar%20un%20bono%20de%205%20o%2010%20masajes',
+    url: 'https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20informaci%C3%B3n%20para%20contratar%20un%20bono%20de%20masajes',
     isWhatsApp: true,
     duration: '5 o 10 Sesiones',
     mainPrice: 'Ahorro Especial',
