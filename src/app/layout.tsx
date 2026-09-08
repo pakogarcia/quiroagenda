@@ -6,8 +6,30 @@ import { AppDataProvider } from '@/context/app-data-context';
 import { PasswordGate } from '@/components/password-gate';
 
 export const metadata: Metadata = {
-  title: 'QuiroAgenda',
-  description: 'Gestión de citas para gabinetes de masajes y estética.',
+  title: 'Quiromasajista Pako García · Pide tu Cita Online',
+  description: 'Especialista en quiromasaje descontracturante, alivio de sobrecargas y bienestar en Córdoba. Reserva tu cita online de forma rápida y cómoda.',
+  openGraph: {
+    title: 'Quiromasajista Pako García · Pide tu Cita Online',
+    description: 'Especialista en quiromasaje descontracturante, alivio de sobrecargas y bienestar en Córdoba. Reserva tu cita online de forma rápida y cómoda.',
+    url: 'https://citas.pakogarcia.es',
+    siteName: 'Pako García Quiromasajes',
+    images: [
+      {
+        url: '/logo-quiro.jpg',
+        width: 800,
+        height: 800,
+        alt: 'Pako García Quiromasajes',
+      },
+    ],
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Quiromasajista Pako García · Pide tu Cita Online',
+    description: 'Especialista en quiromasaje descontracturante, alivio de sobrecargas y bienestar en Córdoba. Reserva tu cita online de forma rápida y cómoda.',
+    images: ['/logo-quiro.jpg'],
+  },
 };
 
 export default function RootLayout({
