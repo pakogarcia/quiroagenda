@@ -286,14 +286,14 @@ export default function ProfilePage() {
                                 <div className="flex gap-2">
                                     <Input 
                                         readOnly 
-                                        value={typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/cal` : 'https://studio--quiroagenda.us-central1.hosted.app/api/webhooks/cal'} 
+                                        value="https://citas.pakogarcia.es/api/webhooks/cal" 
                                         className="font-mono text-xs bg-muted"
                                     />
                                     <Button 
                                         type="button" 
                                         variant="outline"
                                         onClick={() => {
-                                            const url = typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/cal` : 'https://studio--quiroagenda.us-central1.hosted.app/api/webhooks/cal';
+                                            const url = "https://citas.pakogarcia.es/api/webhooks/cal";
                                             navigator.clipboard.writeText(url);
                                             toast({ title: 'Copiado al portapapeles', description: 'Pega esta URL en tu panel de Cal.com (Settings > Webhooks).' });
                                         }}
