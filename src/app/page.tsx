@@ -243,11 +243,14 @@ export default function Home() {
                                 <CalendarIcon className="h-4 w-4" />
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-[95vw] sm:max-w-[400px] p-0 pt-0">
-                           <DialogHeader>
-                             <DialogTitle className="sr-only">Seleccionar Fecha</DialogTitle>
+                        <DialogContent className="max-w-[95vw] sm:max-w-[420px] p-4 pt-10">
+                           <DialogHeader className="mb-2">
+                             <DialogTitle className="text-center font-bold text-base text-primary flex items-center justify-center gap-2">
+                               <CalendarIcon className="w-4 h-4 text-primary" />
+                               Seleccionar Fecha de la Agenda
+                             </DialogTitle>
                            </DialogHeader>
-                           <div className="flex justify-center p-2">
+                           <div className="flex justify-center p-1 bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
                              <Calendar mode="single" selected={selectedDate} onSelect={(date) => { if (!date) return; const nd = new Date(date); nd.setHours(selectedDate.getHours(), selectedDate.getMinutes()); setSelectedDate(nd); setIsCalendarOpen(false); }} initialFocus locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
                            </div>
                         </DialogContent>

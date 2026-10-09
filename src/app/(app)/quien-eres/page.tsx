@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { BusinessProfile } from '@/lib/types';
-import { Building, Phone, MapPin, Instagram, Facebook, Globe, Download, Upload, AlertTriangle, KeyRound, Save, Clock, CalendarDays, Trash2, CalendarIcon as Calendar, Plus, Image as ImageIcon } from 'lucide-react';
+import { Building, Phone, MapPin, Instagram, Facebook, Globe, Download, Upload, AlertTriangle, KeyRound, Save, Clock, CalendarDays, Trash2, CalendarIcon as Calendar, Plus, Image as ImageIcon, Video } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useAppData } from '@/context/app-data-context';
@@ -266,6 +266,12 @@ export default function ProfilePage() {
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Facebook className="w-4 h-4" />Facebook</FormLabel>
                                     <FormControl><Input placeholder="https://facebook.com/..." {...field} value={field.value ?? ''} /></FormControl>
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="tiktok" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Video className="w-4 h-4" />TikTok</FormLabel>
+                                    <FormControl><Input placeholder="https://tiktok.com/@..." {...field} value={field.value ?? ''} /></FormControl>
                                 </FormItem>
                             )}/>
                         </CardContent>

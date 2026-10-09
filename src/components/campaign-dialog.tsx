@@ -114,7 +114,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
         case 'inactiveClients': {
              const clientLastVisit = new Map<string, Date>();
              appointments.forEach(apt => {
-                if (apt.status === 'completed') {
+                if (apt.status === 'completed' || apt.status === 'scheduled') {
                     const client = clients.find(c => c.phone === apt.clientPhone);
                     if (client) {
                         const lastVisit = clientLastVisit.get(client.id);
@@ -124,8 +124,12 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
             });
             return clients.filter(c => {
                 const lastVisit = clientLastVisit.get(c.id);
-                if (!lastVisit) return false;
-                return differenceInDays(today, lastVisit) >= inactiveDays;
+                // If they have a last visit date, check if it's older than inactiveDays
+                if (lastVisit) {
+                    return differenceInDays(today, lastVisit) >= inactiveDays;
+                }
+                // If they have no recorded appointments, consider them inactive if created/registered
+                return true;
             });
         }
         case 'cancellation': {
@@ -232,6 +236,9 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
             } else if (campaignType === 'birthdays') {
                 const clientName = client.name.split(' ')[0];
                 message = `¡Hola ${clientName}!\n\n¡Feliz cumpleaños! 🎉 De parte de todo el equipo de ${profile.name}, te deseamos un día maravilloso.\n\n¡Esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
+            } else if (campaignType === 'inactiveClients') {
+                const clientName = client.name.split(' ')[0];
+                message = `¡Hola ${clientName}!\n\nHace un tiempo que no te vemos por *${profile.name}* y queríamos saber cómo estás. 😊\n\nTu bienestar es lo más importante para nosotros. Si necesitas una sesión para aliviar tensiones o regalarte un momento de descanso, nos encantará volver a atenderte.\n\n¡Escríbenos o reserva tu cita cuando lo desees!\n\nUn saludo,\n${profile.name}`;
             }
 
             if (message) {
@@ -260,6 +267,24 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
 
   const renderConfiguration = () => {
       if (step !== 'select') return null;
+      if (campaignType === 'inactiveClients') {
+        return (
+          <div className="space-y-2 mb-4 bg-muted/40 p-3 rounded-lg border">
+            <Label htmlFor="inactive-days" className="font-bold text-sm text-slate-900">Período de Inactividad</Label>
+            <select
+              id="inactive-days"
+              value={inactiveDays}
+              onChange={(e) => setInactiveDays(Number(e.target.value))}
+              className="w-full h-10 px-3 py-2 bg-background border rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value={30}>Más de 30 días sin asistir (1 mes)</option>
+              <option value={60}>Más de 60 días sin asistir (2 meses)</option>
+              <option value={90}>Más de 90 días sin asistir (3 meses - Recomendado)</option>
+              <option value={180}>Más de 180 días sin asistir (6 meses)</option>
+            </select>
+          </div>
+        );
+      }
       if (campaignType === 'newClients') {
         return (
             <div className="space-y-4">
