@@ -62,7 +62,7 @@ Gestiona tus sesiones con iconos de alto contraste diseñados para no fallar:
 
 Conexión automática en tiempo real con tu página de reservas externas:
 - **Recepción Webhook:** QuiroAgenda dispone de una API dedicada (`/api/webhooks/cal`) compatible con los Webhooks de Cal.com.
-- **Ocupación Automática de Citas:** Cuando un cliente solicita una cita desde `https://www.cal.eu/pakogarcia`, el sistema la procesa al instante y la posiciona en el dietario de QuiroAgenda.
+- **Ocupación Automática de Citas:** Cuando un cliente solicita una cita desde `https://cal.com/pakogarcia`, el sistema la procesa al instante y la posiciona en el dietario de QuiroAgenda.
 - **Fácil Configuración:** Desde *"Quién Eres"* puedes copiar tu URL de suscripción y seguir las instrucciones de 4 pasos para vincular tu cuenta de Cal.com.
 
 ---

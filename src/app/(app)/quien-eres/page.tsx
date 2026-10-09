@@ -277,7 +277,7 @@ export default function ProfilePage() {
                                 <Globe className="w-5 h-5 text-primary" /> Sincronización con Cal.com (Reservas Online)
                             </CardTitle>
                             <CardDescription>
-                                Conecta tu agenda de <strong>cal.eu/pakogarcia</strong> para que las citas reservadas por tus clientes ocupen su hueco automáticamente en QuiroAgenda.
+                                Conecta tu agenda de <strong>cal.com/pakogarcia</strong> para que las citas reservadas por tus clientes ocupen su hueco automáticamente en QuiroAgenda.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">

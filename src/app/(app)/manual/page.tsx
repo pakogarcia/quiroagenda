@@ -58,7 +58,7 @@ export default function ManualPage() {
                     <p>Sincroniza tus reservas externas directamente en tu dietario:</p>
                     <ul className="list-disc pl-5 space-y-2">
                       <li><strong>Conexión Webhook:</strong> Copia tu dirección de Webhook desde la sección "Quién Eres" y pégala en tu panel de Cal.com (Settings &gt; Webhooks).</li>
-                      <li><strong>Ocupación Automática de Hueco:</strong> Cada vez que un cliente pida cita desde tu enlace público <code>cal.eu/pakogarcia</code>, QuiroAgenda la recibirá e insertará automáticamente en tu agenda en segundo plano.</li>
+                      <li><strong>Ocupación Automática de Hueco:</strong> Cada vez que un cliente pida cita desde tu enlace público <code>cal.com/pakogarcia</code>, QuiroAgenda la recibirá e insertará automáticamente en tu agenda en segundo plano.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
