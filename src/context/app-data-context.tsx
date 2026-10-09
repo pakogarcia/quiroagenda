@@ -137,7 +137,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         loadData();
     }, [loadData]);
 
-    // Cal.com Online Booking Auto-Sync
+    // Cal.com Online Booking Auto-Sync (Unrestricted & Fast 15s Polling)
     React.useEffect(() => {
         const syncCalBookings = async () => {
             try {
@@ -145,27 +145,32 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.bookings && data.bookings.length > 0) {
-                    // 1. Process new clients
+                    // 1. Process clients - NO DISCARDING, NO STRICT CONDITIONS
                     setClients((prevClients) => {
                         const updatedClients = [...prevClients];
                         let clientsChanged = false;
 
                         for (const item of data.bookings) {
-                            if (!item.clientPhone || item.clientPhone === 'Sin teléfono') continue;
-                            
-                            const cleanPhone = item.clientPhone.replace(/\D/g, '');
-                            const phoneLast9 = cleanPhone.slice(-9);
+                            const rawPhone = item.clientPhone || '';
+                            const cleanPhone = rawPhone.replace(/\D/g, '');
+                            const phoneLast9 = cleanPhone.length >= 9 ? cleanPhone.slice(-9) : cleanPhone;
+                            const normalizedName = (item.clientName || 'Cliente Cal.com').trim().toLowerCase();
+                            const itemEmail = (item.clientEmail || '').trim().toLowerCase();
 
                             const clientExists = updatedClients.some((c) => {
                                 const cPhoneClean = (c.phone || '').replace(/\D/g, '');
+                                const cNameClean = `${c.name} ${c.lastName}`.trim().toLowerCase();
+                                const cFirstNameClean = c.name.trim().toLowerCase();
+
                                 return (
-                                    (phoneLast9 && cPhoneClean.endsWith(phoneLast9)) ||
-                                    `${c.name} ${c.lastName}`.trim().toLowerCase() === (item.clientName || '').trim().toLowerCase()
+                                    (phoneLast9.length >= 7 && cPhoneClean.endsWith(phoneLast9)) ||
+                                    (normalizedName.length > 2 && (cNameClean === normalizedName || cFirstNameClean === normalizedName)) ||
+                                    (itemEmail.length > 4 && (c.details || '').toLowerCase().includes(itemEmail))
                                 );
                             });
 
-                            if (!clientExists && item.clientName) {
-                                const nameParts = item.clientName.trim().split(' ');
+                            if (!clientExists) {
+                                const nameParts = (item.clientName || 'Cliente Cal.com').trim().split(' ');
                                 const firstName = nameParts[0] || 'Cliente';
                                 const lastName = nameParts.slice(1).join(' ') || '';
 
@@ -173,8 +178,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                                     id: 'client_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                                     name: firstName,
                                     lastName: lastName,
-                                    phone: item.clientPhone,
-                                    details: 'Registrado automáticamente desde reserva online Cal.com',
+                                    phone: item.clientPhone || 'Sin teléfono',
+                                    details: `Registrado automáticamente desde reserva online Cal.com${itemEmail ? ` (${itemEmail})` : ''}`,
                                 });
                                 clientsChanged = true;
                             }
@@ -186,16 +191,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                         return clientsChanged ? updatedClients : prevClients;
                     });
 
-                    // 2. Process appointments
+                    // 2. Process appointments - GUARANTEE ALL BOOKINGS ENTER THE AGENDA
                     setAppointments((prev) => {
                         const newApts = [...prev];
                         let updated = false;
                         for (const item of data.bookings) {
                             const itemDate = new Date(item.dateTime);
+                            if (isNaN(itemDate.getTime())) continue;
+
                             const exists = newApts.some(
                                 (apt) =>
-                                    apt.clientName === item.clientName &&
-                                    Math.abs(new Date(apt.dateTime).getTime() - itemDate.getTime()) < 60000
+                                    apt.id === item.id ||
+                                    (apt.clientName === item.clientName &&
+                                     Math.abs(new Date(apt.dateTime).getTime() - itemDate.getTime()) < 300000)
                             );
                             if (!exists) {
                                 newApts.push({
@@ -217,9 +225,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         };
 
         syncCalBookings();
-        // Check every 5 minutes (300,000 ms) while app is open
-        const interval = setInterval(syncCalBookings, 300000);
-        return () => clearInterval(interval);
+        // Check every 15 seconds (15,000 ms) while app is open
+        const interval = setInterval(syncCalBookings, 15000);
+
+        // Also sync immediately when user switches back to the app window/tab
+        const handleFocus = () => syncCalBookings();
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+        };
     }, []);
     
     // Auto-save logic

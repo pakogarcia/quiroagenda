@@ -1,7 +1,6 @@
-'use client';
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getRemoteConfig, type RemoteConfig } from 'firebase/remote-config';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'quiroagenda',
@@ -14,6 +13,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db: Firestore = getFirestore(app);
 
 let remoteConfigInstance: RemoteConfig | null = null;
 
@@ -33,4 +33,4 @@ const getRemoteConfigInstance = (): RemoteConfig => {
     return remoteConfigInstance;
 }
 
-export { app, getRemoteConfigInstance as remoteConfig };
+export { app, db, getRemoteConfigInstance as remoteConfig };
