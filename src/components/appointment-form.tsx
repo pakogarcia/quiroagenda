@@ -40,18 +40,30 @@ type AppointmentFormProps = {
 
 export function AppointmentForm({ onSubmit, appointment, selectedDate }: AppointmentFormProps) {
   const { clients, services, blockedDays, appointments } = useAppData();
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       clientName: appointment?.clientName || '',
       clientPhone: appointment?.clientPhone || '+34 ',
-      date: appointment?.dateTime || selectedDate || new Date(),
-      time: appointment ? format(appointment.dateTime, 'HH:mm') : format(selectedDate || new Date(), 'HH:mm'),
+      date: appointment?.dateTime ? new Date(appointment.dateTime) : (selectedDate ? new Date(selectedDate) : new Date()),
+      time: appointment ? format(new Date(appointment.dateTime), 'HH:mm') : (selectedDate ? format(new Date(selectedDate), 'HH:mm') : '10:00'),
       notes: appointment?.notes || '',
       serviceId: appointment?.serviceId || services[0]?.id || undefined,
     },
   });
+
+  React.useEffect(() => {
+    form.reset({
+      clientName: appointment?.clientName || '',
+      clientPhone: appointment?.clientPhone || '+34 ',
+      date: appointment?.dateTime ? new Date(appointment.dateTime) : (selectedDate ? new Date(selectedDate) : new Date()),
+      time: appointment ? format(new Date(appointment.dateTime), 'HH:mm') : (selectedDate ? format(new Date(selectedDate), 'HH:mm') : '10:00'),
+      notes: appointment?.notes || '',
+      serviceId: appointment?.serviceId || services[0]?.id || undefined,
+    });
+  }, [appointment, selectedDate, form, services]);
 
   const handleClientChange = (clientId: string) => {
       const selectedClient = clients.find(c => c.id === clientId);
@@ -189,7 +201,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel className="flex items-center gap-2"><Tag className="w-4 h-4"/>Servicio</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecciona un servicio" />
@@ -216,10 +228,11 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
             render={({ field }) => (
                 <FormItem className="flex flex-col">
                 <FormLabel>Fecha</FormLabel>
-                <Popover>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                     <PopoverTrigger asChild>
                     <FormControl>
                         <Button
+                        type="button"
                         variant={"outline"}
                         className={cn(
                             "pl-3 text-left font-normal",
@@ -227,7 +240,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                         )}
                         >
                         {field.value ? (
-                            format(field.value, "PPP", { locale: es })
+                            format(new Date(field.value), "PPP", { locale: es })
                         ) : (
                             <span>Elige una fecha</span>
                         )}
@@ -235,11 +248,16 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                         </Button>
                     </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100]" align="start">
                     <Calendar
                         mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
+                        selected={field.value ? new Date(field.value) : undefined}
+                        onSelect={(newDate) => {
+                            if (newDate) {
+                                field.onChange(newDate);
+                                setIsCalendarOpen(false);
+                            }
+                        }}
                         initialFocus
                         locale={es}
                         disabled={blockedDates}
@@ -256,7 +274,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Hora</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecciona una hora" />

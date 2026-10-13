@@ -178,17 +178,29 @@ export default function Home() {
 
   const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
     const newAppointment: Appointment = { ...data, id: crypto.randomUUID(), reminderSent: false, status: 'scheduled' };
-    setAppointments([...appointments, newAppointment]);
+    setAppointments(prev => [...prev, newAppointment]);
+    if (data.dateTime) {
+      setSelectedDate(new Date(data.dateTime));
+    }
     setIsFormOpen(false);
     setConfirmationAppointment(newAppointment);
   };
 
   const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
     let confirmedAppointment: Appointment | undefined;
-    setAppointments(appointments.map((apt) => { if (apt.id === id) { confirmedAppointment = { ...apt, ...data }; return confirmedAppointment; } return apt; }));
+    setAppointments(prev => prev.map((apt) => {
+      if (apt.id === id) {
+        confirmedAppointment = { ...apt, ...data };
+        return confirmedAppointment;
+      }
+      return apt;
+    }));
+    if (data.dateTime) {
+      setSelectedDate(new Date(data.dateTime));
+    }
     setIsFormOpen(false);
     setEditingAppointment(undefined);
-    if(confirmedAppointment) setConfirmationAppointment(confirmedAppointment);
+    if (confirmedAppointment) setConfirmationAppointment(confirmedAppointment);
   };
 
   const handleDeleteAppointment = () => {
@@ -276,7 +288,7 @@ export default function Home() {
         </section>
       </main>
       
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingAppointment(undefined); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle>
