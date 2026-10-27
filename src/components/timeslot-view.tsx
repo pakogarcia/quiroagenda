@@ -9,7 +9,6 @@ import { motion } from 'framer-motion';
 import { isBefore, isSameDay, startOfToday } from 'date-fns';
 import { CheckCircle, XCircle, Clock, Edit, Trash2, Euro } from 'lucide-react';
 import { Button } from './ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 type TimeSlotViewProps = {
     slots: TimeSlot[];
@@ -54,8 +53,7 @@ export function TimeSlotView({
     const GAP = 0.25;
 
     return (
-        <TooltipProvider>
-            <div className="flex flex-col gap-1 relative pr-2 select-none pb-20">
+        <div className="flex flex-col gap-1 relative pr-2 select-none pb-20">
                 {slots.map((slot, index) => {
                     const today = startOfToday();
                     const isPast = slot.appointment?.dateTime && (isBefore(slot.appointment.dateTime, today) && !isSameDay(slot.appointment.dateTime, today));
@@ -114,43 +112,34 @@ export function TimeSlotView({
 
                                         <div className="flex items-center justify-end gap-2 mt-auto pt-2">
                                             {isUnpaid && (
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button 
-                                                            size="icon" 
-                                                            className="h-10 w-10 bg-amber-500 hover:bg-amber-600 text-white shadow-lg border-none flex-shrink-0 transition-transform active:scale-95"
-                                                            onClick={(e) => { e.stopPropagation(); onFinishAppointment(slot.appointment!); }}
-                                                        >
-                                                            <Euro className="h-5 w-5" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent><p className='font-bold text-amber-950'>Cobrar</p></TooltipContent>
-                                                </Tooltip>
+                                                <Button 
+                                                    size="icon" 
+                                                    className="h-10 w-10 bg-amber-500 hover:bg-amber-600 text-white shadow-lg border-none flex-shrink-0 transition-transform active:scale-95"
+                                                    onClick={(e) => { e.stopPropagation(); onFinishAppointment(slot.appointment!); }}
+                                                    title="Cobrar Cita"
+                                                    aria-label="Cobrar Cita"
+                                                >
+                                                    <Euro className="h-5 w-5" />
+                                                </Button>
                                             )}
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button 
-                                                        size="icon" 
-                                                        className="h-10 w-10 bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-none flex-shrink-0 transition-transform active:scale-95"
-                                                        onClick={(e) => { e.stopPropagation(); onEditAppointment(slot.appointment!); }}
-                                                    >
-                                                        <Edit className="h-5 w-5" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent><p className='font-bold text-blue-950'>Editar</p></TooltipContent>
-                                            </Tooltip>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button 
-                                                        size="icon" 
-                                                        className="h-10 w-10 bg-red-600 hover:bg-red-700 text-white shadow-lg border-none flex-shrink-0 transition-transform active:scale-95"
-                                                        onClick={(e) => { e.stopPropagation(); onDeleteAppointment(slot.appointment!.id); }}
-                                                    >
-                                                        <Trash2 className="h-5 w-5" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent><p className='font-bold text-red-950'>Eliminar</p></TooltipContent>
-                                            </Tooltip>
+                                            <Button 
+                                                size="icon" 
+                                                className="h-10 w-10 bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-none flex-shrink-0 transition-transform active:scale-95"
+                                                onClick={(e) => { e.stopPropagation(); onEditAppointment(slot.appointment!); }}
+                                                title="Editar Cita"
+                                                aria-label="Editar Cita"
+                                            >
+                                                <Edit className="h-5 w-5" />
+                                            </Button>
+                                            <Button 
+                                                size="icon" 
+                                                className="h-10 w-10 bg-red-600 hover:bg-red-700 text-white shadow-lg border-none flex-shrink-0 transition-transform active:scale-95"
+                                                onClick={(e) => { e.stopPropagation(); onDeleteAppointment(slot.appointment!.id); }}
+                                                title="Eliminar Cita"
+                                                aria-label="Eliminar Cita"
+                                            >
+                                                <Trash2 className="h-5 w-5" />
+                                            </Button>
                                         </div>
                                     </Card>
                                 </motion.div>
@@ -159,6 +148,5 @@ export function TimeSlotView({
                     );
                 })}
             </div>
-        </TooltipProvider>
     );
 }

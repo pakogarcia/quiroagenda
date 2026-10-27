@@ -228,42 +228,49 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
             render={({ field }) => (
                 <FormItem className="flex flex-col">
                 <FormLabel>Fecha</FormLabel>
-                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                    <PopoverTrigger asChild>
+                <div className="flex items-center gap-1.5">
                     <FormControl>
-                        <Button
-                        type="button"
-                        variant={"outline"}
-                        className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                        )}
-                        >
-                        {field.value ? (
-                            format(new Date(field.value), "PPP", { locale: es })
-                        ) : (
-                            <span>Elige una fecha</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <Input 
+                            type="date"
+                            className="flex-1 font-semibold text-sm bg-background border-input shadow-sm"
+                            value={field.value ? format(new Date(field.value), 'yyyy-MM-dd') : ''}
+                            onChange={(e) => {
+                                if (e.target.value) {
+                                    const [y, m, d] = e.target.value.split('-').map(Number);
+                                    field.onChange(new Date(y, m - 1, d));
+                                }
+                            }}
+                        />
                     </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[100]" align="start">
-                    <Calendar
-                        mode="single"
-                        selected={field.value ? new Date(field.value) : undefined}
-                        onSelect={(newDate) => {
-                            if (newDate) {
-                                field.onChange(newDate);
-                                setIsCalendarOpen(false);
-                            }
-                        }}
-                        initialFocus
-                        locale={es}
-                        disabled={blockedDates}
-                    />
-                    </PopoverContent>
-                </Popover>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                            type="button"
+                            variant={"outline"}
+                            size="icon"
+                            className="shrink-0 h-10 w-10 border-primary/30 shadow-sm"
+                            title="Calendario visual"
+                            >
+                            <CalendarIcon className="h-4 w-4 text-primary" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(newDate) => {
+                                if (newDate) {
+                                    field.onChange(newDate);
+                                    setIsCalendarOpen(false);
+                                }
+                            }}
+                            initialFocus
+                            locale={es}
+                            disabled={blockedDates}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                </div>
                 <FormMessage />
                 </FormItem>
             )}
