@@ -400,7 +400,7 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
               <div>
                 <Label className="text-sm font-bold text-foreground flex items-center gap-2 mb-2">
                   <CalendarDays className="w-4 h-4 text-primary" />
-                  1. Selecciona el Día
+                  Selecciona el Día
                 </Label>
                 <div className="border rounded-xl p-3 bg-card shadow-sm space-y-2">
                   <div className="flex justify-center">
@@ -446,7 +446,7 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
               <div>
                 <Label className="text-sm font-bold text-foreground flex items-center gap-2 mb-2">
                   <Clock className="w-4 h-4 text-primary" />
-                  2. Horas Disponibles para {selectedDate ? format(selectedDate, 'EEEE, d \'de\' MMMM', { locale: es }) : ''} ({activeDurationLabel})
+                  Horas Disponibles para {selectedDate ? format(selectedDate, 'EEEE, d \'de\' MMMM', { locale: es }) : ''} ({activeDurationLabel})
                 </Label>
 
                 {isLoadingSlots ? (
