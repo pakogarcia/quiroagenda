@@ -58,7 +58,12 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = React.useState<'loading' | 'unlocked' | 'locked' | 'setup'>('loading');
   const [storedHash, setStoredHash] = React.useState<string | null>(null);
 
-  const isPublicRoute = (pathname === '/' || pathname?.startsWith('/reservas') || pathname?.startsWith('/api')) && !pathname?.startsWith('/admin');
+  const isPublicRoute = (
+    pathname === '/' || 
+    pathname?.startsWith('/reservas') || 
+    pathname?.startsWith('/mi-cuenta') || 
+    pathname?.startsWith('/api')
+  ) && !pathname?.startsWith('/admin');
 
   React.useEffect(() => {
     if (isPublicRoute) {
