@@ -37,7 +37,10 @@ import {
   Sun,
   Moon,
   Sparkles,
-  Loader2
+  Loader2,
+  MessageCircle,
+  Bell,
+  Send
 } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -83,19 +86,26 @@ const profileSchema = z.object({
   name: z.string().min(2, 'El nombre del negocio es obligatorio.'),
   address: z.string().optional(),
   phone: z.string().optional(),
+  whatsapp: z.string().optional(),
   logo: z.string().optional(),
   website: z.string().url().or(z.literal('')).optional(),
   instagram: z.string().url().or(z.literal('')).optional(),
   facebook: z.string().url().or(z.literal('')).optional(),
   tiktok: z.string().url().or(z.literal('')).optional(),
   youtube: z.string().url().or(z.literal('')).optional(),
+  telegram: z.string().url().or(z.literal('')).optional(),
   openingHours: z.object({
       morning: z.object({ start: z.string(), end: z.string(), enabled: z.boolean() }),
       afternoon: z.object({ start: z.string(), end: z.string(), enabled: z.boolean() })
   }).optional(),
   weeklySchedule: weeklyScheduleSchema.optional(),
   vacations: z.array(z.object({ from: z.string(), to: z.string() })).optional(),
-  minNoticeHours: z.coerce.number().min(0, 'El valor mínimo es 0 horas').max(168, 'El valor máximo es 168 horas').default(6).optional()
+  minNoticeHours: z.coerce.number().min(0, 'El valor mínimo es 0 horas').max(168, 'El valor máximo es 168 horas').default(6).optional(),
+  notifications: z.object({
+    telegramBotToken: z.string().optional(),
+    telegramChatId: z.string().optional(),
+    webhookUrl: z.string().url().or(z.literal('')).optional(),
+  }).optional()
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -138,6 +148,7 @@ export default function ProfilePage() {
   const [isExportConfirmOpen, setIsExportConfirmOpen] = React.useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isTestingTelegram, setIsTestingTelegram] = React.useState(false);
   
   const [newVacation, setNewVacation] = React.useState<DateRange | undefined>();
   const [newBlockedDate, setNewBlockedDate] = React.useState<Date | undefined>();
@@ -154,18 +165,25 @@ export default function ProfilePage() {
       name: profile?.name || '',
       address: profile?.address || '',
       phone: profile?.phone || '',
+      whatsapp: profile?.whatsapp || '+34 634 43 24 87',
       website: profile?.website || '',
       instagram: profile?.instagram || '',
       facebook: profile?.facebook || '',
       tiktok: profile?.tiktok || '',
       youtube: profile?.youtube || '',
+      telegram: profile?.telegram || 'https://t.me/quiromasajescordoba',
       openingHours: profile?.openingHours || {
         morning: { start: '08:30', end: '14:00', enabled: true },
         afternoon: { start: '16:30', end: '20:30', enabled: true }
       },
       weeklySchedule: buildInitialWeeklySchedule(profile),
       vacations: profile?.vacations || [],
-      minNoticeHours: profile?.minNoticeHours !== undefined ? profile.minNoticeHours : 6
+      minNoticeHours: profile?.minNoticeHours !== undefined ? profile.minNoticeHours : 6,
+      notifications: profile?.notifications || {
+        telegramBotToken: '',
+        telegramChatId: '',
+        webhookUrl: '',
+      }
     },
   });
 
@@ -178,11 +196,13 @@ export default function ProfilePage() {
         name: profile.name || '',
         address: profile.address || '',
         phone: profile.phone || '',
+        whatsapp: profile.whatsapp || '+34 634 43 24 87',
         website: profile.website || '',
         instagram: profile.instagram || '',
         facebook: profile.facebook || '',
         tiktok: profile.tiktok || '',
         youtube: profile.youtube || '',
+        telegram: profile.telegram || 'https://t.me/quiromasajescordoba',
         logo: profile.logo,
         openingHours: profile.openingHours || {
           morning: { start: '08:30', end: '14:00', enabled: true },
@@ -190,7 +210,12 @@ export default function ProfilePage() {
         },
         weeklySchedule: buildInitialWeeklySchedule(profile),
         vacations: profile.vacations || [],
-        minNoticeHours: profile.minNoticeHours !== undefined ? profile.minNoticeHours : 6
+        minNoticeHours: profile.minNoticeHours !== undefined ? profile.minNoticeHours : 6,
+        notifications: profile.notifications || {
+          telegramBotToken: '',
+          telegramChatId: '',
+          webhookUrl: '',
+        }
       });
     }
   }, [profile, form]);
@@ -316,6 +341,47 @@ export default function ProfilePage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    const token = form.getValues('notifications.telegramBotToken');
+    const chatId = form.getValues('notifications.telegramChatId');
+    if (!token || !chatId) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Faltan datos de Telegram', 
+        description: 'Introduce el Token del Bot y tu Chat ID para poder hacer la prueba.' 
+      });
+      return;
+    }
+    setIsTestingTelegram(true);
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token.trim()}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId.trim(),
+          text: '🔔 <b>¡Prueba de QuiroAgenda Exitosa!</b>\n\nTu bot de Telegram está vinculado y listo para avisarte al instante cuando entre cualquier reserva online.',
+          parse_mode: 'HTML'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.description || 'Telegram rechazó el envío');
+      }
+      toast({
+        title: '¡Notificación Recibida!',
+        description: 'Revisa tu Telegram, acabas de recibir el mensaje de confirmación.',
+      });
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error de Conexión con Telegram',
+        description: err.message || 'Verifica que el Bot Token y el Chat ID sean correctos.',
+      });
+    } finally {
+      setIsTestingTelegram(false);
     }
   };
 
@@ -450,8 +516,19 @@ export default function ProfilePage() {
                             )}/>
                             <FormField control={form.control} name="phone" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" />Teléfono de Contacto</FormLabel>
+                                    <FormLabel className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" />Teléfono de Llamadas / Contacto</FormLabel>
                                     <FormControl><Input placeholder="626 10 57 93" {...field} value={field.value ?? ''} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="whatsapp" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2">
+                                      <MessageCircle className="w-4 h-4 text-emerald-600" />
+                                      WhatsApp Business (Atención y Confirmaciones de Citas)
+                                    </FormLabel>
+                                    <FormControl><Input placeholder="+34 634 43 24 87" {...field} value={field.value ?? ''} /></FormControl>
+                                    <p className="text-xs text-muted-foreground">Número oficial donde tus clientes te escribirán dudas y confirmarán citas con 1 clic.</p>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
@@ -487,6 +564,12 @@ export default function ProfilePage() {
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Video className="w-4 h-4 text-slate-800" />TikTok</FormLabel>
                                     <FormControl><Input placeholder="https://tiktok.com/@..." {...field} value={field.value ?? ''} /></FormControl>
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="telegram" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2"><Send className="w-4 h-4 text-sky-500" />Canal o Enlace de Telegram</FormLabel>
+                                    <FormControl><Input placeholder="https://t.me/quiromasajescordoba" {...field} value={field.value ?? ''} /></FormControl>
                                 </FormItem>
                             )}/>
                         </CardContent>
@@ -999,6 +1082,94 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
+                        </CardContent>
+                    </Card>
+
+                    {/* Tarjeta: Notificaciones Instantáneas de Reservas (Gratuito) */}
+                    <Card className="shadow-lg border-primary/10">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-bold font-headline text-primary flex items-center gap-2">
+                              <Bell className="w-5 h-5 text-primary" />
+                              Avisos Instantáneos en tu Móvil (100% Gratuito)
+                            </CardTitle>
+                            <CardDescription>
+                              Recibe un mensaje en tu Telegram en el mismo segundo en que un cliente reserve una cita por la web, con todos los datos y un botón directo para contactarle por WhatsApp.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
+                              <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                                <Sparkles className="w-4 h-4 text-amber-600" />
+                                ¿Cómo activarlo en 2 minutos gratis?
+                              </div>
+                              <ol className="text-xs text-muted-foreground list-decimal list-inside space-y-1.5 pl-1 leading-relaxed">
+                                <li>En Telegram, busca el usuario <strong>@BotFather</strong> y escribe <code>/newbot</code>. Dale el nombre <em>QuiroAgenda Avisos</em> y copia el <strong>Token</strong> que te proporcione.</li>
+                                <li>Abre tu nuevo bot y pulsa <em>Iniciar</em> o envíale un mensaje cualquiera.</li>
+                                <li>Para saber tu <strong>Chat ID</strong>, busca en Telegram <strong>@userinfobot</strong> y te dirá tu número de Id al instante.</li>
+                                <li>Pega aquí ambos valores y pulsa el botón de prueba para comprobar que te llega el aviso.</li>
+                              </ol>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="notifications.telegramBotToken"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-xs font-bold">Token del Bot de Telegram</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="password"
+                                        placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ" 
+                                        {...field} 
+                                        value={field.value ?? ''} 
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="notifications.telegramChatId"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-xs font-bold">Tu Chat ID de Telegram</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="ej. 123456789" 
+                                        {...field} 
+                                        value={field.value ?? ''} 
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleTestTelegram}
+                                disabled={isTestingTelegram}
+                                className="font-semibold text-xs border-sky-300 text-sky-800 hover:bg-sky-50"
+                              >
+                                {isTestingTelegram ? (
+                                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                ) : (
+                                  <Send className="w-3.5 h-3.5 mr-1.5 text-sky-600" />
+                                )}
+                                Probar Notificación en mi Telegram
+                              </Button>
+
+                              <p className="text-[11px] text-muted-foreground italic">
+                                Si lo dejas vacío, no se enviarán avisos externos y las citas seguirán guardándose en la agenda como siempre.
+                              </p>
+                            </div>
                         </CardContent>
                     </Card>
 

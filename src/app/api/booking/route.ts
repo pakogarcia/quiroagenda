@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { parseISO, format, set, addMinutes, isSameDay, isBefore, startOfToday } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { calculateAvailableSlots, madridDateTimeToUtc } from '@/lib/availability';
 
 interface BookingRequestBody {
@@ -160,6 +161,39 @@ export async function POST(request: Request) {
       clients: updatedClients,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
+
+    // 6. Notificación automática instantánea a Pako por Telegram si está configurado (100% gratuito)
+    const notif = profile?.notifications;
+    if (notif?.telegramBotToken && notif?.telegramChatId) {
+      try {
+        const dateFormatted = format(selectedDate, "EEEE, d 'de' MMMM", { locale: es });
+        const cleanClientPhone = (clientPhone || '').replace(/\D/g, '');
+        const telegramText = 
+          `🔔 <b>¡NUEVA CITA RESERVADA EN LA WEB!</b>\n\n` +
+          `👤 <b>Cliente:</b> ${clientName.trim()}\n` +
+          `📞 <b>Teléfono:</b> <a href="tel:${cleanClientPhone}">${clientPhone.trim()}</a>\n` +
+          (clientEmail ? `📧 <b>Email:</b> ${clientEmail.trim()}\n` : '') +
+          `💆 <b>Servicio:</b> ${serviceTitle} (${durationMinutes || 60} min)\n` +
+          `📅 <b>Fecha:</b> ${dateFormatted}\n` +
+          `⏰ <b>Hora:</b> ${timeSlot} h\n` +
+          `💰 <b>Importe:</b> ${price ? price + '€' : 'Consultar'}\n` +
+          (notes ? `📝 <b>Nota:</b> <i>${notes.trim()}</i>\n` : '') +
+          `\n💬 <a href="https://wa.me/${cleanClientPhone}?text=Hola%20${encodeURIComponent(clientName.trim())},%20he%20recibido%20tu%20reserva%20para%20el%20${encodeURIComponent(dateFormatted)}%20a%20las%20${timeSlot}h">Contactar cliente por WhatsApp</a>\n` +
+          `📅 <a href="https://citas.pakogarcia.es/admin">Abrir QuiroAgenda</a>`;
+
+        await fetch(`https://api.telegram.org/bot${notif.telegramBotToken.trim()}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: notif.telegramChatId.trim(),
+            text: telegramText,
+            parse_mode: 'HTML',
+          }),
+        });
+      } catch (tgError) {
+        console.error('Error enviando notificación automática de Telegram:', tgError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

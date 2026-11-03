@@ -942,20 +942,23 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2 pt-2">
+              <div className="flex flex-col gap-2.5 pt-2">
                 <a
                   href={`https://wa.me/34634432487?text=${encodeURIComponent(
-                    `Hola Pako, acabo de reservar cita para ${service.title} (${activeDurationLabel}) el ${format(selectedDate!, "d 'de' MMMM", { locale: es })} a las ${confirmedData.timeSlot}h a nombre de ${confirmedData.clientName}.`
+                    `Hola Pako, acabo de reservar cita para ${service.title} (${activeDurationLabel}) el ${format(selectedDate!, "EEEE, d 'de' MMMM", { locale: es })} a las ${confirmedData.timeSlot}h a nombre de ${confirmedData.clientName}.`
                   )}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 h-12 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2.5 h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all hover:scale-[1.02] text-base"
                 >
-                  <MessageCircle className="w-5 h-5 fill-white" />
-                  Avisar por WhatsApp
+                  <MessageCircle className="w-6 h-6 fill-white" />
+                  Avisar a Pako por WhatsApp
                 </a>
+                <p className="text-[11px] text-muted-foreground text-center">
+                  (Opcional) Abre WhatsApp con los datos de tu cita ya redactados para mayor tranquilidad.
+                </p>
 
-                <Button variant="outline" onClick={onClose} className="h-11 font-medium">
+                <Button variant="outline" onClick={onClose} className="h-11 font-medium rounded-xl mt-1">
                   Cerrar y volver al Catálogo
                 </Button>
               </div>

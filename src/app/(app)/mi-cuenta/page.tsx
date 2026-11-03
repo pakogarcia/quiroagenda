@@ -743,16 +743,16 @@ export default function ClientPortalPage() {
                             Añadir a Google Calendar
                           </a>
                         </Button>
-                        <Button variant="outline" size="sm" asChild className="text-xs font-semibold text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                        <Button variant="outline" size="sm" asChild className="text-xs font-semibold text-emerald-800 border-emerald-300 hover:bg-emerald-50">
                           <a 
                             href={`https://wa.me/34634432487?text=${encodeURIComponent(
-                              `Hola Pako, te escribo en relación a mi cita del ${safeFormatDate(apt.dateTime, "d 'de' MMMM 'a las' HH:mm'h'")}.`
+                              `Hola Pako, soy ${sessionClient.name} ${sessionClient.lastName || ''}. Te escribo en relación a mi cita de ${apt.serviceName || 'masaje'} del ${safeFormatDate(apt.dateTime, "d 'de' MMMM 'a las' HH:mm'h'")}: `
                             )}`}
                             target="_blank"
                             rel="noreferrer"
                           >
-                            <MessageCircle className="w-3.5 h-3.5 mr-1" />
-                            Avisar por WhatsApp
+                            <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                            Modificar / Avisar por WhatsApp
                           </a>
                         </Button>
                       </CardFooter>

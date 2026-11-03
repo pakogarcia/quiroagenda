@@ -72,12 +72,14 @@ export type BusinessProfile = {
   name: string;
   address: string;
   phone: string;
+  whatsapp?: string; // Número de WhatsApp Business (ej. "+34 634 43 24 87")
   logo?: string;
   website?: string;
   instagram?: string;
   facebook?: string;
   tiktok?: string;
   youtube?: string;
+  telegram?: string;
   openingHours?: {
     morning: { start: string; end: string; enabled: boolean };
     afternoon: { start: string; end: string; enabled: boolean };
@@ -85,6 +87,11 @@ export type BusinessProfile = {
   weeklySchedule?: WeeklySchedule;
   vacations?: Vacation[];
   minNoticeHours?: number; // Tiempo mínimo de antelación en horas para reservas online (ej. 6)
+  notifications?: {
+    telegramBotToken?: string;
+    telegramChatId?: string;
+    webhookUrl?: string;
+  };
 };
 
 export type VoucherSale = {
