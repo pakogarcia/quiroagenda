@@ -277,7 +277,12 @@ export default function AgendaView() {
             <DialogHeader>
               <DialogTitle>{editingAppointment ? 'Editar Cita' : 'Añadir Nueva Cita'}</DialogTitle>
             </DialogHeader>
-            <AppointmentForm onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment} appointment={editingAppointment} selectedDate={selectedDate} />
+            <AppointmentForm 
+              key={editingAppointment ? editingAppointment.id : (selectedDate ? selectedDate.toISOString() : 'new')}
+              onSubmit={editingAppointment ? (data) => handleUpdateAppointment(editingAppointment.id, data) : handleAddAppointment} 
+              appointment={editingAppointment} 
+              selectedDate={selectedDate} 
+            />
         </DialogContent>
       </Dialog>
 

@@ -41,6 +41,7 @@ type AppointmentFormProps = {
 export function AppointmentForm({ onSubmit, appointment, selectedDate }: AppointmentFormProps) {
   const { clients, services, blockedDays, appointments } = useAppData();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+  const [selectedClientId, setSelectedClientId] = React.useState<string>('');
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -55,23 +56,46 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
   });
 
   React.useEffect(() => {
-    form.reset({
-      clientName: appointment?.clientName || '',
-      clientPhone: appointment?.clientPhone || '+34 ',
-      date: appointment?.dateTime ? new Date(appointment.dateTime) : (selectedDate ? new Date(selectedDate) : new Date()),
-      time: appointment ? format(new Date(appointment.dateTime), 'HH:mm') : (selectedDate ? format(new Date(selectedDate), 'HH:mm') : '10:00'),
-      notes: appointment?.notes || '',
-      serviceId: appointment?.serviceId || services[0]?.id || undefined,
-    });
-  }, [appointment, selectedDate, form, services]);
+    if (appointment) {
+      form.reset({
+        clientName: appointment.clientName || '',
+        clientPhone: appointment.clientPhone || '+34 ',
+        date: appointment.dateTime ? new Date(appointment.dateTime) : (selectedDate ? new Date(selectedDate) : new Date()),
+        time: appointment.dateTime ? format(new Date(appointment.dateTime), 'HH:mm') : '10:00',
+        notes: appointment.notes || '',
+        serviceId: appointment.serviceId || services[0]?.id || undefined,
+      });
+      const matchingClient = clients.find(c => 
+        `${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (appointment.clientName || '').toLowerCase() ||
+        (appointment.clientPhone && c.phone === appointment.clientPhone)
+      );
+      if (matchingClient) {
+        setSelectedClientId(matchingClient.id);
+      }
+    } else {
+      setSelectedClientId('');
+      form.reset({
+        clientName: '',
+        clientPhone: '+34 ',
+        date: selectedDate ? new Date(selectedDate) : new Date(),
+        time: selectedDate ? format(new Date(selectedDate), 'HH:mm') : '10:00',
+        notes: '',
+        serviceId: services[0]?.id || undefined,
+      });
+    }
+  }, [appointment, selectedDate]);
 
   const handleClientChange = (clientId: string) => {
-      const selectedClient = clients.find(c => c.id === clientId);
-      if (selectedClient) {
-          form.setValue('clientName', `${selectedClient.name} ${selectedClient.lastName || ''}`.trim(), { shouldValidate: true });
-          form.setValue('clientPhone', selectedClient.phone, { shouldValidate: true });
-      }
+    setSelectedClientId(clientId);
+    const selectedClient = clients.find(c => c.id === clientId);
+    if (selectedClient) {
+      const fullName = `${selectedClient.name} ${selectedClient.lastName || ''}`.trim();
+      form.setValue('clientName', fullName, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+      form.setValue('clientPhone', selectedClient.phone || '+34 ', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    }
   };
+
+  const selectedClient = clients.find(c => c.id === selectedClientId);
   
   const handleSubmit = (values: AppointmentFormValues) => {
     const [hours, minutes] = values.time.split(':').map(Number);
@@ -152,18 +176,25 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
         {clients.length > 0 && (
             <div className="space-y-2">
               <Label>Seleccionar Cliente Existente</Label>
-              <Select onValueChange={handleClientChange}>
+              <Select value={selectedClientId} onValueChange={handleClientChange}>
                   <SelectTrigger>
                       <SelectValue placeholder="Elegir de la lista para autocompletar" />
                   </SelectTrigger>
                   <SelectContent>
                       {clients.map(client => (
                           <SelectItem key={client.id} value={client.id}>
-                              {`${client.name} ${client.lastName}`}
+                              {`${client.name} ${client.lastName || ''}`.trim()}
                           </SelectItem>
                       ))}
                   </SelectContent>
               </Select>
+
+              {selectedClient?.voucher && selectedClient.voucher.sessions > 0 && (
+                <div className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
+                  <span>⭐ Bono activo disponible</span>
+                  <span className="font-bold">{selectedClient.voucher.sessions} {selectedClient.voucher.sessions === 1 ? 'sesión restante' : 'sesiones restantes'}</span>
+                </div>
+              )}
             </div>
         )}
 
