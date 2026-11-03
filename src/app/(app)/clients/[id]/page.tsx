@@ -50,8 +50,28 @@ export default function ClientDetailPage() {
             if (currentClient) {
                 setClient(currentClient);
 
+                const cleanClientPhone = (currentClient.phone || '').replace(/\D/g, '');
+                const clientFullName = `${currentClient.name || ''} ${currentClient.lastName || ''}`.trim().toLowerCase();
+
                 const appointmentsForClient: HistoryItem[] = appointments
-                    .filter(apt => apt.clientPhone === currentClient.phone)
+                    .filter(apt => {
+                        // 1. Direct clientId match
+                        if (apt.clientId && apt.clientId === currentClient.id) return true;
+
+                        // 2. Exact phone string match
+                        if (apt.clientPhone && currentClient.phone && apt.clientPhone === currentClient.phone) return true;
+
+                        // 3. Normalized 9 digits (Spanish standard telephone number)
+                        if (cleanClientPhone && cleanClientPhone.length >= 9) {
+                            const aptPhoneDigits = (apt.clientPhone || '').replace(/\D/g, '');
+                            if (aptPhoneDigits.endsWith(cleanClientPhone.slice(-9))) return true;
+                        }
+
+                        // 4. Client name match as fallback
+                        if (clientFullName && apt.clientName && apt.clientName.trim().toLowerCase() === clientFullName) return true;
+
+                        return false;
+                    })
                     .map(apt => ({...apt, type: 'appointment'}));
                 
                 const voucherSalesForClient: HistoryItem[] = voucherSales

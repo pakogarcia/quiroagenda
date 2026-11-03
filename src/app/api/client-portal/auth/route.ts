@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       const clientAppointments = appointments.filter((apt: any) => {
         const aptPhoneNorm = normalizePhone(apt.clientPhone);
         const aptNameNorm = (apt.clientName || '').trim().toLowerCase();
-        return (aptPhoneNorm && aptPhoneNorm === normalizedTarget) || (aptNameNorm && aptNameNorm === clientNameFull);
+        return (apt.clientId && apt.clientId === client.id) || (aptPhoneNorm && aptPhoneNorm === normalizedTarget) || (aptNameNorm && aptNameNorm === clientNameFull);
       });
 
       const today = startOfToday();
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
       const clientAppointments = appointments.filter((apt: any) => {
         const aptPhoneNorm = normalizePhone(apt.clientPhone);
         const aptNameNorm = (apt.clientName || '').trim().toLowerCase();
-        return (aptPhoneNorm && aptPhoneNorm === normalizedTarget) || (aptNameNorm && aptNameNorm === clientNameFull);
+        return (apt.clientId && apt.clientId === client.id) || (aptPhoneNorm && aptPhoneNorm === normalizedTarget) || (aptNameNorm && aptNameNorm === clientNameFull);
       });
 
       const today = startOfToday();
@@ -172,7 +172,43 @@ export async function POST(request: Request) {
       });
     }
 
-    // 4. RESET PIN (Admin reset)
+    // 4. REFRESH CLIENT SESSION APPOINTMENTS
+    if (action === 'refresh') {
+      if (!client) {
+        return NextResponse.json({ error: 'Cliente no encontrado.' }, { status: 404 });
+      }
+
+      const clientNameFull = `${client.name} ${client.lastName || ''}`.trim().toLowerCase();
+      const clientAppointments = appointments.filter((apt: any) => {
+        const aptPhoneNorm = normalizePhone(apt.clientPhone);
+        const aptNameNorm = (apt.clientName || '').trim().toLowerCase();
+        return (apt.clientId && apt.clientId === client.id) || (aptPhoneNorm && aptPhoneNorm === normalizedTarget) || (aptNameNorm && aptNameNorm === clientNameFull);
+      });
+
+      const today = startOfToday();
+      const upcoming = clientAppointments
+        .filter((a: any) => new Date(a.dateTime) >= today && a.status === 'scheduled')
+        .sort((a: any, b: any) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+
+      const past = clientAppointments
+        .filter((a: any) => new Date(a.dateTime) < today || a.status !== 'scheduled')
+        .sort((a: any, b: any) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+
+      return NextResponse.json({
+        success: true,
+        client: {
+          id: client.id,
+          name: client.name,
+          lastName: client.lastName,
+          phone: client.phone,
+          voucher: client.voucher,
+        },
+        upcomingAppointments: upcoming,
+        pastAppointments: past,
+      });
+    }
+
+    // 5. RESET PIN (Admin reset)
     if (action === 'reset_pin') {
       const targetId = clientId || (client ? client.id : null);
       if (!targetId) {

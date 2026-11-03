@@ -8,6 +8,7 @@ export type Payment = {
 
 export type Appointment = {
   id: string;
+  clientId?: string;
   clientName: string;
   clientPhone: string;
   dateTime: Date;

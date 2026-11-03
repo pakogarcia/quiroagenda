@@ -222,8 +222,21 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                         const snap = await getDoc(syncDocRef);
                         const cloudData = snap.exists() ? snap.data() : {};
                         const cloudClients: any[] = cloudData.clients || [];
+                        const cloudAppointments: any[] = cloudData.appointments || [];
 
-                        // Preservar siempre los PINs creados por clientes en la web
+                        // 1. Fusionar citas sin perder citas creadas en tiempo real vía web
+                        const apptUnion = new Map<string, any>();
+                        cloudAppointments.forEach((a: any) => {
+                            if (a && a.id) apptUnion.set(a.id, a);
+                        });
+                        appointments.forEach((a: any) => {
+                            if (a && a.id) {
+                                apptUnion.set(a.id, { ...a, dateTime: new Date(a.dateTime).toISOString() });
+                            }
+                        });
+                        const safeAppointments = Array.from(apptUnion.values());
+
+                        // 2. Preservar siempre los PINs y fusionar nuevos clientes creados vía web
                         const safeClients = clients.map((c) => {
                             if (!c.pinHash) {
                                 const matched = cloudClients.find((cc) => cc.id === c.id);
@@ -234,9 +247,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                             return c;
                         });
 
+                        const clientUnion = new Map<string, any>();
+                        cloudClients.forEach((c: any) => {
+                            if (c && c.id) clientUnion.set(c.id, c);
+                        });
+                        safeClients.forEach((c: any) => {
+                            if (c && c.id) clientUnion.set(c.id, c);
+                        });
+                        const safeClientsList = Array.from(clientUnion.values());
+
                         await setDoc(syncDocRef, {
-                            appointments: appointments.map(a => ({ ...a, dateTime: new Date(a.dateTime).toISOString() })),
-                            clients: safeClients,
+                            appointments: safeAppointments,
+                            clients: safeClientsList,
                             services,
                             blockedDays,
                             profile,

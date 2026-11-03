@@ -66,8 +66,8 @@ export default function AgendaView() {
   const dailyAppointments = React.useMemo(() => {
     if (!selectedDate) return [];
     return appointments
-      .filter((apt) => isSameDay(apt.dateTime, selectedDate))
-      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+      .filter((apt) => apt && apt.dateTime && isSameDay(new Date(apt.dateTime), selectedDate))
+      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
   }, [appointments, selectedDate]);
   
   const timeSlots = React.useMemo(() => {

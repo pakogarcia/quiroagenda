@@ -85,11 +85,47 @@ export async function POST(request: Request) {
       }, { status: 409 });
     }
 
-    // 3. Crear el objeto de cita con hora UTC exacta convertida desde Madrid
+    // 3. Actualizar o crear ficha del cliente en Firestore
+    const existingClients = cloudData.clients || [];
+    let clientFound = false;
+    let targetClientId = '';
+    const updatedClients = [...existingClients];
+
+    for (let i = 0; i < updatedClients.length; i++) {
+      const c = updatedClients[i];
+      const cPhoneClean = (c.phone || '').replace(/\D/g, '');
+      if (cPhoneClean.endsWith(cleanPhone.slice(-9))) {
+        clientFound = true;
+        targetClientId = c.id;
+        // Si no tenía email guardado y ahora sí, actualizar
+        if (clientEmail && !c.details?.includes(clientEmail)) {
+          c.details = (c.details ? c.details + ' ' : '') + `[Email: ${clientEmail}]`;
+        }
+        break;
+      }
+    }
+
+    if (!clientFound) {
+      targetClientId = 'cli_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      const nameParts = clientName.trim().split(' ');
+      const firstName = nameParts[0] || clientName;
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      updatedClients.push({
+        id: targetClientId,
+        name: firstName,
+        lastName: lastName,
+        phone: clientPhone.trim(),
+        details: clientEmail ? `Email: ${clientEmail.trim()}` : '',
+      });
+    }
+
+    // 4. Crear el objeto de cita con hora UTC exacta convertida desde Madrid y clientId asignado
     const appointmentDateTimeIso = madridDateTimeToUtc(dateStr, timeSlot);
     const newAppointmentId = 'apt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     const newAppointment = {
       id: newAppointmentId,
+      clientId: targetClientId,
       clientName: clientName.trim(),
       clientPhone: clientPhone.trim(),
       clientEmail: clientEmail?.trim() || '',
@@ -104,38 +140,6 @@ export async function POST(request: Request) {
       source: 'web_direct',
       createdAt: new Date().toISOString(),
     };
-
-    // 4. Actualizar o crear ficha del cliente en Firestore
-    const existingClients = cloudData.clients || [];
-    let clientFound = false;
-    const updatedClients = [...existingClients];
-
-    for (let i = 0; i < updatedClients.length; i++) {
-      const c = updatedClients[i];
-      const cPhoneClean = (c.phone || '').replace(/\D/g, '');
-      if (cPhoneClean.endsWith(cleanPhone.slice(-9))) {
-        clientFound = true;
-        // Si no tenía email guardado y ahora sí, actualizar
-        if (clientEmail && !c.details?.includes(clientEmail)) {
-          c.details = (c.details ? c.details + ' ' : '') + `[Email: ${clientEmail}]`;
-        }
-        break;
-      }
-    }
-
-    if (!clientFound) {
-      const nameParts = clientName.trim().split(' ');
-      const firstName = nameParts[0] || clientName;
-      const lastName = nameParts.slice(1).join(' ') || '';
-
-      updatedClients.push({
-        id: 'cli_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-        name: firstName,
-        lastName: lastName,
-        phone: clientPhone.trim(),
-        details: clientEmail ? `Email: ${clientEmail.trim()}` : '',
-      });
-    }
 
     // 5. Guardado atómico en Firestore
     const updatedAppointments = [...existingAppointments, newAppointment];

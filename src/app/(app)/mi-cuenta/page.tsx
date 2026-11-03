@@ -51,6 +51,7 @@ export default function ClientPortalPage() {
 
   // Restore session from localStorage if present
   React.useEffect(() => {
+    let activePhone = '';
     try {
       const saved = localStorage.getItem(CLIENT_SESSION_KEY);
       if (saved) {
@@ -60,12 +61,66 @@ export default function ClientPortalPage() {
           setUpcomingAppointments(parsed.upcomingAppointments || []);
           setPastAppointments(parsed.pastAppointments || []);
           setPhoneInput(parsed.phone);
+          activePhone = parsed.phone;
         }
       }
     } catch (e) {
       console.error('Error restaurando sesión de cliente:', e);
     } finally {
       setIsInitializing(false);
+    }
+
+    if (activePhone) {
+      refreshAppointments(activePhone);
+    }
+
+    const handleWindowFocus = () => {
+      const saved = localStorage.getItem(CLIENT_SESSION_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.phone) {
+            refreshAppointments(parsed.phone);
+          }
+        } catch (e) {}
+      }
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
+  }, []);
+
+  const refreshAppointments = React.useCallback(async (phone: string) => {
+    try {
+      const res = await fetch('/api/client-portal/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'refresh', phone }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setUpcomingAppointments(data.upcomingAppointments || []);
+          setPastAppointments(data.pastAppointments || []);
+          if (data.client) {
+            setSessionClient(data.client);
+          }
+          const saved = localStorage.getItem(CLIENT_SESSION_KEY);
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify({
+                ...parsed,
+                client: data.client || parsed.client,
+                upcomingAppointments: data.upcomingAppointments || [],
+                pastAppointments: data.pastAppointments || [],
+              }));
+            } catch (err) {}
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error refrescando citas en área de clientes:', e);
     }
   }, []);
 
