@@ -533,14 +533,23 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
           {/* PASO 3A: CLIENTE HABITUAL / ACCESO CON FICHA EXISTENTE */}
           {step === 'client_existing' && (
             <div className="space-y-4">
-              <button
-                type="button"
-                onClick={() => setStep('client_choice')}
-                className="text-xs font-bold text-primary flex items-center gap-1 hover:underline mb-2"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Volver a elegir si soy cliente o nuevo
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-muted">
+                <button
+                  type="button"
+                  onClick={() => setStep('schedule')}
+                  className="text-xs font-bold text-primary flex items-center gap-1 hover:underline"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Cambiar día u hora ({selectedDate ? format(selectedDate, 'dd/MM/yyyy') : ''} a las {selectedSlot} h)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep('client_choice')}
+                  className="text-xs text-muted-foreground hover:underline"
+                >
+                  Elegir si soy cliente nuevo
+                </button>
+              </div>
 
               {!existingClientData ? (
                 /* Formulario de búsqueda rápida por teléfono */
@@ -619,7 +628,7 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
                       <button
                         type="button"
                         onClick={() => setExistingClientData(null)}
-                        className="text-xs text-emerald-700 hover:underline"
+                        className="text-xs text-emerald-700 hover:underline font-semibold"
                       >
                         Cambiar teléfono
                       </button>
@@ -637,6 +646,34 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
                         </span>
                       </div>
                     )}
+                  </div>
+
+                  {/* Resumen visible de la cita con botón para cambiar cualquier aspecto */}
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+                        Detalles de la cita a confirmar:
+                      </span>
+                      <div className="font-bold text-foreground flex items-center gap-1.5">
+                        <CalendarDays className="w-4 h-4 text-primary shrink-0" />
+                        <span>
+                          {selectedDate ? format(selectedDate, "EEEE, d 'de' MMMM", { locale: es }) : ''} a las {selectedSlot} h
+                        </span>
+                      </div>
+                      <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>{service.title} ({activeDurationLabel}) · {activePriceLabel}</span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStep('schedule')}
+                      className="h-8 text-xs font-bold border-amber-600/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 shrink-0"
+                    >
+                      Cambiar Cita
+                    </Button>
                   </div>
 
                   {/* Notas opcionales */}
@@ -660,20 +697,29 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
                     </div>
                   )}
 
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="w-full h-12 text-base font-bold bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-xl"
-                  >
-                    {isSubmitting ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Confirmando reserva...
-                      </span>
-                    ) : (
-                      `Confirmar Reserva en 1 Clic · ${activePriceLabel}`
-                    )}
-                  </Button>
+                  <div className="pt-2 flex flex-col gap-2">
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      className="w-full h-12 text-base font-bold bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-xl"
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Confirmando reserva...
+                        </span>
+                      ) : (
+                        `Confirmar Reserva en 1 Clic · ${activePriceLabel}`
+                      )}
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => setStep('schedule')}
+                      className="text-xs text-center text-muted-foreground hover:underline py-1"
+                    >
+                      ← ¿Quieres elegir otro día, hora o duración? Pulsa aquí
+                    </button>
+                  </div>
                 </form>
               )}
             </div>
@@ -682,14 +728,23 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
           {/* PASO 3B: FORMULARIO CLIENTE NUEVO (SIN CORREO) */}
           {step === 'client_new' && (
             <form onSubmit={(e) => handleConfirmBooking(e, false)} className="space-y-4">
-              <button
-                type="button"
-                onClick={() => setStep('client_choice')}
-                className="text-xs font-bold text-primary flex items-center gap-1 hover:underline mb-2"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Volver a elegir si soy cliente o nuevo
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-muted">
+                <button
+                  type="button"
+                  onClick={() => setStep('schedule')}
+                  className="text-xs font-bold text-primary flex items-center gap-1 hover:underline"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Cambiar día u hora ({selectedDate ? format(selectedDate, 'dd/MM/yyyy') : ''} a las {selectedSlot} h)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep('client_choice')}
+                  className="text-xs text-muted-foreground hover:underline"
+                >
+                  Elegir si ya soy cliente
+                </button>
+              </div>
 
               <div className="space-y-1">
                 <h3 className="text-lg font-bold font-headline text-foreground flex items-center gap-2">
@@ -699,6 +754,34 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
                 <p className="text-xs text-muted-foreground">
                   Solo necesitamos tu nombre y tu teléfono móvil para agendar tu sesión.
                 </p>
+              </div>
+
+              {/* Resumen visible de la cita con botón para cambiar cualquier aspecto */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+                    Detalles de la cita a confirmar:
+                  </span>
+                  <div className="font-bold text-foreground flex items-center gap-1.5">
+                    <CalendarDays className="w-4 h-4 text-primary shrink-0" />
+                    <span>
+                      {selectedDate ? format(selectedDate, "EEEE, d 'de' MMMM", { locale: es }) : ''} a las {selectedSlot} h
+                    </span>
+                  </div>
+                  <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                    <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>{service.title} ({activeDurationLabel}) · {activePriceLabel}</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStep('schedule')}
+                  className="h-8 text-xs font-bold border-amber-600/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 shrink-0"
+                >
+                  Cambiar Cita
+                </Button>
               </div>
 
               <div className="space-y-2">
@@ -753,7 +836,7 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
                 </div>
               )}
 
-              <div className="pt-2">
+              <div className="pt-2 flex flex-col gap-2">
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
@@ -768,6 +851,13 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
                     `Confirmar Reserva · ${activePriceLabel}`
                   )}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => setStep('schedule')}
+                  className="text-xs text-center text-muted-foreground hover:underline py-1"
+                >
+                  ← ¿Quieres elegir otro día, hora o duración? Pulsa aquí
+                </button>
               </div>
             </form>
           )}
