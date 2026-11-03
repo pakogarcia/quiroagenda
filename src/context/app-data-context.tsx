@@ -59,7 +59,7 @@ type AppDataContextType = {
     isLoading: boolean;
     loadData: () => void;
     exportData: () => void;
-    importData: (jsonString: string) => void;
+    importData: (jsonString: string) => Promise<void>;
 };
 
 const AppDataContext = React.createContext<AppDataContextType | undefined>(undefined);
@@ -74,10 +74,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     const [expenses, setExpenses] = React.useState<Expense[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     
-    // Tracks if cloud data has been loaded at least once
     const isCloudLoadedRef = React.useRef(false);
 
-    // 1. Initial Local Storage Hydration (Immediate display, zero delay)
+    // 1. Initial Local Storage Hydration
     const loadLocalFallback = React.useCallback(() => {
         try {
             if (typeof window === 'undefined') return;
@@ -140,7 +139,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    // 2. Cloud Firestore Realtime Sync (Central source of truth for all devices)
+    // 2. Cloud Firestore Realtime Sync
     React.useEffect(() => {
         loadLocalFallback();
 
@@ -150,7 +149,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             if (docSnap.exists()) {
                 const cloud = docSnap.data();
 
-                // Only overwrite if cloud actually has appointments/clients array
+                // Hydrate from cloud if present
                 if (cloud.appointments && Array.isArray(cloud.appointments) && cloud.appointments.length > 0) {
                     setAppointments(
                         cloud.appointments
@@ -200,7 +199,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     // 3. Auto-Save to Local Storage AND Cloud Firestore
     React.useEffect(() => {
         if (!isLoading) {
-            // Local Storage mirror (fast & offline)
             localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
             localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
             localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
@@ -210,8 +208,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(expenses));
             window.dispatchEvent(new Event('storage'));
 
-            // Cloud Firestore persistence
-            if (isCloudLoadedRef.current) {
+            // Sync to Firestore only if we have real data to avoid saving blank states
+            if (isCloudLoadedRef.current && (appointments.length > 0 || clients.length > 0)) {
                 const timer = setTimeout(async () => {
                     try {
                         const syncDocRef = doc(db, 'gabinete_data', 'main');
@@ -340,17 +338,17 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         link.click();
     };
 
-    const importData = (jsonString: string) => {
+    const importData = async (jsonString: string) => {
         const data = JSON.parse(jsonString);
         STORAGE_KEYS.forEach(key => {
             if (data[key]) localStorage.setItem(key, JSON.stringify(data[key]));
         });
         loadLocalFallback();
         
-        // Push imported data directly to Firestore
+        // Push imported data directly to Firestore AND wait for completion
         try {
             const syncDocRef = doc(db, 'gabinete_data', 'main');
-            setDoc(syncDocRef, {
+            await setDoc(syncDocRef, {
                 appointments: data[APPOINTMENTS_STORAGE_KEY] || [],
                 clients: data[CLIENTS_STORAGE_KEY] || [],
                 services: data[SERVICES_STORAGE_KEY] || getInitialServices(),
@@ -361,7 +359,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 updatedAt: new Date().toISOString()
             }, { merge: true });
         } catch (importCloudErr) {
-            console.warn("Could not push import to Firestore:", importCloudErr);
+            console.error("Could not push import to Firestore:", importCloudErr);
+            throw importCloudErr;
         }
     };
 

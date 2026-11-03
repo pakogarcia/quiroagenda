@@ -146,16 +146,16 @@ export default function ProfilePage() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const text = e.target?.result;
             if (typeof text !== 'string') {
                 throw new Error("El archivo no es válido.");
             }
-            importData(text);
+            await importData(text);
             toast({
                 title: 'Importación completada',
-                description: 'Tus datos han sido restaurados. La aplicación se recargará ahora.'
+                description: 'Tus datos han sido restaurados y sincronizados con la nube. La aplicación se recargará ahora.'
             });
             setTimeout(() => {
                 window.location.reload();
@@ -166,7 +166,7 @@ export default function ProfilePage() {
             toast({
                 variant: 'destructive',
                 title: 'Error de importación',
-                description: 'El archivo de copia de seguridad no es válido.'
+                description: 'El archivo de copia de seguridad no es válido o hubo un fallo de red.'
             });
         }
     };
