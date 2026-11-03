@@ -1,5 +1,6 @@
 import { format, isSameDay, set, addMinutes, isBefore, startOfToday, parseISO } from 'date-fns';
 import type { Appointment, BusinessProfile } from './types';
+import { getDaySchedule } from './schedule';
 
 export interface TimeSlotAvailability {
   time: string;       // Formato 'HH:mm'
@@ -8,7 +9,7 @@ export interface TimeSlotAvailability {
 
 /**
  * Motor central de disponibilidad: calcula las franjas horarias libres
- * considerando horario laboral, descansos, citas activas, vacaciones y días bloqueados.
+ * considerando horario laboral por día de la semana, descansos, citas activas, vacaciones y días bloqueados.
  */
 export function calculateAvailableSlots({
   date,
@@ -38,10 +39,13 @@ export function calculateAvailableSlots({
     }
   }
 
-  // 2. Obtener horarios de mañana y tarde (por defecto 09:00-14:00 y 16:00-20:00)
-  const openingHours = profile?.openingHours;
-  const morning = openingHours?.morning || { start: '09:00', end: '14:00', enabled: true };
-  const afternoon = openingHours?.afternoon || { start: '16:00', end: '20:00', enabled: true };
+  // 2. Obtener horario configurado para este día específico de la semana (Lunes a Domingo)
+  const daySchedule = getDaySchedule(profile, date);
+  if (!daySchedule || !daySchedule.enabled) {
+    return []; // Gabinete cerrado este día
+  }
+
+  const { morning, afternoon } = daySchedule;
 
   // 3. Filtrar citas del día que ocupen tiempo (scheduled o completed)
   const dayAppointments = appointments.filter((apt) => {

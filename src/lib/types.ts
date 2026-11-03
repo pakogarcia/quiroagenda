@@ -42,6 +42,30 @@ export type Vacation = {
   to: string;   // ISO string
 };
 
+export type ShiftHours = {
+  start: string; // "HH:mm"
+  end: string;   // "HH:mm"
+  enabled: boolean;
+};
+
+export type DaySchedule = {
+  enabled: boolean;
+  morning: ShiftHours;
+  afternoon: ShiftHours;
+};
+
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+export type WeeklySchedule = {
+  monday: DaySchedule;
+  tuesday: DaySchedule;
+  wednesday: DaySchedule;
+  thursday: DaySchedule;
+  friday: DaySchedule;
+  saturday: DaySchedule;
+  sunday: DaySchedule;
+};
+
 export type BusinessProfile = {
   name: string;
   address: string;
@@ -53,9 +77,10 @@ export type BusinessProfile = {
   tiktok?: string;
   youtube?: string;
   openingHours?: {
-    morning: { start: string; end: string; enabled: boolean }; // "HH:mm"
-    afternoon: { start: string; end: string; enabled: boolean }; // "HH:mm"
+    morning: { start: string; end: string; enabled: boolean };
+    afternoon: { start: string; end: string; enabled: boolean };
   };
+  weeklySchedule?: WeeklySchedule;
   vacations?: Vacation[];
 };
 

@@ -52,13 +52,13 @@ export default function ManualPage() {
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="calcom">
-                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-primary'><Globe className="w-4 h-4 text-primary" />Sincronización con Cal.com (Reservas Online)</div></AccordionTrigger>
+                <AccordionItem value="reservas-online">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-primary'><Globe className="w-4 h-4 text-primary" />Reservas Online Directas y Área de Clientes</div></AccordionTrigger>
                   <AccordionContent className="space-y-4 text-muted-foreground">
-                    <p>Sincroniza tus reservas externas directamente en tu dietario:</p>
+                    <p>QuiroAgenda dispone de su propio sistema de reservas online 100% independiente:</p>
                     <ul className="list-disc pl-5 space-y-2">
-                      <li><strong>Conexión Webhook:</strong> Copia tu dirección de Webhook desde la sección "Quién Eres" y pégala en tu panel de Cal.com (Settings &gt; Webhooks).</li>
-                      <li><strong>Ocupación Automática de Hueco:</strong> Cada vez que un cliente pida cita desde tu enlace público <code>cal.com/pakogarcia</code>, QuiroAgenda la recibirá e insertará automáticamente en tu agenda en segundo plano.</li>
+                      <li><strong>Catálogo y Reserva Directa (/reservas):</strong> Tus clientes eligen servicio, duración y franja horaria en tiempo real según tus horarios semanales configurados. La cita se guarda al instante en tu agenda en la nube.</li>
+                      <li><strong>Área de Clientes (/mi-cuenta):</strong> Acceso privado con su teléfono móvil y un PIN de 4 dígitos para consultar sus citas programadas, historial y saldo de sesiones en sus bonos activos.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>

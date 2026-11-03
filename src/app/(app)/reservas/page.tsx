@@ -44,7 +44,7 @@ type ServiceLink = {
   title: string;
   category: 'relax' | 'descontracturante' | 'holistico' | 'salud';
   categoryLabel: string;
-  url: string;
+  url?: string;
   isWhatsApp?: boolean;
   duration: string;
   mainPrice: string;
@@ -62,7 +62,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Masaje Circulatorio',
     category: 'salud',
     categoryLabel: 'Salud & Vigor',
-    url: 'https://cal.com/pakogarcia/masaje-circulatorio',
     duration: '60 min',
     mainPrice: '25€',
     icon: HeartPulse,
@@ -75,7 +74,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Masaje de Pies (Reflexología Podal)',
     category: 'relax',
     categoryLabel: 'Relajación Podal',
-    url: 'https://cal.com/pakogarcia/masaje-de-pies',
     duration: '15 min / 30 min',
     mainPrice: 'Desde 8€',
     priceTiers: [
@@ -92,7 +90,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Alquimia Massage',
     category: 'holistico',
     categoryLabel: 'Experiencia Holística',
-    url: 'https://cal.com/pakogarcia/alquimia-massage',
     duration: '75 min',
     mainPrice: '30€',
     icon: Sparkles,
@@ -106,7 +103,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Masaje Integral (Cuerpo Entero)',
     category: 'relax',
     categoryLabel: 'Bienestar Global',
-    url: 'https://cal.com/pakogarcia/masaje-integral',
     duration: '60 min',
     mainPrice: '40€',
     icon: Sun,
@@ -120,7 +116,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Vulcan Massage (Piedras Calientes)',
     category: 'holistico',
     categoryLabel: 'Terapia Térmica',
-    url: 'https://cal.com/pakogarcia/vulcan-massage',
     duration: '60 min',
     mainPrice: '35€',
     icon: Flame,
@@ -148,7 +143,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Masaje Parejas',
     category: 'relax',
     categoryLabel: 'Experiencias Compartidas',
-    url: 'https://cal.com/pakogarcia/masaje-pareja',
     duration: '120 min (2 horas)',
     mainPrice: '43€ (2 personas)',
     icon: Users,
@@ -161,7 +155,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Candle Massage (Velas de Karité)',
     category: 'holistico',
     categoryLabel: 'Nutritivo & Sensorial',
-    url: 'https://cal.com/pakogarcia/candle-massage',
     duration: '60 min',
     mainPrice: '35€',
     icon: Flame,
@@ -174,7 +167,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Masaje Relax',
     category: 'relax',
     categoryLabel: 'Relajación Absoluta',
-    url: 'https://cal.com/pakogarcia/masaje-relax',
     duration: '30 min a 90 min',
     mainPrice: 'Desde 15€',
     priceTiers: [
@@ -194,7 +186,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Espalda y Piernas',
     category: 'descontracturante',
     categoryLabel: 'Descontracturante Focal',
-    url: 'https://cal.com/pakogarcia/espalda-piernas',
     duration: '30 min / 60 min',
     mainPrice: 'Desde 15€',
     priceTiers: [
@@ -211,7 +202,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Espalda y Cuello',
     category: 'descontracturante',
     categoryLabel: 'Descontracturante Tensional',
-    url: 'https://cal.com/pakogarcia/espalda-cuello',
     duration: '30 min / 60 min',
     mainPrice: 'Desde 15€',
     priceTiers: [
@@ -229,7 +219,6 @@ const SERVICES: ServiceLink[] = [
     title: 'Drenaje Linfático Manual',
     category: 'salud',
     categoryLabel: 'Salud & Depuración',
-    url: 'https://cal.com/pakogarcia/drenaje-linfatico',
     duration: '45 min',
     mainPrice: '45€',
     icon: Droplets,

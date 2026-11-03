@@ -62,6 +62,8 @@ type AppDataContextType = {
     addAppointment: (apt: Appointment) => Promise<void>;
     updateAppointment: (id: string, data: Partial<Appointment>) => Promise<void>;
     deleteAppointment: (id: string) => Promise<void>;
+    setCloudBlockedDays: (days: string[]) => Promise<void>;
+    updateProfile: (newProfile: BusinessProfile) => Promise<void>;
     exportData: () => void;
     importData: (jsonString: string) => Promise<void>;
 };
@@ -237,89 +239,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         }
     }, [appointments, clients, services, blockedDays, profile, voucherSales, expenses, isLoading]);
 
-    // 4. Cal.com Online Booking Auto-Sync (Unrestricted & Fast 15s Polling)
-    React.useEffect(() => {
-        const syncCalBookings = async () => {
-            try {
-                const res = await fetch('/api/webhooks/cal?sync=1');
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data.bookings && data.bookings.length > 0) {
-                    setClients((prevClients) => {
-                        const updatedClients = [...prevClients];
-                        let clientsChanged = false;
-
-                        for (const item of data.bookings) {
-                            const rawPhone = item.clientPhone || '';
-                            const cleanPhone = rawPhone.replace(/\D/g, '');
-                            const phoneLast9 = cleanPhone.length >= 9 ? cleanPhone.slice(-9) : cleanPhone;
-                            const normalizedName = (item.clientName || 'Cliente Cal.com').trim().toLowerCase();
-                            const itemEmail = (item.clientEmail || '').trim().toLowerCase();
-
-                            const clientExists = updatedClients.some((c) => {
-                                const cPhoneClean = (c.phone || '').replace(/\D/g, '');
-                                const cNameClean = `${c.name} ${c.lastName}`.trim().toLowerCase();
-                                const cFirstNameClean = c.name.trim().toLowerCase();
-
-                                return (
-                                    (phoneLast9.length >= 7 && cPhoneClean.endsWith(phoneLast9)) ||
-                                    (normalizedName.length > 2 && (cNameClean === normalizedName || cFirstNameClean === normalizedName)) ||
-                                    (itemEmail.length > 4 && (c.details || '').toLowerCase().includes(itemEmail))
-                                );
-                            });
-
-                            if (!clientExists) {
-                                const nameParts = (item.clientName || 'Cliente Cal.com').trim().split(' ');
-                                const firstName = nameParts[0] || 'Cliente';
-                                const lastName = nameParts.slice(1).join(' ') || '';
-
-                                updatedClients.push({
-                                    id: 'client_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                                    name: firstName,
-                                    lastName: lastName,
-                                    phone: item.clientPhone || 'Sin teléfono',
-                                    details: `Registrado automáticamente desde reserva online Cal.com${itemEmail ? ` (${itemEmail})` : ''}`,
-                                });
-                                clientsChanged = true;
-                            }
-                        }
-                        return clientsChanged ? updatedClients : prevClients;
-                    });
-
-                    setAppointments((prev) => {
-                        const newApts = [...prev];
-                        let updated = false;
-                        for (const item of data.bookings) {
-                            const itemDate = new Date(item.dateTime);
-                            if (isNaN(itemDate.getTime())) continue;
-
-                            const exists = newApts.some(
-                                (apt) =>
-                                    apt.id === item.id ||
-                                    (apt.clientName === item.clientName &&
-                                     Math.abs(new Date(apt.dateTime).getTime() - itemDate.getTime()) < 300000)
-                            );
-                            if (!exists) {
-                                newApts.push({
-                                    ...item,
-                                    dateTime: itemDate,
-                                });
-                                updated = true;
-                            }
-                        }
-                        return updated ? newApts : prev;
-                    });
-                }
-            } catch (e) {
-                console.warn('Error en sincronización Cal.com:', e);
-            }
-        };
-
-        syncCalBookings();
-        const interval = setInterval(syncCalBookings, 15000);
-
-        return () => clearInterval(interval);
-    }, []);
+    // 4. (Cal.com auto-sync removido - QuiroAgenda ahora gestiona reservas directamente)
 
     const refreshData = React.useCallback(async () => {
         try {
@@ -425,6 +345,40 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const setCloudBlockedDays = async (newBlockedDays: string[]) => {
+        setBlockedDays(newBlockedDays);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(BLOCKED_DAYS_STORAGE_KEY, JSON.stringify(newBlockedDays));
+        }
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            await setDoc(syncDocRef, {
+                blockedDays: newBlockedDays,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } catch (err) {
+            console.error("Error direct saving blocked days:", err);
+            throw err;
+        }
+    };
+
+    const updateProfile = async (newProfile: BusinessProfile) => {
+        setProfile(newProfile);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(newProfile));
+        }
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            await setDoc(syncDocRef, {
+                profile: newProfile,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } catch (err) {
+            console.error("Error direct saving profile:", err);
+            throw err;
+        }
+    };
+
     // Auto-refresh when tab gains focus or visibility changes
     React.useEffect(() => {
         const handleVisibilityOrFocus = () => {
@@ -496,6 +450,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             addAppointment,
             updateAppointment,
             deleteAppointment,
+            setCloudBlockedDays,
+            updateProfile,
             exportData,
             importData,
         }}>

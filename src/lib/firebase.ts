@@ -6,7 +6,7 @@ const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'quiroagenda',
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:77325796753:web:cb45dc3cfee137f83f8630',
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'quiroagenda.firebasestorage.app',
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBR921D3tLf0QfeBS4d6uhdzCxasd3mV4I',
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'quiroagenda.firebaseapp.com',
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '77325796753',
 };

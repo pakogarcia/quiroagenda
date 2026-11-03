@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppData } from '@/context/app-data-context';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { TimeSlotView } from '@/components/timeslot-view';
+import { getDaySchedule } from '@/lib/schedule';
 
 export default function AgendaView() {
   const { 
@@ -25,6 +26,7 @@ export default function AgendaView() {
     setAppointments, 
     blockedDays, 
     setBlockedDays,
+    setCloudBlockedDays,
     services,
     profile,
     isLoading,
@@ -76,9 +78,9 @@ export default function AgendaView() {
     if (!selectedDate || !profile) return [];
     const slots: TimeSlot[] = [];
     const interval = 15;
-    const { openingHours } = profile;
-    const morning = openingHours?.morning || { start: '09:00', end: '14:00', enabled: true };
-    const afternoon = openingHours?.afternoon || { start: '16:00', end: '20:00', enabled: true };
+    const daySchedule = getDaySchedule(profile, selectedDate);
+    const morning = daySchedule?.morning || { start: '08:30', end: '14:00', enabled: true };
+    const afternoon = daySchedule?.afternoon || { start: '16:30', end: '20:30', enabled: true };
 
     const generateSlotsForPeriod = (startStr: string, endStr: string, isEnabled: boolean) => {
         if (!isEnabled || !startStr || !endStr || startStr === endStr) return;
@@ -92,8 +94,27 @@ export default function AgendaView() {
         }
     };
     
-    generateSlotsForPeriod(morning.start, morning.end, morning.enabled);
-    generateSlotsForPeriod(afternoon.start, afternoon.end, afternoon.enabled);
+    const isDayOpen = daySchedule?.enabled ?? true;
+    if (isDayOpen) {
+      generateSlotsForPeriod(morning.start, morning.end, morning.enabled);
+      generateSlotsForPeriod(afternoon.start, afternoon.end, afternoon.enabled);
+    } else {
+      // Si el día está marcado como no laborable pero el admin lo consulta o hay citas,
+      // mostramos las franjas habituales para gestionar o visualizar
+      generateSlotsForPeriod(morning.start, morning.end, true);
+      if (afternoon.enabled) {
+        generateSlotsForPeriod(afternoon.start, afternoon.end, true);
+      }
+    }
+
+    // Asegurar que cualquier cita registrada tenga su fila visible aunque esté fuera de rango habitual
+    dailyAppointments.forEach(apt => {
+        const aptTime = format(apt.dateTime, 'HH:mm');
+        if (!slots.some(s => s.time === aptTime)) {
+            slots.push({ time: aptTime, isBooked: false });
+        }
+    });
+    slots.sort((a, b) => a.time.localeCompare(b.time));
 
     dailyAppointments.forEach(apt => {
         if (apt.status === 'scheduled' || apt.status === 'completed' || apt.status === 'no-show') {
@@ -226,16 +247,21 @@ export default function AgendaView() {
     setFinishingAppointment(null);
   };
 
-  const handleToggleBlockDay = () => {
+  const handleToggleBlockDay = async () => {
     if (!selectedDate) return;
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     if (blockedDays.includes(dateStr)) {
-        setBlockedDays(prev => prev.filter(d => d !== dateStr));
-        toast({ title: 'Día Desbloqueado' });
+        const next = blockedDays.filter(d => d !== dateStr);
+        await setCloudBlockedDays(next);
+        toast({ title: 'Día Desbloqueado', description: `El día ${format(selectedDate, 'dd/MM/yyyy')} vuelve a estar disponible.` });
     } else {
-        if (dailyAppointments.length > 0) { toast({ variant: 'destructive', title: 'Error', description: 'No se puede bloquear un día con citas.' }); return; }
-        setBlockedDays(prev => [...prev, dateStr]);
-        toast({ title: 'Día Bloqueado' });
+        if (dailyAppointments.length > 0) { 
+            toast({ variant: 'destructive', title: 'Error', description: 'No se puede bloquear un día con citas programadas.' }); 
+            return; 
+        }
+        const next = [...blockedDays, dateStr];
+        await setCloudBlockedDays(next);
+        toast({ title: 'Día Bloqueado', description: `El día ${format(selectedDate, 'dd/MM/yyyy')} marcado como inhábil / festivo.` });
     }
   };
 
