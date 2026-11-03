@@ -141,19 +141,10 @@ export function calculateAvailableSlots({
   const shifts = [daySchedule.morning, daySchedule.afternoon];
   const availableSlots: string[] = [];
 
-  // Si la fecha evaluada es hoy, calcular el umbral mínimo (30 min de antelación)
-  const isToday = targetDateStr === todayStr;
-  let currentMadridMinutes = 0;
-  if (isToday) {
-    const currentMadridTime = now.toLocaleTimeString('es-ES', { 
-      timeZone: TIMEZONE, 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false 
-    });
-    const [curH, curM] = currentMadridTime.split(':').map(Number);
-    currentMadridMinutes = curH * 60 + curM + 30; // 30 minutos de antelación mínima
-  }
+  // Antelación mínima configurada en horas (por defecto 6 horas si no está definida)
+  const minNoticeHours = typeof profile?.minNoticeHours === 'number' ? profile.minNoticeHours : 6;
+  const minNoticeMs = Math.max(0, minNoticeHours) * 60 * 60 * 1000;
+  const cutoffTimestamp = Date.now() + minNoticeMs;
 
   for (const shift of shifts) {
     if (!shift.enabled || !shift.start || !shift.end || shift.start === shift.end) continue;
@@ -167,10 +158,13 @@ export function calculateAvailableSlots({
       slotStartMin + serviceDurationMinutes <= shiftEndMin; 
       slotStartMin += 15
     ) {
+      const slotTimeStr = minutesToTimeStr(slotStartMin);
       const slotEndMin = slotStartMin + serviceDurationMinutes;
 
-      // Descartar si ya pasó la hora en el día de hoy
-      if (isToday && slotStartMin < currentMadridMinutes) {
+      // Descartar si el slot está dentro del margen de antelación mínima exigida
+      const slotUtcIso = madridDateTimeToUtc(targetDateStr, slotTimeStr);
+      const slotTimestamp = new Date(slotUtcIso).getTime();
+      if (slotTimestamp < cutoffTimestamp) {
         continue;
       }
 
@@ -180,7 +174,7 @@ export function calculateAvailableSlots({
       );
 
       if (!collides) {
-        availableSlots.push(minutesToTimeStr(slotStartMin));
+        availableSlots.push(slotTimeStr);
       }
     }
   }

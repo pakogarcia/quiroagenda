@@ -69,6 +69,17 @@ export async function POST(request: Request) {
     const profile = cloudData.profile || null;
     const blockedDays = cloudData.blockedDays || [];
 
+    // Validar antelación mínima exigida (ej. 6 horas por defecto)
+    const minNoticeHours = typeof profile?.minNoticeHours === 'number' ? profile.minNoticeHours : 6;
+    const minNoticeMs = Math.max(0, minNoticeHours) * 60 * 60 * 1000;
+    const slotUtcIso = madridDateTimeToUtc(dateStr, timeSlot);
+    const slotTimestamp = new Date(slotUtcIso).getTime();
+    if (slotTimestamp < Date.now() + minNoticeMs) {
+      return NextResponse.json({
+        error: `Las citas deben reservarse con un mínimo de ${minNoticeHours} hora${minNoticeHours === 1 ? '' : 's'} de antelación.`
+      }, { status: 400 });
+    }
+
     // Validar con el motor de disponibilidad si ese hueco sigue libre en zona de Madrid
     const availableSlots = calculateAvailableSlots({
       date: dateStr,

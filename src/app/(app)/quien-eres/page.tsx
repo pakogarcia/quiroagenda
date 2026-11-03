@@ -94,7 +94,8 @@ const profileSchema = z.object({
       afternoon: z.object({ start: z.string(), end: z.string(), enabled: z.boolean() })
   }).optional(),
   weeklySchedule: weeklyScheduleSchema.optional(),
-  vacations: z.array(z.object({ from: z.string(), to: z.string() })).optional()
+  vacations: z.array(z.object({ from: z.string(), to: z.string() })).optional(),
+  minNoticeHours: z.coerce.number().min(0, 'El valor mínimo es 0 horas').max(168, 'El valor máximo es 168 horas').default(6).optional()
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -163,7 +164,8 @@ export default function ProfilePage() {
         afternoon: { start: '16:30', end: '20:30', enabled: true }
       },
       weeklySchedule: buildInitialWeeklySchedule(profile),
-      vacations: profile?.vacations || []
+      vacations: profile?.vacations || [],
+      minNoticeHours: profile?.minNoticeHours !== undefined ? profile.minNoticeHours : 6
     },
   });
 
@@ -187,7 +189,8 @@ export default function ProfilePage() {
           afternoon: { start: '16:30', end: '20:30', enabled: true }
         },
         weeklySchedule: buildInitialWeeklySchedule(profile),
-        vacations: profile.vacations || []
+        vacations: profile.vacations || [],
+        minNoticeHours: profile.minNoticeHours !== undefined ? profile.minNoticeHours : 6
       });
     }
   }, [profile, form]);
@@ -736,6 +739,89 @@ export default function ProfilePage() {
                                   );
                                 })}
                             </Tabs>
+                        </CardContent>
+                    </Card>
+
+                    {/* Tarjeta: Antelación Mínima para Reservas Online */}
+                    <Card className="shadow-lg border-primary/10">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-bold font-headline text-primary flex items-center gap-2">
+                              <Clock className="w-5 h-5 text-primary" />
+                              Antelación Mínima para Reservas Online
+                            </CardTitle>
+                            <CardDescription>
+                              Tiempo mínimo de aviso previo necesario para que los clientes puedan solicitar cita desde la web. Evita reservas imprevistas de última hora y te da tiempo para preparar la sesión y el gabinete.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="minNoticeHours"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-muted/20 border">
+                                            <div>
+                                              <FormLabel className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                                Horas mínimas de antelación
+                                              </FormLabel>
+                                              <p className="text-xs text-muted-foreground mt-0.5">
+                                                Si fijas 6 horas y un cliente entra a las 14:00h, la primera cita disponible que verá será a partir de las 20:00h.
+                                              </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <FormControl>
+                                                    <Input
+                                                      type="number"
+                                                      min={0}
+                                                      max={72}
+                                                      step={1}
+                                                      className="w-24 text-center font-bold text-lg h-11 bg-background"
+                                                      {...field}
+                                                      value={field.value ?? 6}
+                                                      onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                                    />
+                                                </FormControl>
+                                                <span className="font-semibold text-slate-700 text-sm">horas</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Botones de selección rápida */}
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                          <span className="text-xs text-muted-foreground mr-1">Accesos rápidos:</span>
+                                          {[
+                                            { hours: 2, label: '2 horas' },
+                                            { hours: 4, label: '4 horas' },
+                                            { hours: 6, label: '6 horas (Recomendado)' },
+                                            { hours: 12, label: '12 horas' },
+                                            { hours: 24, label: '24 horas (1 día)' },
+                                          ].map((preset) => (
+                                            <Button
+                                              key={preset.hours}
+                                              type="button"
+                                              variant={Number(field.value) === preset.hours ? 'default' : 'outline'}
+                                              size="sm"
+                                              className="h-8 text-xs font-medium"
+                                              onClick={() => form.setValue('minNoticeHours', preset.hours, { shouldDirty: true, shouldTouch: true, shouldValidate: true })}
+                                            >
+                                              {preset.label}
+                                            </Button>
+                                          ))}
+                                        </div>
+
+                                        <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+                                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                          <div>
+                                            <strong className="font-semibold">¿Cómo funciona para tus clientes?</strong>
+                                            <p className="mt-0.5 text-amber-800">
+                                              Al ver el calendario en tu portal de citas, todas las franjas horarias dentro de las próximas <strong>{field.value || 6} horas</strong> quedan automáticamente excluidas. Si para hoy no queda ninguna hora libre que cumpla ese margen de antelación, el día aparecerá como completo/no disponible y el calendario sugerirá directamente el día siguiente con citas libres.
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
 

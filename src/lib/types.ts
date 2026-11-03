@@ -84,6 +84,7 @@ export type BusinessProfile = {
   };
   weeklySchedule?: WeeklySchedule;
   vacations?: Vacation[];
+  minNoticeHours?: number; // Tiempo mínimo de antelación en horas para reservas online (ej. 6)
 };
 
 export type VoucherSale = {
