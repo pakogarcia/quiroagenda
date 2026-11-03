@@ -3,13 +3,17 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { 
   Lock, 
   Phone, 
@@ -26,7 +30,9 @@ import {
   CalendarCheck,
   History,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  CalendarX,
+  CalendarClock
 } from 'lucide-react';
 import type { Client, Appointment } from '@/lib/types';
 
@@ -48,6 +54,145 @@ export default function ClientPortalPage() {
   const [upcomingAppointments, setUpcomingAppointments] = React.useState<Appointment[]>([]);
   const [pastAppointments, setPastAppointments] = React.useState<Appointment[]>([]);
   const [isInitializing, setIsInitializing] = React.useState(true);
+
+  const { toast } = useToast();
+
+  // Cancel modal state
+  const [cancellingAppointment, setCancellingAppointment] = React.useState<Appointment | null>(null);
+  const [cancelReason, setCancelReason] = React.useState('');
+  const [isSubmittingCancel, setIsSubmittingCancel] = React.useState(false);
+
+  // Reschedule modal state
+  const [reschedulingAppointment, setReschedulingAppointment] = React.useState<Appointment | null>(null);
+  const [newSelectedDate, setNewSelectedDate] = React.useState<Date | undefined>(() => addDays(new Date(), 1));
+  const [newAvailableSlots, setNewAvailableSlots] = React.useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = React.useState(false);
+  const [selectedNewSlot, setSelectedNewSlot] = React.useState<string | null>(null);
+  const [isSubmittingReschedule, setIsSubmittingReschedule] = React.useState(false);
+
+  // Cargar disponibilidad cuando se abre la reprogramación o cambia la fecha seleccionada
+  React.useEffect(() => {
+    if (!reschedulingAppointment || !newSelectedDate) return;
+    const dateStr = format(newSelectedDate, 'yyyy-MM-dd');
+    const duration = reschedulingAppointment.duration || 60;
+    setIsLoadingSlots(true);
+    setSelectedNewSlot(null);
+
+    fetch(`/api/availability?date=${dateStr}&duration=${duration}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setNewAvailableSlots(data.availableSlots || []);
+      })
+      .catch((err) => {
+        console.error('Error cargando disponibilidad:', err);
+        setNewAvailableSlots([]);
+      })
+      .finally(() => {
+        setIsLoadingSlots(false);
+      });
+  }, [reschedulingAppointment, newSelectedDate]);
+
+  const handleConfirmCancel = async () => {
+    if (!cancellingAppointment || !sessionClient) return;
+    setIsSubmittingCancel(true);
+    try {
+      const res = await fetch('/api/client-portal/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'cancel',
+          phone: sessionClient.phone,
+          clientId: sessionClient.id,
+          appointmentId: cancellingAppointment.id,
+          reason: cancelReason,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo cancelar la cita.');
+      }
+
+      toast({
+        title: 'Cita Cancelada',
+        description: 'Tu cita ha sido cancelada y el hueco ha quedado liberado en la agenda.',
+      });
+
+      const updated = upcomingAppointments.filter((a) => a.id !== cancellingAppointment.id);
+      setUpcomingAppointments(updated);
+
+      try {
+        const saved = localStorage.getItem(CLIENT_SESSION_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          parsed.upcomingAppointments = updated;
+          localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(parsed));
+        }
+      } catch (e) {}
+
+      setCancellingAppointment(null);
+      setCancelReason('');
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'No se pudo cancelar',
+        description: err.message || 'Error al cancelar la cita.',
+      });
+    } finally {
+      setIsSubmittingCancel(false);
+    }
+  };
+
+  const handleConfirmReschedule = async () => {
+    if (!reschedulingAppointment || !sessionClient || !newSelectedDate || !selectedNewSlot) return;
+    setIsSubmittingReschedule(true);
+    try {
+      const newDateStr = format(newSelectedDate, 'yyyy-MM-dd');
+      const res = await fetch('/api/client-portal/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reschedule',
+          phone: sessionClient.phone,
+          clientId: sessionClient.id,
+          appointmentId: reschedulingAppointment.id,
+          newDateStr,
+          newTimeSlot: selectedNewSlot,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo cambiar la cita.');
+      }
+
+      toast({
+        title: '¡Cita Cambiada con Éxito!',
+        description: `Tu cita ha sido reprogramada para el ${format(newSelectedDate, "EEEE, d 'de' MMMM", { locale: es })} a las ${selectedNewSlot} h.`,
+      });
+
+      const updated = upcomingAppointments.map((a) => (a.id === reschedulingAppointment.id ? data.appointment : a));
+      setUpcomingAppointments(updated);
+
+      try {
+        const saved = localStorage.getItem(CLIENT_SESSION_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          parsed.upcomingAppointments = updated;
+          localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(parsed));
+        }
+      } catch (e) {}
+
+      setReschedulingAppointment(null);
+      setSelectedNewSlot(null);
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'No se pudo cambiar la cita',
+        description: err.message || 'Error al reprogramar la cita.',
+      });
+    } finally {
+      setIsSubmittingReschedule(false);
+    }
+  };
 
   // Restore session from localStorage if present
   React.useEffect(() => {
@@ -737,13 +882,43 @@ export default function ClientPortalPage() {
                           </p>
                         )}
                       </CardContent>
-                      <CardFooter className="p-3 bg-slate-50 dark:bg-slate-800/50 border-t border-amber-100 dark:border-slate-800 flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" asChild className="text-xs font-semibold flex-1">
-                          <a href={makeGoogleCalendarUrl(apt)} target="_blank" rel="noreferrer">
-                            Añadir a Google Calendar
-                          </a>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild className="text-xs font-semibold text-emerald-800 border-emerald-300 hover:bg-emerald-50">
+                      <CardFooter className="p-3 bg-slate-50 dark:bg-slate-800/50 border-t border-amber-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5 flex-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setReschedulingAppointment(apt);
+                              setNewSelectedDate(addDays(new Date(), 1));
+                              setSelectedNewSlot(null);
+                            }}
+                            className="text-xs font-bold border-amber-400 bg-amber-50/70 text-amber-950 dark:text-amber-200 hover:bg-amber-100 h-8"
+                          >
+                            <CalendarClock className="w-3.5 h-3.5 mr-1 text-amber-700" />
+                            Cambiar Cita
+                          </Button>
+
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setCancellingAppointment(apt);
+                              setCancelReason('');
+                            }}
+                            className="text-xs font-semibold border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 h-8"
+                          >
+                            <CalendarX className="w-3.5 h-3.5 mr-1" />
+                            Cancelar Cita
+                          </Button>
+
+                          <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground hover:text-foreground h-8">
+                            <a href={makeGoogleCalendarUrl(apt)} target="_blank" rel="noreferrer">
+                              Google Calendar
+                            </a>
+                          </Button>
+                        </div>
+
+                        <Button variant="ghost" size="sm" asChild className="text-xs font-semibold text-emerald-800 hover:bg-emerald-50 h-8 shrink-0">
                           <a 
                             href={`https://wa.me/34634432487?text=${encodeURIComponent(
                               `Hola Pako, soy ${sessionClient.name} ${sessionClient.lastName || ''}. Te escribo en relación a mi cita de ${apt.serviceName || 'masaje'} del ${safeFormatDate(apt.dateTime, "d 'de' MMMM 'a las' HH:mm'h'")}: `
@@ -752,7 +927,7 @@ export default function ClientPortalPage() {
                             rel="noreferrer"
                           >
                             <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                            Modificar / Avisar por WhatsApp
+                            Avisar por WhatsApp
                           </a>
                         </Button>
                       </CardFooter>
@@ -805,6 +980,180 @@ export default function ClientPortalPage() {
         <p className="font-headline font-bold text-amber-100">Pako García Quiromasajes · Gabinete Profesional</p>
         <p className="text-amber-300/70">Tus datos están protegidos y solo son accesibles con tu PIN personal confidencial.</p>
       </footer>
+
+      {/* DIÁLOGO: CANCELAR CITA */}
+      <Dialog open={!!cancellingAppointment} onOpenChange={(open) => !open && setCancellingAppointment(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-2">
+              <CalendarX className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-xl font-bold font-headline text-slate-900">
+              ¿Deseas cancelar esta cita?
+            </DialogTitle>
+            <DialogDescription className="text-slate-600">
+              {cancellingAppointment && (
+                <>
+                  Tu cita para <strong>{cancellingAppointment.serviceName || 'Masaje'}</strong> del{' '}
+                  <strong>{safeFormatDate(cancellingAppointment.dateTime, "EEEE, d 'de' MMMM 'a las' HH:mm'h'")}</strong> será cancelada y el hueco quedará libre en la agenda.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <Label htmlFor="cancelReason" className="text-xs font-semibold text-slate-700">
+              Motivo de la cancelación (opcional):
+            </Label>
+            <Input
+              id="cancelReason"
+              placeholder="ej. Motivos laborales, imprevisto de salud..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Se enviará un aviso inmediato a Pako para que esté informado y no te espere en el gabinete.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancellingAppointment(null)}
+              disabled={isSubmittingCancel}
+            >
+              Volver
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmCancel}
+              disabled={isSubmittingCancel}
+              className="font-bold"
+            >
+              {isSubmittingCancel ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cancelando...
+                </span>
+              ) : (
+                'Sí, Cancelar Cita'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIÁLOGO: REPROGRAMAR / CAMBIAR CITA */}
+      <Dialog open={!!reschedulingAppointment} onOpenChange={(open) => !open && setReschedulingAppointment(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mb-2">
+              <CalendarClock className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-xl font-bold font-headline text-slate-900">
+              Cambiar Día y Hora de tu Cita
+            </DialogTitle>
+            <DialogDescription className="text-slate-600">
+              {reschedulingAppointment && (
+                <>
+                  Cita actual: <strong>{reschedulingAppointment.serviceName || 'Masaje'}</strong> —{' '}
+                  {safeFormatDate(reschedulingAppointment.dateTime, "d 'de' MMMM 'a las' HH:mm'h'")}.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-bold text-slate-800 mb-1.5 block">
+                1. Elige la nueva fecha:
+              </Label>
+              <div className="border rounded-xl p-1 flex justify-center bg-muted/10">
+                <CalendarPicker
+                  mode="single"
+                  selected={newSelectedDate}
+                  onSelect={setNewSelectedDate}
+                  locale={es}
+                  disabled={{ before: addDays(new Date(), 1) }}
+                  initialFocus
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                <span>2. Elige la nueva hora:</span>
+                {newSelectedDate && (
+                  <span className="text-[11px] text-muted-foreground font-normal">
+                    {format(newSelectedDate, "EEEE, d 'de' MMMM", { locale: es })}
+                  </span>
+                )}
+              </Label>
+
+              {isLoadingSlots ? (
+                <div className="p-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                  Buscando horas libres...
+                </div>
+              ) : newAvailableSlots.length === 0 ? (
+                <div className="p-6 border border-dashed rounded-xl text-center text-xs text-muted-foreground bg-muted/20">
+                  No hay horas disponibles para este día. Por favor selecciona otra fecha en el calendario.
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
+                  {newAvailableSlots.map((slot) => {
+                    const isSelected = selectedNewSlot === slot;
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => setSelectedNewSlot(slot)}
+                        className={cn(
+                          "py-2 px-3 rounded-lg text-xs font-bold transition-all border",
+                          isSelected
+                            ? "bg-amber-700 text-white border-amber-800 shadow-sm scale-105"
+                            : "bg-background hover:bg-amber-50 hover:border-amber-300 text-slate-800 border-border"
+                        )}
+                      >
+                        {slot} h
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReschedulingAppointment(null)}
+              disabled={isSubmittingReschedule}
+            >
+              Volver
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmReschedule}
+              disabled={!selectedNewSlot || isSubmittingReschedule}
+              className="bg-amber-800 hover:bg-amber-900 text-white font-bold"
+            >
+              {isSubmittingReschedule ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cambiando cita...
+                </span>
+              ) : (
+                `Confirmar cambio a las ${selectedNewSlot ? selectedNewSlot + 'h' : '...'}`
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
