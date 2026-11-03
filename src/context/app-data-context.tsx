@@ -81,6 +81,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = React.useState(true);
     
     const isCloudLoadedRef = React.useRef(false);
+    const isIncomingFromCloudRef = React.useRef(false);
 
     // 1. Initial Local Storage Hydration
     const loadLocalFallback = React.useCallback(() => {
@@ -153,6 +154,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
         const unsubscribe = onSnapshot(syncDocRef, (docSnap) => {
             if (docSnap.exists()) {
+                isIncomingFromCloudRef.current = true;
                 const cloud = docSnap.data();
 
                 // Hydrate from cloud if present
@@ -213,6 +215,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem(VOUCHER_SALES_STORAGE_KEY, JSON.stringify(voucherSales));
             localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(expenses));
             window.dispatchEvent(new Event('storage'));
+
+            // Evitar bucle infinito de auto-guardado si el cambio proviene de una actualización entrante de Firestore
+            if (isIncomingFromCloudRef.current) {
+                isIncomingFromCloudRef.current = false;
+                return;
+            }
 
             // Sync to Firestore only if we have real data to avoid saving blank states
             if (isCloudLoadedRef.current && (appointments.length > 0 || clients.length > 0)) {

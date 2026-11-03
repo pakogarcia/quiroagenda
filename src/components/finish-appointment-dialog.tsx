@@ -62,14 +62,23 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   });
 
+  const initializedAppointmentIdRef = React.useRef<string | null>(null);
+
   React.useEffect(() => {
-    if (appointment) {
+    if (appointment && appointment.id !== initializedAppointmentIdRef.current) {
+        initializedAppointmentIdRef.current = appointment.id;
         const initialStep = isEditing ? 'paymentForm' : 'selectAction';
         setStep(initialStep);
         setConfirmationData(null);
 
         const defaultPayment = appointment.payment;
-        const currentClient = clients.find(c => c.phone === appointment.clientPhone);
+        const cleanAptPhone = (appointment.clientPhone || '').replace(/\D/g, '');
+        const currentClient = clients.find(c => 
+            (appointment.clientId && c.id === appointment.clientId) ||
+            (c.phone && appointment.clientPhone && c.phone === appointment.clientPhone) ||
+            (cleanAptPhone.length >= 9 && (c.phone || '').replace(/\D/g, '').endsWith(cleanAptPhone.slice(-9))) ||
+            (`${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (appointment.clientName || '').trim().toLowerCase())
+        );
         
         const defaultAmount = defaultPayment?.method !== 'voucher'
             ? defaultPayment?.amount ?? appointment?.servicePrice
@@ -83,14 +92,22 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 : (currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined),
             refundVoucher: true,
         });
+    } else if (!appointment) {
+        initializedAppointmentIdRef.current = null;
     }
-  }, [appointment, isEditing, clients, form]);
+  }, [appointment, isEditing, form]);
   
   const clientsWithVouchers = React.useMemo(() => {
     const clientSet = new Set<Client>();
     
     if (appointment) {
-        const currentClient = clients.find(c => c.phone === appointment.clientPhone);
+        const cleanAptPhone = (appointment.clientPhone || '').replace(/\D/g, '');
+        const currentClient = clients.find(c => 
+            (appointment.clientId && c.id === appointment.clientId) ||
+            (c.phone && appointment.clientPhone && c.phone === appointment.clientPhone) ||
+            (cleanAptPhone.length >= 9 && (c.phone || '').replace(/\D/g, '').endsWith(cleanAptPhone.slice(-9))) ||
+            (`${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (appointment.clientName || '').trim().toLowerCase())
+        );
         if (currentClient?.voucher && currentClient.voucher.sessions > 0) {
             clientSet.add(currentClient);
         }
