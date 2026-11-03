@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag, MessageSquare, ShoppingCart, CreditCard, Cake } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, User, Phone, Gift, Euro, History, CheckCircle, XCircle, AlertCircle, FileText, BarChart, Tag, MessageSquare, ShoppingCart, CreditCard, Cake, ShieldCheck } from 'lucide-react';
 import type { Client, Appointment, Payment, PaymentMethod, VoucherSale } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -81,6 +81,25 @@ export default function ClientDetailPage() {
     const handleDeleteClient = () => {
         setClients(prev => prev.filter(c => c.id !== clientId));
         router.push('/clients');
+    };
+
+    const handleResetPin = async () => {
+        if (!client) return;
+        if (!confirm(`¿Deseas restablecer el PIN de acceso web de ${client.name}? La próxima vez que entre al Área de Clientes podrá elegir uno nuevo.`)) return;
+        try {
+            const res = await fetch('/api/client-portal/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'reset_pin', clientId: client.id }),
+            });
+            if (res.ok) {
+                const updated = { ...client, pinHash: undefined };
+                setClient(updated);
+                setClients(prev => prev.map(c => c.id === client.id ? updated : c));
+            }
+        } catch (e) {
+            console.error('Error restableciendo PIN:', e);
+        }
     };
 
     const clientStats = React.useMemo(() => {
@@ -227,6 +246,28 @@ export default function ClientDetailPage() {
                                         <span>{format(parseISO(client.birthDate), "d 'de' MMMM", { locale: es })}</span>
                                     </span>
                                 )}
+                                <div className="inline-flex items-center gap-2 pl-2 border-l border-muted">
+                                    {client.pinHash ? (
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 flex items-center gap-1 font-semibold text-[11px]">
+                                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> PIN Web Activo
+                                            </Badge>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="h-6 px-2 text-[11px] border-amber-300 text-amber-900 dark:text-amber-300 hover:bg-amber-100/50"
+                                                onClick={handleResetPin}
+                                                title="Permitir que el cliente elija un nuevo PIN"
+                                            >
+                                                Restablecer PIN
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <Badge variant="outline" className="bg-muted/40 text-muted-foreground text-[11px]">
+                                            Sin PIN Web (lo creará en su primer acceso)
+                                        </Badge>
+                                    )}
+                                </div>
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">

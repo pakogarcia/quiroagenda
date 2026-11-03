@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ import {
   Sun, 
   Flame, 
   Users, 
+  UserCheck,
   Flower2, 
   Activity, 
   Zap, 
@@ -324,10 +326,19 @@ export default function OnlineBookingPage() {
             />
           </div>
 
-          <Badge variant="outline" className="mb-3 px-4 py-1 border-amber-500/30 bg-amber-100/50 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200 font-semibold tracking-wide uppercase text-xs">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600 inline" />
-            Pako García Quiromasajes · Portal de Citas
-          </Badge>
+          <div className="flex flex-wrap items-center justify-center gap-2.5 mb-4">
+            <Badge variant="outline" className="px-3.5 py-1.5 border-amber-500/30 bg-amber-100/50 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200 font-semibold tracking-wide uppercase text-xs">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600 inline" />
+              Pako García Quiromasajes · Portal de Citas
+            </Badge>
+
+            <Link href="/mi-cuenta">
+              <Button size="sm" variant="outline" className="h-7 rounded-full border-amber-400 bg-white/90 dark:bg-slate-900/90 hover:bg-amber-100/80 text-amber-950 dark:text-amber-200 font-bold text-xs shadow-xs transition-all hover:scale-105">
+                <UserCheck className="w-3.5 h-3.5 mr-1.5 text-amber-700" />
+                Área de Clientes / Mis Citas
+              </Button>
+            </Link>
+          </div>
 
           <h1 className="text-4xl md:text-6xl font-bold font-headline bg-gradient-to-r from-amber-900 via-rose-900 to-amber-700 dark:from-amber-200 dark:via-rose-200 dark:to-amber-100 bg-clip-text text-transparent mb-4">
             Tu Momento de Bienestar y Calma
@@ -647,9 +658,14 @@ export default function OnlineBookingPage() {
 
       {/* FOOTER CÁLIDO */}
       <footer className="bg-amber-950 text-amber-100 py-6 border-t border-amber-900 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 text-center space-y-1.5">
+        <div className="max-w-6xl mx-auto px-4 text-center space-y-2">
           <p className="font-headline text-base font-bold text-amber-200">Pako García Quiromasajes · Gabinete de Bienestar</p>
           <p className="text-xs text-amber-300/70">Todas las reservas se confirman al instante y quedan agendadas en tiempo real.</p>
+          <div className="pt-2">
+            <Link href="/mi-cuenta" className="text-xs text-amber-300 hover:text-white underline font-semibold transition-colors">
+              Acceso a mi Área de Clientes (Consultar mis citas y bonos)
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

@@ -34,6 +34,7 @@ export type Client = {
   birthDate?: string; // Stored as 'yyyy-MM-dd' string
   details?: string;
   voucher?: Voucher;
+  pinHash?: string;
 };
 
 export type Vacation = {
