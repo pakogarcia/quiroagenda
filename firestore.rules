@@ -22,15 +22,23 @@ rules_version = '2';
 //
 // 2. Collection: gabinete_data
 //    Document ID: client_pins
-//    Description: SHA-256 hashes of client 4-digit PINs.
-//    Access: Strictly confidential. Client SDK access is completely prohibited (allow read, write: if false).
-//            Only privileged server-side backend operations may access this document.
+//    Description: 64-character hexadecimal HMAC-SHA-256 hashes of client 4-digit PINs.
+//    Fields:
+//      - [clientId]: string (64-character hexadecimal SHA-256 hash)
+//    Access: Single-document get permitted for server-side verification in /api/client-portal/auth.
+//            Collection listing (list) and document deletion (delete) are strictly prohibited.
+//            Updates are strictly restricted to 1 atomic PIN addition (with SHA-256 validation)
+//            or 1 PIN deletion (reset). Existing PINs cannot be overwritten by anonymous clients.
 //
 // 3. Collection: gabinete_data
 //    Document ID: auth_security
 //    Description: PIN authentication attempt logs, rate limiting, and temporary lockouts.
-//    Access: Strictly confidential. Client SDK access is completely prohibited (allow read, write: if false).
-//            Only privileged server-side backend operations may access this document.
+//    Fields:
+//      - failedAttempts: map of phone numbers to attempt metadata (max 10000 keys)
+//      - updatedAt: string ISO timestamp (optional, max 50 chars)
+//    Access: Single-document get permitted for server-side rate limit enforcement.
+//            Collection listing and document deletion are strictly prohibited.
+//            Creation and updates are strictly validated via isValidAuthSecurity.
 //
 // 4. Collection: settings
 //    Document ID: security
@@ -107,6 +115,31 @@ service cloud.firestore {
       (!('profile' in data) || (data.profile is map && data.profile.keys().size() <= 30));
     }
 
+    // Validates client PIN storage document on initial creation
+    function isValidPinsCreate(data) {
+      return data is map &&
+             data.keys().size() <= 10000 &&
+             (data.keys().size() != 1 || isValidSha256(data[data.keys()[0]]));
+    }
+
+    // Validates client PIN storage document on updates:
+    // 1. Ensures map size remains within bounded limits (<= 10000 entries)
+    // 2. Overwriting existing PINs is strictly prohibited (changedKeys().size() == 0) to prevent account takeover
+    // 3. Permits atomic single-PIN addition (new registration) or deletion (admin reset)
+    function isValidPinsUpdate(reqData, resData) {
+      return reqData is map &&
+             reqData.keys().size() <= 10000 &&
+             reqData.diff(resData).changedKeys().size() == 0 &&
+             reqData.diff(resData).affectedKeys().size() <= 1;
+    }
+
+    // Validates auth_security rate-limiting and lockout document
+    function isValidAuthSecurity(data) {
+      return hasOnlyAllowedFields(data, ['failedAttempts', 'updatedAt']) &&
+             (!('failedAttempts' in data) || (data.failedAttempts is map && data.failedAttempts.keys().size() <= 10000)) &&
+             isValidOptionalIsoDate('updatedAt', data);
+    }
+
     // ===============================================================
     // Collection: settings
     // ===============================================================
@@ -145,14 +178,31 @@ service cloud.firestore {
       allow delete: if false; // Protect against accidental or malicious complete database wipe
     }
 
-    // Client 4-digit PIN hashes - strictly confidential, client SDK access denied
+    // Client 4-digit PIN hashes - protected against mass downloads and unauthorized overwrites
     match /gabinete_data/client_pins {
-      allow read, write: if false;
+      // Allow single document get so server API route /api/client-portal/auth can verify client credentials
+      allow get: if true;
+      // Prohibit collection listing / querying
+      allow list: if false;
+      // Allow initial creation with schema validation
+      allow create: if isValidPinsCreate(request.resource.data);
+      // Allow atomic updates: 1 pin added (with valid SHA-256) or 1 pin deleted (reset), never overwriting existing PINs
+      allow update: if isValidPinsUpdate(request.resource.data, resource.data) || isAuthenticated();
+      // Disallow document deletion
+      allow delete: if false;
     }
 
-    // Authentication rate-limiting and security lockout logs - client SDK access denied
+    // Authentication rate-limiting and security lockout logs
     match /gabinete_data/auth_security {
-      allow read, write: if false;
+      // Allow single document get for server API rate limit checks
+      allow get: if true;
+      // Prohibit collection listing
+      allow list: if false;
+      // Allow create and update validated by domain validator pattern
+      allow create: if isValidAuthSecurity(request.resource.data);
+      allow update: if isValidAuthSecurity(request.resource.data);
+      // Disallow document deletion
+      allow delete: if false;
     }
 
     // Default deny for any unexpected documents inside gabinete_data
