@@ -6,8 +6,8 @@ import { startOfToday } from 'date-fns';
 
 function normalizePhone(phone: string): string {
   const digits = (phone || '').replace(/\D/g, '');
-  if (digits.startsWith('34') && digits.length >= 11) {
-    return digits.slice(2);
+  if (digits.length >= 9) {
+    return digits.slice(-9);
   }
   return digits;
 }
