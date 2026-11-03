@@ -4,6 +4,8 @@ import * as React from 'react';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment, Client, Service, BusinessProfile, VoucherSale, Expense } from '@/lib/types';
 import { format } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
@@ -12,6 +14,7 @@ const BLOCKED_DAYS_STORAGE_KEY = 'quiroagenda_blocked_days';
 const PROFILE_STORAGE_KEY = 'quiroagenda_profile';
 const VOUCHER_SALES_STORAGE_KEY = 'quiroagenda_voucher_sales';
 const EXPENSES_STORAGE_KEY = 'quiroagenda_expenses';
+
 const STORAGE_KEYS = [
     APPOINTMENTS_STORAGE_KEY,
     CLIENTS_STORAGE_KEY,
@@ -71,49 +74,48 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     const [expenses, setExpenses] = React.useState<Expense[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     
-    const loadData = React.useCallback(() => {
-        setIsLoading(true);
+    // Flag to prevent cloud auto-save loops during initial hydration
+    const isCloudLoadedRef = React.useRef(false);
+
+    // 1. Initial Local Storage Hydration (Instant UI display, zero white screen)
+    const loadLocalFallback = React.useCallback(() => {
         try {
             if (typeof window === 'undefined') return;
 
-            // Helper for safe JSON parsing
             const safeParse = (key: string, fallback: any) => {
                 try {
                     const item = localStorage.getItem(key);
                     return item ? JSON.parse(item) : fallback;
-                } catch (e) {
-                    console.warn(`Failed to parse localStorage key ${key}:`, e);
+                } catch {
                     return fallback;
                 }
             };
 
-            // Appointments
             const rawAppointments = safeParse(APPOINTMENTS_STORAGE_KEY, null);
-            const initialAppointments = rawAppointments && Array.isArray(rawAppointments)
-                ? rawAppointments
-                    .map((apt: any) => ({
-                        ...apt,
-                        dateTime: new Date(apt.dateTime),
-                        status: apt.status || 'scheduled',
-                        payment: apt.payment || undefined,
-                    }))
-                    .filter((apt: Appointment) => apt.dateTime && !isNaN(new Date(apt.dateTime).getTime()))
-                : getInitialAppointments(new Date());
-            setAppointments(initialAppointments);
+            if (rawAppointments && Array.isArray(rawAppointments)) {
+                setAppointments(
+                    rawAppointments
+                        .map((apt: any) => ({
+                            ...apt,
+                            dateTime: new Date(apt.dateTime),
+                            status: apt.status || 'scheduled',
+                            payment: apt.payment || undefined,
+                        }))
+                        .filter((apt: Appointment) => apt.dateTime && !isNaN(new Date(apt.dateTime).getTime()))
+                );
+            } else {
+                setAppointments(getInitialAppointments(new Date()));
+            }
 
-            // Clients
             const rawClients = safeParse(CLIENTS_STORAGE_KEY, []);
             setClients(Array.isArray(rawClients) ? rawClients : []);
 
-            // Services
             const rawServices = safeParse(SERVICES_STORAGE_KEY, null);
             setServices(rawServices && Array.isArray(rawServices) ? rawServices : getInitialServices());
 
-            // Blocked Days
             const rawBlockedDays = safeParse(BLOCKED_DAYS_STORAGE_KEY, []);
             setBlockedDays(Array.isArray(rawBlockedDays) ? rawBlockedDays : []);
 
-            // Profile
             const defaultProfile = {
                 name: 'QuiroAgenda',
                 address: '',
@@ -127,26 +129,136 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             const rawProfile = safeParse(PROFILE_STORAGE_KEY, null);
             setProfile(rawProfile ? { ...defaultProfile, ...rawProfile } : defaultProfile);
             
-            // Voucher Sales
             const rawVoucherSales = safeParse(VOUCHER_SALES_STORAGE_KEY, []);
             setVoucherSales(Array.isArray(rawVoucherSales) ? rawVoucherSales.map((s:any) => ({...s, date: new Date(s.date)})) : []);
 
-            // Expenses
             const rawExpenses = safeParse(EXPENSES_STORAGE_KEY, []);
             setExpenses(Array.isArray(rawExpenses) ? rawExpenses.map((e:any) => ({...e, date: new Date(e.date)})) : []);
 
         } catch (error) {
-            console.error("Error loading data:", error);
-        } finally {
-            setIsLoading(false);
+            console.error("Error loading local fallback data:", error);
         }
     }, []);
 
+    // 2. Cloud Firestore Realtime Sync (Central source of truth for all devices)
     React.useEffect(() => {
-        loadData();
-    }, [loadData]);
+        loadLocalFallback();
 
-    // Cal.com Online Booking Auto-Sync (Unrestricted & Fast 15s Polling)
+        const syncDocRef = doc(db, 'gabinete_data', 'main');
+
+        const unsubscribe = onSnapshot(syncDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const cloud = docSnap.data();
+
+                if (cloud.appointments && Array.isArray(cloud.appointments)) {
+                    setAppointments(
+                        cloud.appointments
+                            .map((apt: any) => ({
+                                ...apt,
+                                dateTime: new Date(apt.dateTime),
+                            }))
+                            .filter((apt: any) => apt.dateTime && !isNaN(new Date(apt.dateTime).getTime()))
+                    );
+                }
+
+                if (cloud.clients && Array.isArray(cloud.clients)) {
+                    setClients(cloud.clients);
+                }
+
+                if (cloud.services && Array.isArray(cloud.services) && cloud.services.length > 0) {
+                    setServices(cloud.services);
+                }
+
+                if (cloud.blockedDays && Array.isArray(cloud.blockedDays)) {
+                    setBlockedDays(cloud.blockedDays);
+                }
+
+                if (cloud.profile) {
+                    setProfile(cloud.profile);
+                }
+
+                if (cloud.voucherSales && Array.isArray(cloud.voucherSales)) {
+                    setVoucherSales(cloud.voucherSales.map((s: any) => ({ ...s, date: new Date(s.date) })));
+                }
+
+                if (cloud.expenses && Array.isArray(cloud.expenses)) {
+                    setExpenses(cloud.expenses.map((e: any) => ({ ...e, date: new Date(e.date) })));
+                }
+            } else {
+                // If cloud document does not exist yet, initialize it with current local data
+                try {
+                    const localApts = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
+                    const localClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
+                    const localServices = localStorage.getItem(SERVICES_STORAGE_KEY);
+                    const localProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+                    const localBlocked = localStorage.getItem(BLOCKED_DAYS_STORAGE_KEY);
+                    const localVouchers = localStorage.getItem(VOUCHER_SALES_STORAGE_KEY);
+                    const localExpenses = localStorage.getItem(EXPENSES_STORAGE_KEY);
+
+                    setDoc(syncDocRef, {
+                        appointments: localApts ? JSON.parse(localApts) : [],
+                        clients: localClients ? JSON.parse(localClients) : [],
+                        services: localServices ? JSON.parse(localServices) : getInitialServices(),
+                        profile: localProfile ? JSON.parse(localProfile) : null,
+                        blockedDays: localBlocked ? JSON.parse(localBlocked) : [],
+                        voucherSales: localVouchers ? JSON.parse(localVouchers) : [],
+                        expenses: localExpenses ? JSON.parse(localExpenses) : [],
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                } catch (initErr) {
+                    console.warn("Could not seed initial cloud document:", initErr);
+                }
+            }
+            isCloudLoadedRef.current = true;
+            setIsLoading(false);
+        }, (err) => {
+            console.warn("Firestore snapshot listener notice (operating in offline fallback):", err);
+            setIsLoading(false);
+            isCloudLoadedRef.current = true;
+        });
+
+        return () => unsubscribe();
+    }, [loadLocalFallback]);
+
+    // 3. Auto-Save to Local Storage AND Cloud Firestore
+    React.useEffect(() => {
+        if (!isLoading) {
+            // Local Storage mirror (fast & offline)
+            localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
+            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
+            localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
+            localStorage.setItem(BLOCKED_DAYS_STORAGE_KEY, JSON.stringify(blockedDays));
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+            localStorage.setItem(VOUCHER_SALES_STORAGE_KEY, JSON.stringify(voucherSales));
+            localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(expenses));
+            window.dispatchEvent(new Event('storage'));
+
+            // Cloud Firestore persistence (debounced to avoid unnecessary writes)
+            if (isCloudLoadedRef.current) {
+                const timer = setTimeout(async () => {
+                    try {
+                        const syncDocRef = doc(db, 'gabinete_data', 'main');
+                        await setDoc(syncDocRef, {
+                            appointments: appointments.map(a => ({ ...a, dateTime: new Date(a.dateTime).toISOString() })),
+                            clients,
+                            services,
+                            blockedDays,
+                            profile,
+                            voucherSales: voucherSales.map(v => ({ ...v, date: new Date(v.date).toISOString() })),
+                            expenses: expenses.map(e => ({ ...e, date: new Date(e.date).toISOString() })),
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                    } catch (cloudErr) {
+                        console.warn("Failed syncing update to Firestore:", cloudErr);
+                    }
+                }, 1000);
+
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [appointments, clients, services, blockedDays, profile, voucherSales, expenses, isLoading]);
+
+    // 4. Cal.com Online Booking Auto-Sync (Unrestricted & Fast 15s Polling)
     React.useEffect(() => {
         const syncCalBookings = async () => {
             try {
@@ -154,7 +266,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.bookings && data.bookings.length > 0) {
-                    // 1. Process clients - NO DISCARDING, NO STRICT CONDITIONS
+                    // Process clients
                     setClients((prevClients) => {
                         const updatedClients = [...prevClients];
                         let clientsChanged = false;
@@ -193,14 +305,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                                 clientsChanged = true;
                             }
                         }
-
-                        if (clientsChanged) {
-                            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(updatedClients));
-                        }
                         return clientsChanged ? updatedClients : prevClients;
                     });
 
-                    // 2. Process appointments - GUARANTEE ALL BOOKINGS ENTER THE AGENDA
+                    // Process appointments
                     setAppointments((prev) => {
                         const newApts = [...prev];
                         let updated = false;
@@ -222,9 +330,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                                 updated = true;
                             }
                         }
-                        if (updated) {
-                            localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(newApts));
-                        }
                         return updated ? newApts : prev;
                     });
                 }
@@ -234,10 +339,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         };
 
         syncCalBookings();
-        // Check every 15 seconds (15,000 ms) while app is open
         const interval = setInterval(syncCalBookings, 15000);
 
-        // Also sync immediately when user switches back to the app window/tab
         const handleFocus = () => syncCalBookings();
         window.addEventListener('focus', handleFocus);
         document.addEventListener('visibilitychange', handleFocus);
@@ -248,20 +351,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             document.removeEventListener('visibilitychange', handleFocus);
         };
     }, []);
-    
-    // Auto-save logic
-    React.useEffect(() => {
-        if (!isLoading) {
-            localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
-            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
-            localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
-            localStorage.setItem(BLOCKED_DAYS_STORAGE_KEY, JSON.stringify(blockedDays));
-            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
-            localStorage.setItem(VOUCHER_SALES_STORAGE_KEY, JSON.stringify(voucherSales));
-            localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(expenses));
-            window.dispatchEvent(new Event('storage'));
-        }
-    }, [appointments, clients, services, blockedDays, profile, voucherSales, expenses, isLoading]);
     
     const exportData = () => {
         const dataToExport: { [key: string]: any } = {};
@@ -281,7 +370,24 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         STORAGE_KEYS.forEach(key => {
             if (data[key]) localStorage.setItem(key, JSON.stringify(data[key]));
         });
-        loadData();
+        loadLocalFallback();
+        
+        // Push imported data directly to Firestore
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            setDoc(syncDocRef, {
+                appointments: data[APPOINTMENTS_STORAGE_KEY] || [],
+                clients: data[CLIENTS_STORAGE_KEY] || [],
+                services: data[SERVICES_STORAGE_KEY] || getInitialServices(),
+                blockedDays: data[BLOCKED_DAYS_STORAGE_KEY] || [],
+                profile: data[PROFILE_STORAGE_KEY] || null,
+                voucherSales: data[VOUCHER_SALES_STORAGE_KEY] || [],
+                expenses: data[EXPENSES_STORAGE_KEY] || [],
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } catch (importCloudErr) {
+            console.warn("Could not push import to Firestore:", importCloudErr);
+        }
     };
 
     return (
@@ -294,7 +400,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             voucherSales, setVoucherSales,
             expenses, setExpenses,
             isLoading,
-            loadData,
+            loadData: loadLocalFallback,
             exportData,
             importData,
         }}>
@@ -305,6 +411,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
 export function useAppData() {
     const context = React.useContext(AppDataContext);
-    if (context === undefined) throw new Error('useAppData must be used within an AppDataProvider');
+    if (context === undefined) {
+        throw new Error('useAppData must be used within an AppDataProvider');
+    }
     return context;
 }
