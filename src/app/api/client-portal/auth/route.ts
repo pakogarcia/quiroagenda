@@ -31,6 +31,11 @@ export async function POST(request: Request) {
     const clients: any[] = data.clients || [];
     const appointments: any[] = data.appointments || [];
 
+    // Documento aislado e inmutable exclusivo para PINs (inmune a sobreescrituras del admin)
+    const pinsDocRef = doc(db, 'gabinete_data', 'client_pins');
+    const pinsSnap = await getDoc(pinsDocRef);
+    const clientPins: Record<string, string> = pinsSnap.exists() ? (pinsSnap.data() || {}) : {};
+
     // Helper to find client by phone
     const normalizedTarget = normalizePhone(phone);
     const client = clients.find(c => normalizePhone(c.phone) === normalizedTarget);
@@ -48,13 +53,15 @@ export async function POST(request: Request) {
         });
       }
 
+      const storedHash = clientPins[client.id] || client.pinHash;
+
       return NextResponse.json({
         found: true,
         clientId: client.id,
         clientName: client.name,
         lastName: client.lastName || '',
         fullName: `${client.name || ''} ${client.lastName || ''}`.trim() || client.name,
-        hasPin: Boolean(client.pinHash),
+        hasPin: Boolean(storedHash),
         voucher: client.voucher || null,
       });
     }
@@ -69,15 +76,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'El PIN debe ser de exactamente 4 dígitos numéricos (ej. 1234).' }, { status: 400 });
       }
 
-      // If client already has a PIN, require login instead
-      if (client.pinHash) {
+      const existingPin = clientPins[client.id] || client.pinHash;
+      if (existingPin) {
         return NextResponse.json({ error: 'Ya tienes un PIN creado. Por favor introduce tu PIN para acceder.' }, { status: 400 });
       }
 
       const pinHash = hashPin(pin, client.id);
-      client.pinHash = pinHash;
 
-      // Persist updated clients array to Firestore
+      // Guardar de forma permanente en documento aislado de PINs
+      await setDoc(pinsDocRef, { [client.id]: pinHash }, { merge: true });
+
+      // También reflejar en el array de clientes
+      client.pinHash = pinHash;
       await setDoc(syncDocRef, { ...data, clients });
 
       // Gather appointments for this client
@@ -121,12 +131,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'El PIN debe tener 4 dígitos numéricos.' }, { status: 400 });
       }
 
-      if (!client.pinHash) {
+      const storedHash = clientPins[client.id] || client.pinHash;
+      if (!storedHash) {
         return NextResponse.json({ error: 'Aún no has configurado tu PIN personal.', needsPin: true }, { status: 400 });
       }
 
       const expectedHash = hashPin(pin, client.id);
-      if (client.pinHash !== expectedHash) {
+      if (storedHash !== expectedHash) {
         return NextResponse.json({ error: 'El PIN introducido no es correcto.' }, { status: 401 });
       }
 
@@ -168,13 +179,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Cliente no especificado.' }, { status: 400 });
       }
 
-      const targetClient = clients.find(c => c.id === targetId);
-      if (!targetClient) {
-        return NextResponse.json({ error: 'Cliente no encontrado.' }, { status: 404 });
+      // Borrar del documento de pins
+      if (pinsSnap.exists()) {
+        const updatedPins = { ...clientPins };
+        delete updatedPins[targetId];
+        await setDoc(pinsDocRef, updatedPins);
       }
 
-      delete targetClient.pinHash;
-      await setDoc(syncDocRef, { ...data, clients });
+      const targetClient = clients.find(c => c.id === targetId);
+      if (targetClient) {
+        delete targetClient.pinHash;
+        await setDoc(syncDocRef, { ...data, clients });
+      }
 
       return NextResponse.json({ success: true, message: 'PIN restablecido correctamente.' });
     }

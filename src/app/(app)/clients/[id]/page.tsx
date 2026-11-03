@@ -34,6 +34,7 @@ export default function ClientDetailPage() {
     const clientId = params.id as string;
 
     const [client, setClient] = React.useState<Client | null>(null);
+    const [hasWebPin, setHasWebPin] = React.useState<boolean>(false);
     const [clientHistory, setClientHistory] = React.useState<HistoryItem[]>([]);
     
     const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -66,6 +67,22 @@ export default function ClientDetailPage() {
                 
                 setClientHistory(combinedHistory);
 
+                // Comprobar estado real del PIN en el servidor para evitar falsos negativos por caché
+                if (currentClient.phone) {
+                    fetch('/api/client-portal/auth', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'lookup', phone: currentClient.phone }),
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.found) {
+                            setHasWebPin(Boolean(data.hasPin));
+                        }
+                    })
+                    .catch(() => {});
+                }
+
             } else {
                 router.push('/clients');
             }
@@ -93,6 +110,7 @@ export default function ClientDetailPage() {
                 body: JSON.stringify({ action: 'reset_pin', clientId: client.id }),
             });
             if (res.ok) {
+                setHasWebPin(false);
                 const updated = { ...client, pinHash: undefined };
                 setClient(updated);
                 setClients(prev => prev.map(c => c.id === client.id ? updated : c));
@@ -247,7 +265,7 @@ export default function ClientDetailPage() {
                                     </span>
                                 )}
                                 <div className="inline-flex items-center gap-2 pl-2 border-l border-muted">
-                                    {client.pinHash ? (
+                                    {hasWebPin ? (
                                         <div className="flex items-center gap-2">
                                             <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 flex items-center gap-1 font-semibold text-[11px]">
                                                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> PIN Web Activo
