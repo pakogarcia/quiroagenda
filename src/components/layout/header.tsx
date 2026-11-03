@@ -50,7 +50,7 @@ export function AppHeader({ className }: { className?: string }) {
       "flex flex-wrap items-center justify-between p-4 border-b bg-card gap-x-4 gap-y-2", 
       className
     )}>
-      <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors">
+      <Link href="/admin" className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors">
         {profile?.logo ? (
           <Image src={profile.logo} alt="Logo" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
         ) : (
@@ -59,10 +59,10 @@ export function AppHeader({ className }: { className?: string }) {
         <h1 className="text-xl md:text-2xl font-bold font-headline">{profile?.name || 'QuiroAgenda'}</h1>
       </Link>
       <nav className="flex items-center gap-1 md:gap-2 flex-wrap justify-start md:justify-end">
-        <Link href="/reservas">
+        <Link href="/" target="_blank">
           <Button variant="default" size="sm" className="bg-gradient-to-r from-amber-700 to-rose-700 hover:from-amber-800 hover:to-rose-800 text-white font-bold shadow-sm">
             <Sparkles className="h-4 w-4 md:mr-1.5" />
-            <span className="hidden md:inline">Reservas Online</span>
+            <span className="hidden md:inline">Ver Reservas Web</span>
           </Button>
         </Link>
         <Link href="/quien-eres">
@@ -71,7 +71,7 @@ export function AppHeader({ className }: { className?: string }) {
             <span className="hidden md:inline">Quién eres</span>
           </Button>
         </Link>
-         <Link href="/">
+         <Link href="/admin">
            <Button variant="outline" size="sm">
             <CalendarDays className="h-4 w-4 md:mr-2" />
             <span className="hidden md:inline">Agenda</span>
