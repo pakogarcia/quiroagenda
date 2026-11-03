@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DirectBookingModal, ServiceModalInfo, ServiceTier } from '@/components/direct-booking-modal';
 import { 
   CalendarDays, 
   Clock, 
@@ -240,8 +240,7 @@ const SERVICES: ServiceLink[] = [
 export default function OnlineBookingPage() {
   const [activeCategory, setActiveCategory] = React.useState<string>('todos');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
-  const [selectedIframeUrl, setSelectedIframeUrl] = React.useState<string | null>(null);
-  const [selectedServiceTitle, setSelectedServiceTitle] = React.useState<string>('');
+  const [selectedBookingService, setSelectedBookingService] = React.useState<ServiceModalInfo | null>(null);
 
   const filteredServices = React.useMemo(() => {
     return SERVICES.filter((service) => {
@@ -254,13 +253,57 @@ export default function OnlineBookingPage() {
     });
   }, [activeCategory, searchQuery]);
 
-  const handleOpenBooking = (service: ServiceLink) => {
+  const handleOpenBooking = (service: ServiceLink, preferredTier?: PriceTier) => {
     if (service.isWhatsApp) {
       window.open(service.url, '_blank');
       return;
     }
-    setSelectedServiceTitle(service.title);
-    setSelectedIframeUrl(service.url);
+
+    // Parse tiers if available
+    let availableTiers: ServiceTier[] | undefined;
+    if (service.priceTiers && service.priceTiers.length > 0) {
+      availableTiers = service.priceTiers.map((t) => {
+        const dMin = parseInt(t.duration.replace(/\D/g, ''), 10) || 60;
+        const pVal = parseFloat(t.price.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        return {
+          durationMinutes: dMin,
+          durationLabel: t.duration,
+          price: pVal,
+          priceLabel: t.price,
+        };
+      });
+    }
+
+    // Initial tier or duration
+    let initialDuration = 60;
+    let initialDurationLabel = service.duration;
+    let initialPrice = 0;
+    let initialPriceLabel = service.mainPrice;
+
+    if (preferredTier) {
+      initialDuration = parseInt(preferredTier.duration.replace(/\D/g, ''), 10) || 60;
+      initialDurationLabel = preferredTier.duration;
+      initialPrice = parseFloat(preferredTier.price.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+      initialPriceLabel = preferredTier.price;
+    } else if (availableTiers && availableTiers.length > 0) {
+      initialDuration = availableTiers[0].durationMinutes;
+      initialDurationLabel = availableTiers[0].durationLabel;
+      initialPrice = availableTiers[0].price;
+      initialPriceLabel = availableTiers[0].priceLabel;
+    } else {
+      initialDuration = parseInt(service.duration.replace(/\D/g, ''), 10) || 60;
+      initialPrice = parseFloat(service.mainPrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+    }
+
+    setSelectedBookingService({
+      id: service.id,
+      title: service.title,
+      durationMinutes: initialDuration,
+      durationLabel: initialDurationLabel,
+      price: initialPrice,
+      priceLabel: initialPriceLabel,
+      availableTiers,
+    });
   };
 
   return (
@@ -452,14 +495,20 @@ export default function OnlineBookingPage() {
                     {service.priceTiers && (
                       <div className="bg-amber-50/70 dark:bg-slate-800/60 p-2.5 rounded-xl border border-amber-200/50 dark:border-slate-700 space-y-1">
                         <p className="text-[11px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 mb-1">
-                          Opciones de Duración & Precio:
+                          Opciones de Duración & Precio (pulsa para elegir):
                         </p>
                         <div className="grid grid-cols-2 gap-1.5">
                           {service.priceTiers.map((tier, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-white dark:bg-slate-900 px-2 py-1 rounded-lg border border-amber-200/40 text-xs">
-                              <span className="text-slate-600 dark:text-slate-400">{tier.duration}</span>
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleOpenBooking(service, tier)}
+                              className="flex items-center justify-between bg-white dark:bg-slate-900 px-2.5 py-1.5 rounded-lg border border-amber-200/50 hover:border-amber-500 hover:bg-amber-100/60 dark:hover:bg-slate-800 text-xs transition-all cursor-pointer text-left shadow-xs hover:scale-[1.02]"
+                              title={`Reservar ${service.title} (${tier.duration})`}
+                            >
+                              <span className="text-slate-600 dark:text-slate-400 font-medium">{tier.duration}</span>
                               <span className="font-bold text-amber-800 dark:text-amber-300">{tier.price}</span>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       </div>
@@ -577,28 +626,12 @@ export default function OnlineBookingPage() {
         </div>
       </section>
 
-      {/* DIÁLOGO MODAL FLOTANTE CON LA AGENDA INTERACTIVA DE CAL.COM */}
-      <Dialog open={!!selectedIframeUrl} onOpenChange={() => setSelectedIframeUrl(null)}>
-        <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 overflow-hidden rounded-2xl border-amber-300/40">
-          <DialogHeader className="p-4 bg-gradient-to-r from-amber-800 to-rose-900 text-white flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-300" />
-              <DialogTitle className="text-lg font-bold font-headline text-white">
-                Reserva Online: {selectedServiceTitle}
-              </DialogTitle>
-            </div>
-          </DialogHeader>
-          {selectedIframeUrl && (
-            <div className="w-full h-full bg-white relative">
-              <iframe 
-                src={selectedIframeUrl}
-                className="w-full h-full border-none"
-                title={`Reserva de ${selectedServiceTitle}`}
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* MODAL DE RESERVA DIRECTA EN TIEMPO REAL (100% INDEPENDIENTE) */}
+      <DirectBookingModal
+        service={selectedBookingService}
+        isOpen={!!selectedBookingService}
+        onClose={() => setSelectedBookingService(null)}
+      />
 
       {/* BOTÓN FLOTANTE DE CONTACTO DIRECTO POR WHATSAPP */}
       <a
