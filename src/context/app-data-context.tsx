@@ -236,23 +236,20 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                         });
                         const safeAppointments = Array.from(apptUnion.values());
 
-                        // 2. Preservar siempre los PINs y fusionar nuevos clientes creados vía web
-                        const safeClients = clients.map((c) => {
-                            if (!c.pinHash) {
-                                const matched = cloudClients.find((cc) => cc.id === c.id);
-                                if (matched && matched.pinHash) {
-                                    return { ...c, pinHash: matched.pinHash };
-                                }
-                            }
-                            return c;
-                        });
-
+                        // 2. Fusionar clientes sin sobrescribir clientes creados vía web
+                        // Los PINs se gestionan exclusivamente en gabinete_data/client_pins y nunca en main
                         const clientUnion = new Map<string, any>();
                         cloudClients.forEach((c: any) => {
-                            if (c && c.id) clientUnion.set(c.id, c);
+                            if (c && c.id) {
+                                const { pinHash, ...clean } = c;
+                                clientUnion.set(c.id, clean);
+                            }
                         });
-                        safeClients.forEach((c: any) => {
-                            if (c && c.id) clientUnion.set(c.id, c);
+                        clients.forEach((c: any) => {
+                            if (c && c.id) {
+                                const { pinHash, ...clean } = c;
+                                clientUnion.set(c.id, clean);
+                            }
                         });
                         const safeClientsList = Array.from(clientUnion.values());
 

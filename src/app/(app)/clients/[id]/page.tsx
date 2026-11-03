@@ -122,21 +122,25 @@ export default function ClientDetailPage() {
 
     const handleResetPin = async () => {
         if (!client) return;
-        if (!confirm(`¿Deseas restablecer el PIN de acceso web de ${client.name}? La próxima vez que entre al Área de Clientes podrá elegir uno nuevo.`)) return;
+        if (!confirm(`¿Deseas restablecer el PIN de acceso web de ${client.name}? La próxima vez que entre al Área de Clientes podrá elegir uno nuevo de 4 dígitos.`)) return;
         try {
             const res = await fetch('/api/client-portal/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'reset_pin', clientId: client.id }),
+                body: JSON.stringify({ action: 'reset_pin', clientId: client.id, phone: client.phone }),
             });
             if (res.ok) {
                 setHasWebPin(false);
                 const updated = { ...client, pinHash: undefined };
                 setClient(updated);
                 setClients(prev => prev.map(c => c.id === client.id ? updated : c));
+                alert(`¡PIN de ${client.name} restablecido con éxito! La próxima vez que acceda con su teléfono ${client.phone} la web le pedirá crear un PIN nuevo.`);
+            } else {
+                alert('No se pudo restablecer el PIN. Inténtalo de nuevo.');
             }
         } catch (e) {
             console.error('Error restableciendo PIN:', e);
+            alert('Error de conexión al restablecer el PIN.');
         }
     };
 

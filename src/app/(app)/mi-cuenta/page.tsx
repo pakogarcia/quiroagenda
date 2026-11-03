@@ -99,6 +99,14 @@ export default function ClientPortalPage() {
       });
       if (res.ok) {
         const data = await res.json();
+        if (data.pinReset) {
+          localStorage.removeItem(CLIENT_SESSION_KEY);
+          localStorage.removeItem('quiro_client_session');
+          setSessionClient(null);
+          setLookupState('needs_pin');
+          setErrorMessage('Tu PIN ha sido restablecido por el administrador. Elige un nuevo PIN de 4 dígitos para entrar.');
+          return;
+        }
         if (data.success) {
           setUpcomingAppointments(data.upcomingAppointments || []);
           setPastAppointments(data.pastAppointments || []);
@@ -266,6 +274,7 @@ export default function ClientPortalPage() {
   // Logout
   const handleLogout = () => {
     localStorage.removeItem(CLIENT_SESSION_KEY);
+    localStorage.removeItem('quiro_client_session');
     setSessionClient(null);
     setLookupState('initial');
     setPhoneInput('');
