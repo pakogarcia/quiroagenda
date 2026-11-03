@@ -277,10 +277,12 @@ export default function OnlineBookingPage() {
       initialPrice = parseFloat(preferredTier.price.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
       initialPriceLabel = preferredTier.price;
     } else if (availableTiers && availableTiers.length > 0) {
-      initialDuration = availableTiers[0].durationMinutes;
-      initialDurationLabel = availableTiers[0].durationLabel;
-      initialPrice = availableTiers[0].price;
-      initialPriceLabel = availableTiers[0].priceLabel;
+      // Prioridad por defecto: 60 minutos si existe entre las opciones
+      const defaultTier = availableTiers.find((t) => t.durationMinutes === 60) || availableTiers[0];
+      initialDuration = defaultTier.durationMinutes;
+      initialDurationLabel = defaultTier.durationLabel;
+      initialPrice = defaultTier.price;
+      initialPriceLabel = defaultTier.priceLabel;
     } else {
       initialDuration = parseInt(service.duration.replace(/\D/g, ''), 10) || 60;
       initialPrice = parseFloat(service.mainPrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;

@@ -50,8 +50,12 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         found: true,
+        clientId: client.id,
         clientName: client.name,
+        lastName: client.lastName || '',
+        fullName: `${client.name || ''} ${client.lastName || ''}`.trim() || client.name,
         hasPin: Boolean(client.pinHash),
+        voucher: client.voucher || null,
       });
     }
 
