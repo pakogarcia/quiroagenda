@@ -193,7 +193,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
                     .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
                 if (appointment) {
                     appointmentId = appointment.id;
-                    message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en *${profile.name}*.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n📍 Ubicación: ${profile.address}\n💳 Pago: en consulta (Bizum o efectivo).\n\n⚙️ Puedes consultar o gestionar tu cita en tu área privada:\n👉 https://citas.pakogarcia.es/mi-cuenta\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
+                    message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en *${profile.name}*.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n📍 Ubicación: ${profile.address}\n💳 Pago: en consulta (efectivo preferible).\n\n⚙️ Puedes consultar o gestionar tu cita en tu área privada:\n👉 https://citas.pakogarcia.es/mi-cuenta\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
                 }
             } else if (campaignType === 'voucherPurchase') {
                  if (client.voucher) {

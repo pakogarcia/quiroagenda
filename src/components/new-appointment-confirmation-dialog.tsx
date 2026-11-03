@@ -51,7 +51,7 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
 
         const socialBlock = socialLinks.length > 0 ? `\n\nSíguenos en nuestras redes:\n${socialLinks.join('\n')}` : '';
 
-        finalMessage = `¡Hola ${appointment.clientName.split(' ')[0]}!\n\nTe confirmo tu cita en *${businessProfile.name}*.\n\nAquí tienes los detalles:\n🗓️ *Fecha:* ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ *Hora:* ${format(appointment.dateTime, "p", { locale: es })}\n${serviceLine}\nNos vemos en:\n📍 ${businessProfile.address}\n\n*Recuerda, el pago es siempre en efectivo.*\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Muchas gracias!\n${businessProfile.name}${socialBlock}`;
+        finalMessage = `¡Hola ${appointment.clientName.split(' ')[0]}!\n\nTe confirmo tu cita en *${businessProfile.name}*.\n\nAquí tienes los detalles:\n🗓️ *Fecha:* ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ *Hora:* ${format(appointment.dateTime, "p", { locale: es })}\n${serviceLine}\nNos vemos en:\n📍 ${businessProfile.address}\n\n*Recuerda, el pago es en consulta (efectivo preferible).*\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Muchas gracias!\n${businessProfile.name}${socialBlock}`;
     } else if (mode === 'voucherUpdate' && voucherUpdateData && clientData) {
         const rawName = 'name' in clientData ? clientData.name : clientData.clientName;
         const clientName = rawName.split(' ')[0];
@@ -111,7 +111,9 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   
   const clientData = mode === 'newAppointment' ? appointment : mode === 'voucherUpdate' ? voucherUpdateData?.client : voucherPurchaseData?.client;
   const clientPhoneNumber = mode === 'newAppointment' ? appointment?.clientPhone : mode === 'voucherUpdate' ? voucherUpdateData?.client.phone : voucherPurchaseData?.client.phone;
-  const whatsappLink = clientPhoneNumber ? `https://wa.me/${clientPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(editedMessage)}` : '';
+  const rawPhone = (clientPhoneNumber || '').replace(/\D/g, '');
+  const cleanPhone = rawPhone.length === 9 && /^[6789]/.test(rawPhone) ? `34${rawPhone}` : rawPhone;
+  const whatsappLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(editedMessage)}` : '';
 
   const showSocials = businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
