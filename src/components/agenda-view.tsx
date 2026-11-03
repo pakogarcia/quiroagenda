@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { addDays, format, isSameDay, isBefore, startOfToday, set, addMinutes, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Plus, Lock, Unlock, Ban } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Lock, Unlock, Ban, RefreshCw } from 'lucide-react';
 import type { Appointment, TimeSlot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -27,12 +27,17 @@ export default function AgendaView() {
     setBlockedDays,
     services,
     profile,
-    isLoading 
+    isLoading,
+    addAppointment,
+    updateAppointment,
+    deleteAppointment,
+    refreshData
   } = useAppData();
   
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const { toast } = useToast();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
   
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAppointment, setEditingAppointment] = React.useState<Appointment | undefined>(undefined);
@@ -162,39 +167,58 @@ export default function AgendaView() {
     };
   }, [appointments, isDayBlocked, blockedDays, profile?.vacations]);
 
-  const handleAddAppointment = (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
+  const handleAddAppointment = async (data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
     const newAppointment: Appointment = { ...data, id: crypto.randomUUID(), reminderSent: false, status: 'scheduled' };
-    setAppointments(prev => [...prev, newAppointment]);
-    if (data.dateTime) {
-      setSelectedDate(new Date(data.dateTime));
-    }
-    setIsFormOpen(false);
-    setConfirmationAppointment(newAppointment);
-  };
-
-  const handleUpdateAppointment = (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
-    let confirmedAppointment: Appointment | undefined;
-    setAppointments(prev => prev.map((apt) => {
-      if (apt.id === id) {
-        confirmedAppointment = { ...apt, ...data };
-        return confirmedAppointment;
+    try {
+      await addAppointment(newAppointment);
+      if (data.dateTime) {
+        setSelectedDate(new Date(data.dateTime));
       }
-      return apt;
-    }));
-    if (data.dateTime) {
-      setSelectedDate(new Date(data.dateTime));
+      setIsFormOpen(false);
+      setConfirmationAppointment(newAppointment);
+      toast({ 
+        title: '✅ Cita guardada en la nube', 
+        description: `${newAppointment.clientName} ha quedado agendado(a) correctamente.` 
+      });
+    } catch (err) {
+      console.error(err);
+      toast({ 
+        title: 'Error al sincronizar con la nube', 
+        description: 'Revisa tu conexión a internet.', 
+        variant: 'destructive' 
+      });
     }
-    setIsFormOpen(false);
-    setEditingAppointment(undefined);
-    if (confirmedAppointment) setConfirmationAppointment(confirmedAppointment);
   };
 
-  const handleDeleteAppointment = () => {
+  const handleUpdateAppointment = async (id: string, data: Omit<Appointment, 'id' | 'reminderSent' | 'status'>) => {
+    let confirmedAppointment: Appointment | undefined;
+    try {
+      await updateAppointment(id, data);
+      confirmedAppointment = { ...appointments.find(a => a.id === id), ...data } as Appointment;
+      if (data.dateTime) {
+        setSelectedDate(new Date(data.dateTime));
+      }
+      setIsFormOpen(false);
+      setEditingAppointment(undefined);
+      if (confirmedAppointment) setConfirmationAppointment(confirmedAppointment);
+      toast({ title: '✅ Cita actualizada en la nube' });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Error al actualizar', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteAppointment = async () => {
     if (!deletingAppointmentId) return;
-    setAppointments(prev => prev.filter(apt => apt.id !== deletingAppointmentId));
-    setIsDeleteConfirmOpen(false);
-    setDeletingAppointmentId(null);
-    toast({ title: 'Cita eliminada' });
+    try {
+      await deleteAppointment(deletingAppointmentId);
+      setIsDeleteConfirmOpen(false);
+      setDeletingAppointmentId(null);
+      toast({ title: '✅ Cita eliminada de la nube' });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Error al eliminar', variant: 'destructive' });
+    }
   };
 
   const handleFinishAppointment = (updatedAppointment: Appointment) => {
@@ -252,7 +276,27 @@ export default function AgendaView() {
                         </DialogContent>
                     </Dialog>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={isRefreshing}
+                      onClick={async () => {
+                        setIsRefreshing(true);
+                        await refreshData();
+                        setIsRefreshing(false);
+                        toast({ 
+                          title: '✅ Agenda sincronizada', 
+                          description: `Actualizado con éxito. Hay ${appointments.length} citas en la base de datos.` 
+                        });
+                      }}
+                      className="h-10 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 border-emerald-300 bg-emerald-50/60 hover:bg-emerald-100 dark:bg-emerald-950/40 shadow-xs"
+                      title="Forzar comprobación y sincronización en tiempo real con la nube"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-2" />
+                      <span className="hidden sm:inline">Nube ({appointments.length})</span>
+                      <RefreshCw className={`w-3.5 h-3.5 ml-1 text-emerald-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </Button>
                     <Button onClick={() => { setEditingAppointment(undefined); setIsFormOpen(true); }} disabled={isCurrentDayBlocked} className="shadow-md"><Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Nueva Cita</span></Button>
                     <Button variant={isCurrentDayBlocked ? "destructive" : "outline"} onClick={handleToggleBlockDay} className="shadow-sm">{isCurrentDayBlocked ? <Unlock className="h-4 w-4 md:mr-2" /> : <Lock className="h-4 w-4 md:mr-2" />}<span className="hidden md:inline">{isCurrentDayBlocked ? 'Desbloquear' : 'Bloquear'}</span></Button>
                 </div>

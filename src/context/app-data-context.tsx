@@ -5,7 +5,7 @@ import { getInitialAppointments } from '@/lib/data';
 import type { Appointment, Client, Service, BusinessProfile, VoucherSale, Expense } from '@/lib/types';
 import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
@@ -58,6 +58,10 @@ type AppDataContextType = {
     setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
     isLoading: boolean;
     loadData: () => void;
+    refreshData: () => Promise<void>;
+    addAppointment: (apt: Appointment) => Promise<void>;
+    updateAppointment: (id: string, data: Partial<Appointment>) => Promise<void>;
+    deleteAppointment: (id: string) => Promise<void>;
     exportData: () => void;
     importData: (jsonString: string) => Promise<void>;
 };
@@ -314,16 +318,129 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         syncCalBookings();
         const interval = setInterval(syncCalBookings, 15000);
 
-        const handleFocus = () => syncCalBookings();
-        window.addEventListener('focus', handleFocus);
-        document.addEventListener('visibilitychange', handleFocus);
+        return () => clearInterval(interval);
+    }, []);
+
+    const refreshData = React.useCallback(async () => {
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            const docSnap = await getDoc(syncDocRef);
+            if (docSnap.exists()) {
+                const cloud = docSnap.data();
+                if (cloud.appointments && Array.isArray(cloud.appointments)) {
+                    setAppointments(
+                        cloud.appointments
+                            .map((apt: any) => ({
+                                ...apt,
+                                dateTime: new Date(apt.dateTime),
+                            }))
+                            .filter((apt: any) => apt.dateTime && !isNaN(new Date(apt.dateTime).getTime()))
+                    );
+                }
+                if (cloud.clients && Array.isArray(cloud.clients)) setClients(cloud.clients);
+                if (cloud.services && Array.isArray(cloud.services)) setServices(cloud.services);
+                if (cloud.blockedDays && Array.isArray(cloud.blockedDays)) setBlockedDays(cloud.blockedDays);
+                if (cloud.profile && cloud.profile.name) setProfile(cloud.profile);
+                if (cloud.voucherSales && Array.isArray(cloud.voucherSales)) setVoucherSales(cloud.voucherSales.map((s: any) => ({ ...s, date: new Date(s.date) })));
+                if (cloud.expenses && Array.isArray(cloud.expenses)) setExpenses(cloud.expenses.map((e: any) => ({ ...e, date: new Date(e.date) })));
+            }
+        } catch (e) {
+            console.warn("Error refreshing from Firestore:", e);
+        }
+    }, []);
+
+    const addAppointment = async (newApt: Appointment) => {
+        setAppointments(prev => [...prev.filter(a => a.id !== newApt.id), newApt]);
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            const snap = await getDoc(syncDocRef);
+            if (snap.exists()) {
+                const cloud = snap.data();
+                const existing = cloud.appointments || [];
+                const serialized = {
+                    ...newApt,
+                    dateTime: new Date(newApt.dateTime).toISOString()
+                };
+                const updatedList = [...existing.filter((a: any) => a.id !== newApt.id), serialized];
+                await setDoc(syncDocRef, {
+                    ...cloud,
+                    appointments: updatedList,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            }
+        } catch (err) {
+            console.error("Error direct saving appointment:", err);
+            throw err;
+        }
+    };
+
+    const updateAppointment = async (id: string, aptData: Partial<Appointment>) => {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...aptData } : a));
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            const snap = await getDoc(syncDocRef);
+            if (snap.exists()) {
+                const cloud = snap.data();
+                const existing = cloud.appointments || [];
+                const updatedList = existing.map((a: any) => {
+                    if (a.id === id) {
+                        return {
+                            ...a,
+                            ...aptData,
+                            dateTime: aptData.dateTime ? new Date(aptData.dateTime).toISOString() : a.dateTime
+                        };
+                    }
+                    return a;
+                });
+                await setDoc(syncDocRef, {
+                    ...cloud,
+                    appointments: updatedList,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            }
+        } catch (err) {
+            console.error("Error direct updating appointment:", err);
+            throw err;
+        }
+    };
+
+    const deleteAppointment = async (id: string) => {
+        setAppointments(prev => prev.filter(a => a.id !== id));
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            const snap = await getDoc(syncDocRef);
+            if (snap.exists()) {
+                const cloud = snap.data();
+                const existing = cloud.appointments || [];
+                const updatedList = existing.filter((a: any) => a.id !== id);
+                await setDoc(syncDocRef, {
+                    ...cloud,
+                    appointments: updatedList,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            }
+        } catch (err) {
+            console.error("Error direct deleting appointment:", err);
+            throw err;
+        }
+    };
+
+    // Auto-refresh when tab gains focus or visibility changes
+    React.useEffect(() => {
+        const handleVisibilityOrFocus = () => {
+            if (document.visibilityState === 'visible') {
+                refreshData();
+            }
+        };
+
+        window.addEventListener('focus', handleVisibilityOrFocus);
+        document.addEventListener('visibilitychange', handleVisibilityOrFocus);
 
         return () => {
-            clearInterval(interval);
-            window.removeEventListener('focus', handleFocus);
-            document.removeEventListener('visibilitychange', handleFocus);
+            window.removeEventListener('focus', handleVisibilityOrFocus);
+            document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
         };
-    }, []);
+    }, [refreshData]);
     
     const exportData = () => {
         const dataToExport: { [key: string]: any } = {};
@@ -375,6 +492,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             expenses, setExpenses,
             isLoading,
             loadData: loadLocalFallback,
+            refreshData,
+            addAppointment,
+            updateAppointment,
+            deleteAppointment,
             exportData,
             importData,
         }}>
