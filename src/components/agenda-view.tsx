@@ -36,7 +36,7 @@ export default function AgendaView() {
     refreshData
   } = useAppData();
   
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = React.useState<Date>(() => new Date());
   const { toast } = useToast();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -49,10 +49,6 @@ export default function AgendaView() {
 
   const [finishingAppointment, setFinishingAppointment] = React.useState<Appointment | null>(null);
   const [confirmationAppointment, setConfirmationAppointment] = React.useState<Appointment | null>(null);
-
-  React.useEffect(() => {
-    setSelectedDate(new Date());
-  }, []);
 
   const isDayBlocked = React.useCallback((date: Date): boolean => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -265,7 +261,7 @@ export default function AgendaView() {
     }
   };
 
-  if (isLoading || !selectedDate) return <SplashScreen />;
+  if (isLoading) return <SplashScreen />;
   const isCurrentDayBlocked = isDayBlocked(selectedDate);
 
   return (
@@ -275,7 +271,18 @@ export default function AgendaView() {
         <aside className="hidden md:flex flex-col gap-8 items-center w-full max-w-sm">
           <Card className="shadow-lg w-full border-primary/10">
             <CardContent className="p-0">
-              <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="rounded-md w-full" fixedWeeks locale={es} modifiers={modifiers} modifiersClassNames={modifierClassNames} />
+              <Calendar 
+                mode="single" 
+                selected={selectedDate} 
+                onSelect={(date) => {
+                  if (date) setSelectedDate(date);
+                }} 
+                className="rounded-md w-full" 
+                fixedWeeks 
+                locale={es} 
+                modifiers={modifiers} 
+                modifiersClassNames={modifierClassNames} 
+              />
             </CardContent>
           </Card>
         </aside>
