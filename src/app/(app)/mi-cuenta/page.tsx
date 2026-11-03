@@ -283,16 +283,33 @@ export default function ClientPortalPage() {
     setErrorMessage(null);
   };
 
+  // Safe date formatting helper to prevent any unhandled RangeError crashes
+  const safeFormatDate = (dateVal: any, formatPattern: string): string => {
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return '';
+      return format(d, formatPattern, { locale: es });
+    } catch (e) {
+      console.warn('Error formateando fecha:', e);
+      return '';
+    }
+  };
+
   // Helper for Google Calendar Link
   const makeGoogleCalendarUrl = (apt: Appointment) => {
-    const aptDate = new Date(apt.dateTime);
-    const startStr = aptDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
-    const endDate = new Date(aptDate.getTime() + 60 * 60 * 1000);
-    const endStr = endDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
-    const title = encodeURIComponent(`Cita Masaje: ${apt.serviceName || 'Pako García Quiromasajes'}`);
-    const details = encodeURIComponent(`Cita en Gabinete de Quiromasaje Pako García.\nServicio: ${apt.serviceName || ''}\nImporte: ${apt.servicePrice ? `${apt.servicePrice}€` : 'Consultar'}`);
-    const location = encodeURIComponent('Pako García Quiromasajes, Córdoba');
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
+    try {
+      const aptDate = new Date(apt.dateTime);
+      if (isNaN(aptDate.getTime())) return '#';
+      const startStr = aptDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
+      const endDate = new Date(aptDate.getTime() + 60 * 60 * 1000);
+      const endStr = endDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
+      const title = encodeURIComponent(`Cita Masaje: ${apt.serviceName || 'Pako García Quiromasajes'}`);
+      const details = encodeURIComponent(`Cita en Gabinete de Quiromasaje Pako García.\nServicio: ${apt.serviceName || ''}\nImporte: ${apt.servicePrice ? `${apt.servicePrice}€` : 'Consultar'}`);
+      const location = encodeURIComponent('Pako García Quiromasajes, Córdoba');
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
+    } catch {
+      return '#';
+    }
   };
 
   if (isInitializing) {
@@ -706,12 +723,12 @@ export default function ClientPortalPage() {
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
                           <CalendarCheck className="w-4 h-4 text-amber-700" />
                           <span>
-                            {format(new Date(apt.dateTime), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+                            {safeFormatDate(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
                           <Clock className="w-4 h-4 text-amber-700" />
-                          <span>A las {format(new Date(apt.dateTime), 'HH:mm')} h</span>
+                          <span>A las {safeFormatDate(apt.dateTime, 'HH:mm')} h</span>
                         </div>
 
                         {apt.notes && (
@@ -729,7 +746,7 @@ export default function ClientPortalPage() {
                         <Button variant="outline" size="sm" asChild className="text-xs font-semibold text-emerald-700 border-emerald-300 hover:bg-emerald-50">
                           <a 
                             href={`https://wa.me/34634432487?text=${encodeURIComponent(
-                              `Hola Pako, te escribo en relación a mi cita del ${format(new Date(apt.dateTime), "d 'de' MMMM a las HH:mm'h'", { locale: es })}.`
+                              `Hola Pako, te escribo en relación a mi cita del ${safeFormatDate(apt.dateTime, "d 'de' MMMM 'a las' HH:mm'h'")}.`
                             )}`}
                             target="_blank"
                             rel="noreferrer"
@@ -761,7 +778,7 @@ export default function ClientPortalPage() {
                           {apt.serviceName || 'Sesión de Masaje'}
                         </p>
                         <p className="text-slate-500 text-xs">
-                          {format(new Date(apt.dateTime), "d 'de' MMMM 'de' yyyy 'a las' HH:mm 'h'", { locale: es })}
+                          {safeFormatDate(apt.dateTime, "d 'de' MMMM 'de' yyyy 'a las' HH:mm 'h'")}
                         </p>
                       </div>
                       <Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 border-slate-300 text-slate-600 shrink-0">
