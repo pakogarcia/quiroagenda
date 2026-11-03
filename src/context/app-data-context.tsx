@@ -5,7 +5,7 @@ import { getInitialAppointments } from '@/lib/data';
 import type { Appointment, Client, Service, BusinessProfile, VoucherSale, Expense } from '@/lib/types';
 import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const APPOINTMENTS_STORAGE_KEY = 'quiroagenda_appointments';
 const CLIENTS_STORAGE_KEY = 'quiroagenda_clients';
@@ -74,10 +74,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     const [expenses, setExpenses] = React.useState<Expense[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     
-    // Flag to prevent cloud auto-save loops during initial hydration
+    // Tracks if cloud data has been loaded at least once
     const isCloudLoadedRef = React.useRef(false);
 
-    // 1. Initial Local Storage Hydration (Instant UI display, zero white screen)
+    // 1. Initial Local Storage Hydration (Immediate display, zero delay)
     const loadLocalFallback = React.useCallback(() => {
         try {
             if (typeof window === 'undefined') return;
@@ -150,7 +150,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             if (docSnap.exists()) {
                 const cloud = docSnap.data();
 
-                if (cloud.appointments && Array.isArray(cloud.appointments)) {
+                // Only overwrite if cloud actually has appointments/clients array
+                if (cloud.appointments && Array.isArray(cloud.appointments) && cloud.appointments.length > 0) {
                     setAppointments(
                         cloud.appointments
                             .map((apt: any) => ({
@@ -161,7 +162,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                     );
                 }
 
-                if (cloud.clients && Array.isArray(cloud.clients)) {
+                if (cloud.clients && Array.isArray(cloud.clients) && cloud.clients.length > 0) {
                     setClients(cloud.clients);
                 }
 
@@ -173,7 +174,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                     setBlockedDays(cloud.blockedDays);
                 }
 
-                if (cloud.profile) {
+                if (cloud.profile && cloud.profile.name) {
                     setProfile(cloud.profile);
                 }
 
@@ -184,35 +185,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 if (cloud.expenses && Array.isArray(cloud.expenses)) {
                     setExpenses(cloud.expenses.map((e: any) => ({ ...e, date: new Date(e.date) })));
                 }
-            } else {
-                // If cloud document does not exist yet, initialize it with current local data
-                try {
-                    const localApts = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-                    const localClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-                    const localServices = localStorage.getItem(SERVICES_STORAGE_KEY);
-                    const localProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
-                    const localBlocked = localStorage.getItem(BLOCKED_DAYS_STORAGE_KEY);
-                    const localVouchers = localStorage.getItem(VOUCHER_SALES_STORAGE_KEY);
-                    const localExpenses = localStorage.getItem(EXPENSES_STORAGE_KEY);
-
-                    setDoc(syncDocRef, {
-                        appointments: localApts ? JSON.parse(localApts) : [],
-                        clients: localClients ? JSON.parse(localClients) : [],
-                        services: localServices ? JSON.parse(localServices) : getInitialServices(),
-                        profile: localProfile ? JSON.parse(localProfile) : null,
-                        blockedDays: localBlocked ? JSON.parse(localBlocked) : [],
-                        voucherSales: localVouchers ? JSON.parse(localVouchers) : [],
-                        expenses: localExpenses ? JSON.parse(localExpenses) : [],
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                } catch (initErr) {
-                    console.warn("Could not seed initial cloud document:", initErr);
-                }
             }
             isCloudLoadedRef.current = true;
             setIsLoading(false);
         }, (err) => {
-            console.warn("Firestore snapshot listener notice (operating in offline fallback):", err);
+            console.warn("Firestore snapshot listener notice (offline mode):", err);
             setIsLoading(false);
             isCloudLoadedRef.current = true;
         });
@@ -233,7 +210,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(expenses));
             window.dispatchEvent(new Event('storage'));
 
-            // Cloud Firestore persistence (debounced to avoid unnecessary writes)
+            // Cloud Firestore persistence
             if (isCloudLoadedRef.current) {
                 const timer = setTimeout(async () => {
                     try {
@@ -266,7 +243,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.bookings && data.bookings.length > 0) {
-                    // Process clients
                     setClients((prevClients) => {
                         const updatedClients = [...prevClients];
                         let clientsChanged = false;
@@ -308,7 +284,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                         return clientsChanged ? updatedClients : prevClients;
                     });
 
-                    // Process appointments
                     setAppointments((prev) => {
                         const newApts = [...prev];
                         let updated = false;
