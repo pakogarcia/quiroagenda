@@ -120,7 +120,7 @@ export default function AgendaView() {
         if (apt.status === 'scheduled' || apt.status === 'completed' || apt.status === 'no-show') {
             const aptStart = apt.dateTime;
             const service = services.find(s => s.id === apt.serviceId);
-            const duration = service?.duration || 60;
+            const duration = apt.duration || service?.duration || 60;
             const startIndex = slots.findIndex(s => s.time === format(aptStart, 'HH:mm'));
             if (startIndex !== -1) {
                 const numSlotsToBook = Math.ceil(duration / interval);

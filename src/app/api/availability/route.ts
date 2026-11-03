@@ -24,14 +24,16 @@ export async function GET(request: Request) {
     const docSnap = await getDoc(mainDocRef);
 
     const appointments = docSnap.exists() ? docSnap.data().appointments || [] : [];
+    const services = docSnap.exists() ? docSnap.data().services || [] : [];
     const profile = docSnap.exists() ? docSnap.data().profile || null : null;
     const blockedDays = docSnap.exists() ? docSnap.data().blockedDays || [] : [];
 
-    // Calcular huecos con el motor inteligente
+    // Calcular huecos con el motor inteligente blindado en zona horaria de España
     const slots = calculateAvailableSlots({
-      date,
+      date: dateStr,
       serviceDurationMinutes: duration,
       appointments,
+      services,
       profile,
       blockedDays,
     });

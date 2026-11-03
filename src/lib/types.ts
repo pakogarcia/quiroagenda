@@ -18,6 +18,7 @@ export type Appointment = {
   serviceId?: string;
   serviceName?: string;
   servicePrice?: number;
+  duration?: number; // Duración de la sesión en minutos (ej. 15, 30, 45, 60, 75, 90)
 };
 
 export type Voucher = {

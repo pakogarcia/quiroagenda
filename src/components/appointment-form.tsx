@@ -110,6 +110,7 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
       serviceId: values.serviceId,
       serviceName: selectedService?.name,
       servicePrice: selectedService?.price,
+      duration: selectedService?.duration || 60,
     });
   };
 

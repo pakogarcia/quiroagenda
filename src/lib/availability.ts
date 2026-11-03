@@ -1,5 +1,5 @@
-import { format, isSameDay, set, addMinutes, isBefore, startOfToday, parseISO } from 'date-fns';
-import type { Appointment, BusinessProfile } from './types';
+import { parseISO } from 'date-fns';
+import type { Appointment, BusinessProfile, Service } from './types';
 import { getDaySchedule } from './schedule';
 
 export interface TimeSlotAvailability {
@@ -7,102 +7,183 @@ export interface TimeSlotAvailability {
   available: boolean; // true si cabe el servicio completo
 }
 
+export const TIMEZONE = 'Europe/Madrid';
+
 /**
- * Motor central de disponibilidad: calcula las franjas horarias libres
- * considerando horario laboral por día de la semana, descansos, citas activas, vacaciones y días bloqueados.
+ * Convierte "HH:mm" a minutos desde las 00:00 (ej. "08:30" -> 510)
+ */
+export function timeStrToMinutes(str: string): number {
+  const [h, m] = str.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Convierte minutos desde las 00:00 a formato "HH:mm" (ej. 510 -> "08:30")
+ */
+export function minutesToTimeStr(min: number): string {
+  const h = Math.floor(min / 60).toString().padStart(2, '0');
+  const m = (min % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/**
+ * Obtiene la fecha YYYY-MM-DD y la hora HH:mm exacta en la zona horaria del gabinete (Europe/Madrid).
+ * Es inmune a si el servidor se ejecuta en UTC, Estados Unidos o local.
+ */
+export function getAppointmentMadridDetails(dateTime: string | Date) {
+  const d = new Date(dateTime);
+  const dateStr = d.toLocaleDateString('en-CA', { timeZone: TIMEZONE }); // 'YYYY-MM-DD'
+  const timeStr = d.toLocaleTimeString('es-ES', { 
+    timeZone: TIMEZONE, 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
+  const [h, m] = timeStr.split(':').map(Number);
+  return { dateStr, timeStr, startMin: h * 60 + m };
+}
+
+/**
+ * Convierte una fecha YYYY-MM-DD y una hora HH:mm en horario de Madrid
+ * a su cadena ISO UTC exacta para almacenar en base de datos.
+ */
+export function madridDateTimeToUtc(dateStr: string, timeStr: string): string {
+  const guess = new Date(`${dateStr}T${timeStr}:00Z`);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  }).formatToParts(guess);
+  
+  const mParts: Record<string, string> = {};
+  parts.forEach(p => mParts[p.type] = p.value);
+  const madridHour = parseInt(mParts.hour, 10);
+  const targetHour = parseInt(timeStr.split(':')[0], 10);
+  const offsetHours = madridHour - targetHour;
+  
+  const utcDate = new Date(guess.getTime() - offsetHours * 3600000);
+  return utcDate.toISOString();
+}
+
+/**
+ * Motor central de disponibilidad de QuiroAgenda:
+ * Calcula las franjas horarias libres considerando:
+ * 1. Zona horaria de España (Europe/Madrid) exacta, tanto en cliente como en servidor UTC.
+ * 2. Horario semanal configurado por día de la semana (Lunes a Domingo, turnos Mañana y Tarde).
+ * 3. Duración real del servicio solicitado y de cada cita previa existente.
+ * 4. Detección matemática de solapamientos sin fisuras ni desfases.
+ * 5. Días festivos/inhábiles y períodos de vacaciones.
  */
 export function calculateAvailableSlots({
   date,
   serviceDurationMinutes,
   appointments,
+  services,
   profile,
   blockedDays,
 }: {
-  date: Date;
+  date: Date | string;
   serviceDurationMinutes: number;
   appointments: Appointment[];
+  services?: Service[];
   profile: BusinessProfile | null;
   blockedDays: string[];
 }): string[] {
-  const dateStr = format(date, 'yyyy-MM-dd');
-  const today = startOfToday();
+  // 1. Normalizar la fecha a evaluar en hora de Madrid
+  const targetDateObj = typeof date === 'string' ? parseISO(date) : date;
+  const targetDateStr = typeof date === 'string' 
+    ? date 
+    : targetDateObj.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
 
-  // 1. Si la fecha es pasada, o es un día bloqueado o está en vacaciones -> 0 disponibilidad
-  if (isBefore(date, today)) return [];
-  if (blockedDays.includes(dateStr)) return [];
+  // Comprobar si la fecha es pasada con respecto a hoy en Madrid
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+  if (targetDateStr < todayStr) return [];
 
+  // Comprobar días bloqueados/inhábiles
+  if (blockedDays.includes(targetDateStr)) return [];
+
+  // Comprobar vacaciones
   if (profile?.vacations) {
     for (const vac of profile.vacations) {
-      const from = parseISO(vac.from);
-      const to = parseISO(vac.to);
-      if (date >= from && date <= to) return [];
+      const fromStr = new Date(vac.from).toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+      const toStr = new Date(vac.to).toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+      if (targetDateStr >= fromStr && targetDateStr <= toStr) return [];
     }
   }
 
   // 2. Obtener horario configurado para este día específico de la semana (Lunes a Domingo)
-  const daySchedule = getDaySchedule(profile, date);
+  const daySchedule = getDaySchedule(profile, targetDateObj);
   if (!daySchedule || !daySchedule.enabled) {
     return []; // Gabinete cerrado este día
   }
 
-  const { morning, afternoon } = daySchedule;
+  // 3. Procesar las citas activas del día con su duración real en minutos
+  const dayAppointments = appointments
+    .filter((apt) => apt.status !== 'no-show')
+    .map((apt) => {
+      const { dateStr, timeStr, startMin } = getAppointmentMadridDetails(apt.dateTime);
+      // Duración: 1) directa en apt, 2) del servicio correspondiente, 3) fallback a 60 min
+      const duration = apt.duration 
+        || (services ? services.find((s) => s.id === apt.serviceId)?.duration : undefined) 
+        || 60;
+      return {
+        dateStr,
+        timeStr,
+        startMin,
+        endMin: startMin + duration,
+      };
+    })
+    .filter((apt) => apt.dateStr === targetDateStr);
 
-  // 3. Filtrar citas del día que ocupen tiempo (scheduled o completed)
-  const dayAppointments = appointments.filter((apt) => {
-    if (apt.status === 'no-show') return false;
-    const aptDate = new Date(apt.dateTime);
-    return isSameDay(aptDate, date);
-  });
-
+  // 4. Evaluar los turnos de trabajo configurados
+  const shifts = [daySchedule.morning, daySchedule.afternoon];
   const availableSlots: string[] = [];
-  const intervalMinutes = 15; // Fraccionamiento mínimo de 15 minutos
 
-  const evaluatePeriod = (startStr: string, endStr: string, isEnabled: boolean) => {
-    if (!isEnabled || !startStr || !endStr || startStr === endStr) return;
+  // Si la fecha evaluada es hoy, calcular el umbral mínimo (30 min de antelación)
+  const isToday = targetDateStr === todayStr;
+  let currentMadridMinutes = 0;
+  if (isToday) {
+    const currentMadridTime = now.toLocaleTimeString('es-ES', { 
+      timeZone: TIMEZONE, 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    const [curH, curM] = currentMadridTime.split(':').map(Number);
+    currentMadridMinutes = curH * 60 + curM + 30; // 30 minutos de antelación mínima
+  }
 
-    const [startH, startM] = startStr.split(':').map(Number);
-    const [endH, endM] = endStr.split(':').map(Number);
+  for (const shift of shifts) {
+    if (!shift.enabled || !shift.start || !shift.end || shift.start === shift.end) continue;
 
-    let currentSlot = set(date, { hours: startH, minutes: startM, seconds: 0, milliseconds: 0 });
-    const periodEnd = set(date, { hours: endH, minutes: endM, seconds: 0, milliseconds: 0 });
+    const shiftStartMin = timeStrToMinutes(shift.start);
+    const shiftEndMin = timeStrToMinutes(shift.end);
 
-    while (isBefore(currentSlot, periodEnd)) {
-      const slotEnd = addMinutes(currentSlot, serviceDurationMinutes);
+    // Iterar cada 15 minutos comprobando si cabe el servicio completo
+    for (
+      let slotStartMin = shiftStartMin; 
+      slotStartMin + serviceDurationMinutes <= shiftEndMin; 
+      slotStartMin += 15
+    ) {
+      const slotEndMin = slotStartMin + serviceDurationMinutes;
 
-      // El masaje completo debe terminar antes o justo a la hora de cierre del turno
-      if (slotEnd <= periodEnd) {
-        // Si es el día de hoy, el hueco debe ser en el futuro (mínimo 30 minutos de antelación)
-        const isPastNow = isSameDay(date, new Date()) && isBefore(currentSlot, addMinutes(new Date(), 30));
-
-        if (!isPastNow) {
-          // Comprobar si solapa con alguna cita existente
-          let collides = false;
-
-          for (const apt of dayAppointments) {
-            const aptStart = new Date(apt.dateTime);
-            // Duración de la cita existente (si no viene especificada, estimamos 60 min)
-            const aptDuration = 60; 
-            const aptEnd = addMinutes(aptStart, aptDuration);
-
-            // Regla de colisión de intervalos: (A_start < B_end) && (B_start < A_end)
-            if (isBefore(currentSlot, aptEnd) && isBefore(aptStart, slotEnd)) {
-              collides = true;
-              break;
-            }
-          }
-
-          if (!collides) {
-            availableSlots.push(format(currentSlot, 'HH:mm'));
-          }
-        }
+      // Descartar si ya pasó la hora en el día de hoy
+      if (isToday && slotStartMin < currentMadridMinutes) {
+        continue;
       }
 
-      currentSlot = addMinutes(currentSlot, intervalMinutes);
-    }
-  };
+      // Regla matemática de no-colisión de intervalos: (A_start < B_end) && (B_start < A_end)
+      const collides = dayAppointments.some(
+        (apt) => slotStartMin < apt.endMin && apt.startMin < slotEndMin
+      );
 
-  evaluatePeriod(morning.start, morning.end, morning.enabled);
-  evaluatePeriod(afternoon.start, afternoon.end, afternoon.enabled);
+      if (!collides) {
+        availableSlots.push(minutesToTimeStr(slotStartMin));
+      }
+    }
+  }
 
   return availableSlots;
 }

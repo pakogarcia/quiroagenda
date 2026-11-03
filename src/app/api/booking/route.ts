@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { parseISO, format, set, addMinutes, isSameDay, isBefore, startOfToday } from 'date-fns';
-import { calculateAvailableSlots } from '@/lib/availability';
+import { calculateAvailableSlots, madridDateTimeToUtc } from '@/lib/availability';
 
 interface BookingRequestBody {
   serviceId: string;
@@ -65,14 +65,16 @@ export async function POST(request: Request) {
 
     const cloudData = docSnap.data();
     const existingAppointments = cloudData.appointments || [];
+    const services = cloudData.services || [];
     const profile = cloudData.profile || null;
     const blockedDays = cloudData.blockedDays || [];
 
-    // Validar con el motor de disponibilidad si ese hueco sigue libre
+    // Validar con el motor de disponibilidad si ese hueco sigue libre en zona de Madrid
     const availableSlots = calculateAvailableSlots({
-      date: selectedDate,
+      date: dateStr,
       serviceDurationMinutes: durationMinutes || 60,
       appointments: existingAppointments,
+      services,
       profile,
       blockedDays,
     });
@@ -83,20 +85,22 @@ export async function POST(request: Request) {
       }, { status: 409 });
     }
 
-    // 3. Crear el objeto de cita
+    // 3. Crear el objeto de cita con hora UTC exacta convertida desde Madrid
+    const appointmentDateTimeIso = madridDateTimeToUtc(dateStr, timeSlot);
     const newAppointmentId = 'apt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     const newAppointment = {
       id: newAppointmentId,
       clientName: clientName.trim(),
       clientPhone: clientPhone.trim(),
       clientEmail: clientEmail?.trim() || '',
-      dateTime: appointmentDateTime.toISOString(),
+      dateTime: appointmentDateTimeIso,
       notes: notes?.trim() || '',
       reminderSent: false,
       status: 'scheduled',
       serviceId: serviceId || 'direct_booking',
       serviceName: serviceTitle,
       servicePrice: price || 0,
+      duration: durationMinutes || 60,
       source: 'web_direct',
       createdAt: new Date().toISOString(),
     };
