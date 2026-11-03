@@ -126,8 +126,8 @@ export default function ManualPage() {
                     <ul className="list-disc pl-5 space-y-2">
                       <li><strong>Identificación por Móvil:</strong> El paciente accede introduciendo el número de teléfono con el que está registrado o reservó su cita.</li>
                       <li><strong>Creación de PIN (Primera Vez):</strong> Si accede por primera vez, el sistema le solicita crear un PIN confidencial de 4 números y confirmarlo.</li>
-                      <li><strong>Seguridad Inmutable:</strong> Los PINs se almacenan de forma aislada y encriptada mediante algoritmo HMAC SHA-256 en la nube. Ni siquiera las actualizaciones de datos administrativos pueden borrar o alterar el PIN del cliente.</li>
-                      <li><strong>Reseteo por el Administrador:</strong> Si un paciente olvida su PIN, puedes entrar a su ficha en "Clientes" y pulsar el botón <em>"Resetear PIN Web"</em> para que pueda definir uno nuevo en su siguiente acceso.</li>
+                      <li><strong>Seguridad Inmutable y Privacidad Total:</strong> Los PINs se almacenan de forma aislada y encriptada mediante algoritmo HMAC SHA-256 en la nube. Nadie, ni siquiera el administrador del gabinete, puede conocer ni ver el PIN de un cliente.</li>
+                      <li><strong>Pérdida de PIN y Reseteo por el Administrador:</strong> Dado que el PIN está cifrado y nadie lo sabe, si un paciente lo olvida no es posible recuperarlo; únicamente puedes entrar a su ficha en "Clientes" y pulsar el botón <em>"Resetear PIN Web"</em> para que el sistema le pida crear uno nuevo en su siguiente acceso.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
