@@ -535,7 +535,7 @@ export default function ClientPortalPage() {
               </div>
 
               <Button asChild className="h-11 px-6 font-bold bg-white text-amber-950 hover:bg-amber-100 shadow-md rounded-xl">
-                <Link href="/">
+                <Link href="/reservas">
                   <CalendarDays className="w-4 h-4 mr-2 text-amber-700" />
                   Reservar Nuevo Masaje
                 </Link>
@@ -612,7 +612,7 @@ export default function ClientPortalPage() {
                 <div className="p-8 border-2 border-dashed border-amber-200 rounded-2xl bg-white dark:bg-slate-900 text-center space-y-3">
                   <p className="text-slate-600 font-medium">No tienes ninguna cita programada próximamente.</p>
                   <Button asChild className="font-bold bg-amber-800 hover:bg-amber-900 text-white">
-                    <Link href="/">
+                    <Link href="/reservas">
                       Elegir día y hora para un masaje
                     </Link>
                   </Button>

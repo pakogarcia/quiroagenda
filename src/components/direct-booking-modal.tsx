@@ -118,13 +118,23 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
 
       // Check if user has an existing session in localStorage
       try {
-        const stored = localStorage.getItem('quiro_client_session');
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('quiro_client_session') : null;
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed?.client?.phone) {
-            setLookupPhone(parsed.client.phone);
-            setClientPhone(parsed.client.phone);
-            setClientName(`${parsed.client.name || ''} ${parsed.client.lastName || ''}`.trim());
+            const clientObj = parsed.client;
+            const fullName = `${clientObj.name || ''} ${clientObj.lastName || ''}`.trim() || clientObj.name;
+            setLookupPhone(clientObj.phone);
+            setClientPhone(clientObj.phone);
+            setClientName(fullName);
+            setExistingClientData({
+              found: true,
+              clientName: clientObj.name,
+              lastName: clientObj.lastName || '',
+              fullName: fullName,
+              voucher: clientObj.voucher || null,
+              hasPin: false,
+            });
           }
         }
       } catch (e) {
@@ -329,6 +339,28 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
           {step === 'schedule' && (
             <div className="space-y-6">
 
+              {/* Badge si el usuario ya inició sesión previamente en su Área de Clientes */}
+              {existingClientData && (
+                <div className="flex items-center justify-between px-3.5 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 rounded-xl text-xs text-emerald-900 dark:text-emerald-200 font-semibold shadow-xs">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Sesión activa: <strong>{existingClientData.fullName || existingClientData.clientName}</strong></span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExistingClientData(null);
+                      setLookupPhone('+34 ');
+                      setClientPhone('+34 ');
+                      setClientName('');
+                    }}
+                    className="text-xs text-emerald-700 dark:text-emerald-300 underline hover:no-underline font-medium"
+                  >
+                    Cambiar cuenta
+                  </button>
+                </div>
+              )}
+
               {/* Selector de opciones de duración si tiene múltiples tarifas (por defecto 60 min) */}
               {service.availableTiers && service.availableTiers.length > 1 && (
                 <div className="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl space-y-2">
@@ -453,11 +485,24 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
               <div className="pt-2">
                 <Button 
                   type="button" 
-                  className="w-full h-12 text-base font-bold shadow-lg"
+                  className={`w-full h-12 text-base font-bold shadow-lg transition-all ${
+                    existingClientData
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white'
+                      : ''
+                  }`}
                   disabled={!selectedDate || !selectedSlot}
-                  onClick={() => setStep('client_choice')}
+                  onClick={() => {
+                    if (existingClientData) {
+                      setStep('client_existing');
+                    } else {
+                      setStep('client_choice');
+                    }
+                  }}
                 >
-                  Continuar con la Reserva ({selectedSlot ? `${selectedSlot} h` : 'Elige una hora'})
+                  {existingClientData
+                    ? `Confirmar Cita para ${existingClientData.fullName || existingClientData.clientName} (${selectedSlot ? `${selectedSlot} h` : 'Elige hora'})`
+                    : `Continuar con la Reserva (${selectedSlot ? `${selectedSlot} h` : 'Elige una hora'})`
+                  }
                 </Button>
               </div>
             </div>
