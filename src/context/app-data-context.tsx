@@ -219,9 +219,24 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                 const timer = setTimeout(async () => {
                     try {
                         const syncDocRef = doc(db, 'gabinete_data', 'main');
+                        const snap = await getDoc(syncDocRef);
+                        const cloudData = snap.exists() ? snap.data() : {};
+                        const cloudClients: any[] = cloudData.clients || [];
+
+                        // Preservar siempre los PINs creados por clientes en la web
+                        const safeClients = clients.map((c) => {
+                            if (!c.pinHash) {
+                                const matched = cloudClients.find((cc) => cc.id === c.id);
+                                if (matched && matched.pinHash) {
+                                    return { ...c, pinHash: matched.pinHash };
+                                }
+                            }
+                            return c;
+                        });
+
                         await setDoc(syncDocRef, {
                             appointments: appointments.map(a => ({ ...a, dateTime: new Date(a.dateTime).toISOString() })),
-                            clients,
+                            clients: safeClients,
                             services,
                             blockedDays,
                             profile,

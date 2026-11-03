@@ -118,7 +118,9 @@ export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingMo
 
       // Check if user has an existing session in localStorage
       try {
-        const stored = typeof window !== 'undefined' ? localStorage.getItem('quiro_client_session') : null;
+        const stored = typeof window !== 'undefined' 
+          ? (localStorage.getItem('quiroagenda_client_portal_session') || localStorage.getItem('quiro_client_session')) 
+          : null;
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed?.client?.phone) {

@@ -151,6 +151,7 @@ export default function ClientPortalPage() {
         pastAppointments: data.pastAppointments || [],
       };
       localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(newSession));
+      localStorage.setItem('quiro_client_session', JSON.stringify(newSession));
       setSessionClient(data.client);
       setUpcomingAppointments(data.upcomingAppointments || []);
       setPastAppointments(data.pastAppointments || []);
@@ -196,6 +197,7 @@ export default function ClientPortalPage() {
         pastAppointments: data.pastAppointments || [],
       };
       localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(newSession));
+      localStorage.setItem('quiro_client_session', JSON.stringify(newSession));
       setSessionClient(data.client);
       setUpcomingAppointments(data.upcomingAppointments || []);
       setPastAppointments(data.pastAppointments || []);
