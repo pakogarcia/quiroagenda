@@ -35,7 +35,9 @@ import {
   CheckCircle2, 
   Ban,
   Sun,
-  Moon
+  Moon,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -130,12 +132,20 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
+  const isInitializedRef = React.useRef(false);
+
   const [isExportConfirmOpen, setIsExportConfirmOpen] = React.useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
   
   const [newVacation, setNewVacation] = React.useState<DateRange | undefined>();
   const [newBlockedDate, setNewBlockedDate] = React.useState<Date | undefined>();
   const [activeDayTab, setActiveDayTab] = React.useState<DayOfWeek>('monday');
+
+  // Fecha actual en hora de Madrid (YYYY-MM-DD)
+  const todayMadridStr = React.useMemo(() => {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+  }, []);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -157,8 +167,11 @@ export default function ProfilePage() {
     },
   });
 
+  // Inicializar el formulario SOLO UNA VEZ cuando cargue el perfil,
+  // para evitar que re-renders o sincronizaciones de fondo borren las ediciones en curso del usuario
   React.useEffect(() => {
-    if (profile) {
+    if (profile && !isInitializedRef.current) {
+      isInitializedRef.current = true;
       form.reset({
         name: profile.name || '',
         address: profile.address || '',
@@ -207,7 +220,11 @@ export default function ProfilePage() {
       : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
     targets.forEach(day => {
-      form.setValue(`weeklySchedule.${day}`, JSON.parse(JSON.stringify(currentSchedule)), { shouldDirty: true });
+      form.setValue(`weeklySchedule.${day}`, JSON.parse(JSON.stringify(currentSchedule)), { 
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true 
+      });
     });
 
     const dayName = DAYS_OF_WEEK_CONFIG.find(d => d.key === fromDay)?.label || fromDay;
@@ -223,7 +240,7 @@ export default function ProfilePage() {
     if (newVacation?.from && newVacation?.to) {
         const currentVacations = form.getValues('vacations') || [];
         const updatedVacations = [...currentVacations, { from: newVacation.from.toISOString(), to: newVacation.to.toISOString() }];
-        form.setValue('vacations', updatedVacations, { shouldDirty: true });
+        form.setValue('vacations', updatedVacations, { shouldDirty: true, shouldTouch: true });
         setNewVacation(undefined);
     }
   };
@@ -231,7 +248,7 @@ export default function ProfilePage() {
   const handleRemoveVacation = (index: number) => {
     const currentVacations = form.getValues('vacations') || [];
     const updatedVacations = currentVacations.filter((_, i) => i !== index);
-    form.setValue('vacations', updatedVacations, { shouldDirty: true });
+    form.setValue('vacations', updatedVacations, { shouldDirty: true, shouldTouch: true });
   };
 
   const handleAddBlockedDay = async () => {
@@ -259,7 +276,18 @@ export default function ProfilePage() {
     });
   };
 
+  const handlePurgePastBlockedDays = async () => {
+    const updated = blockedDays.filter(d => d >= todayMadridStr);
+    const countRemoved = blockedDays.length - updated.length;
+    await setCloudBlockedDays(updated);
+    toast({
+      title: 'Días pasados limpiados',
+      description: `Se han eliminado ${countRemoved} fechas anteriores a hoy de la base de datos.`,
+    });
+  };
+
   const onSubmit = async (data: ProfileFormValues) => {
+    setIsSaving(true);
     try {
       // Sincronizar también openingHours legado con lunes para máxima compatibilidad
       const monday = data.weeklySchedule?.monday;
@@ -272,17 +300,19 @@ export default function ProfilePage() {
 
       await updateProfile(data as BusinessProfile);
       toast({
-        title: 'Configuración guardada',
-        description: 'El perfil, horario semanal y vacaciones se han actualizado en la nube.',
+        title: 'Configuración guardada con éxito',
+        description: 'Tus horarios semanales y datos del gabinete se han guardado en la nube.',
       });
       form.reset(data, { keepValues: true }); 
     } catch (error) {
       console.error('Failed to save profile.', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'No se pudo guardar la información de tu negocio en la nube.',
+        title: 'Error al guardar',
+        description: 'No se pudo guardar la información en la nube. Revisa tu conexión.',
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -321,11 +351,27 @@ export default function ProfilePage() {
     }
   };
 
+  // Filtrar solo festivos desde hoy hacia el futuro
+  const upcomingBlockedDays = React.useMemo(() => {
+    return blockedDays.filter(d => d >= todayMadridStr).sort();
+  }, [blockedDays, todayMadridStr]);
+
+  // Filtrar vacaciones activas o futuras
+  const vacations = form.watch('vacations') || [];
+  const upcomingVacations = React.useMemo(() => {
+    return vacations.filter(v => {
+      try {
+        const toStr = new Date(v.to).toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+        return toStr >= todayMadridStr;
+      } catch {
+        return true;
+      }
+    });
+  }, [vacations, todayMadridStr]);
+
   if (isLoading) {
     return <SplashScreen />;
   }
-
-  const vacations = form.watch('vacations') || [];
 
   return (
     <>
@@ -333,9 +379,21 @@ export default function ProfilePage() {
       <AppHeader />
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold font-headline text-primary tracking-tight">Quién Eres</h1>
-              <p className="text-muted-foreground mt-1">Configura la identidad de tu centro, tus horarios de trabajo por día y tus días inhábiles.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold font-headline text-primary tracking-tight">Quién Eres</h1>
+                <p className="text-muted-foreground mt-1">Configura la identidad de tu centro, tus horarios de trabajo por día y tus días inhábiles.</p>
+              </div>
+              <Button 
+                type="button" 
+                size="lg" 
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isSaving}
+                className="font-bold shadow-md"
+              >
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Guardar Cambios
+              </Button>
             </div>
 
             <Form {...form}>
@@ -444,6 +502,16 @@ export default function ProfilePage() {
                                   Personaliza el horario de mañana y tarde para cada día (Lunes a Domingo). Las reservas online respetarán estos rangos exactos.
                                 </CardDescription>
                               </div>
+                              <Button 
+                                type="button" 
+                                size="sm" 
+                                onClick={form.handleSubmit(onSubmit)}
+                                disabled={isSaving}
+                                className="font-bold shadow-xs shrink-0"
+                              >
+                                {isSaving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                                Guardar Horarios
+                              </Button>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -627,28 +695,41 @@ export default function ProfilePage() {
                                         </div>
                                       )}
 
-                                      {/* Botones de acción rápida: Copiar a otros días */}
-                                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-                                        <span className="text-xs font-semibold text-muted-foreground mr-1">Acciones rápidas:</span>
+                                      {/* Botones de acción rápida: Copiar a otros días y Guardar */}
+                                      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <span className="text-xs font-semibold text-muted-foreground mr-1">Acciones rápidas:</span>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs h-8"
+                                            onClick={() => handleCopySchedule(dayKey, 'workdays')}
+                                          >
+                                            <Copy className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                                            Copiar a Lun - Vie
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs h-8"
+                                            onClick={() => handleCopySchedule(dayKey, 'all')}
+                                          >
+                                            <Copy className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                                            Copiar a Toda la Semana
+                                          </Button>
+                                        </div>
+
                                         <Button
                                           type="button"
-                                          variant="outline"
                                           size="sm"
-                                          className="text-xs h-8"
-                                          onClick={() => handleCopySchedule(dayKey, 'workdays')}
+                                          className="text-xs h-8 font-bold shadow-xs ml-auto"
+                                          onClick={form.handleSubmit(onSubmit)}
+                                          disabled={isSaving}
                                         >
-                                          <Copy className="w-3.5 h-3.5 mr-1.5 text-primary" />
-                                          Copiar a Lun - Vie
-                                        </Button>
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-xs h-8"
-                                          onClick={() => handleCopySchedule(dayKey, 'all')}
-                                        >
-                                          <Copy className="w-3.5 h-3.5 mr-1.5 text-primary" />
-                                          Copiar a Toda la Semana
+                                          {isSaving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                                          Guardar Horarios
                                         </Button>
                                       </div>
                                     </TabsContent>
@@ -676,17 +757,17 @@ export default function ProfilePage() {
                                 <div className="flex items-center justify-between">
                                   <FormLabel className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                     <Sun className="w-4 h-4 text-amber-500" />
-                                    Períodos de Vacaciones (Rangos)
+                                    Períodos de Vacaciones
                                   </FormLabel>
                                   <Badge variant="outline" className="text-xs font-semibold">
-                                    {vacations.length} {vacations.length === 1 ? 'período' : 'períodos'}
+                                    {upcomingVacations.length} {upcomingVacations.length === 1 ? 'período activo/próximo' : 'períodos activos/próximos'}
                                   </Badge>
                                 </div>
 
                                 <div className="space-y-4 rounded-xl border p-4 bg-muted/20">
-                                    {vacations.length > 0 ? (
+                                    {upcomingVacations.length > 0 ? (
                                         <ul className="space-y-2">
-                                            {vacations.map((vac, index) => (
+                                            {upcomingVacations.map((vac, index) => (
                                                 <li key={index} className="flex items-center justify-between text-sm p-3 bg-background border rounded-lg shadow-xs">
                                                     <span className="font-semibold text-slate-900">
                                                       {format(parseISO(vac.from), 'dd/MM/yyyy', {locale: es})} — {format(parseISO(vac.to), 'dd/MM/yyyy', {locale: es})}
@@ -698,7 +779,7 @@ export default function ProfilePage() {
                                             ))}
                                         </ul>
                                     ) : (
-                                      <p className="text-xs text-muted-foreground text-center py-3">Sin vacaciones configuradas actualmente.</p>
+                                      <p className="text-xs text-muted-foreground text-center py-3">Sin vacaciones programadas para las próximas fechas.</p>
                                     )}
                                     <Separator />
                                     <div className="flex flex-col sm:flex-row gap-2">
@@ -714,10 +795,19 @@ export default function ProfilePage() {
                                             </Button>
                                           </PopoverTrigger>
                                           <PopoverContent className="w-auto p-0" align="start">
-                                            <CalendarPicker initialFocus mode="range" defaultMonth={newVacation?.from} selected={newVacation} onSelect={setNewVacation} numberOfMonths={2} locale={es} />
+                                            <CalendarPicker 
+                                              initialFocus 
+                                              mode="range" 
+                                              defaultMonth={newVacation?.from} 
+                                              selected={newVacation} 
+                                              onSelect={setNewVacation} 
+                                              numberOfMonths={2} 
+                                              locale={es} 
+                                              disabled={{ before: new Date() }}
+                                            />
                                           </PopoverContent>
                                         </Popover>
-                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="sm:w-auto h-10">
+                                        <Button type="button" onClick={handleAddVacation} disabled={!newVacation?.from || !newVacation?.to} className="sm:w-auto h-10 font-semibold">
                                           <Plus className="w-4 h-4 mr-1.5"/> Añadir Período
                                         </Button>
                                     </div>
@@ -726,21 +816,35 @@ export default function ProfilePage() {
 
                             <Separator />
 
-                            {/* Sección 2: Días Festivos / Inhábiles Concretos */}
+                            {/* Sección 2: Días Festivos / Inhábiles Concretos (SOLO DESDE HOY HACIA EL FUTURO) */}
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                   <div>
                                     <FormLabel className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                       <Ban className="w-4 h-4 text-red-500" />
-                                      Días Festivos e Inhábiles Sueltos
+                                      Días Festivos e Inhábiles Próximos
                                     </FormLabel>
                                     <p className="text-xs text-muted-foreground mt-0.5">
-                                      También puedes marcar o desmarcar cualquier día directamente desde el botón &ldquo;Bloquear Día&rdquo; en la agenda.
+                                      Mostrando exclusivamente las fechas desde hoy en adelante.
                                     </p>
                                   </div>
-                                  <Badge variant="outline" className="text-xs font-semibold">
-                                    {blockedDays.length} {blockedDays.length === 1 ? 'día bloqueado' : 'días bloqueados'}
-                                  </Badge>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs font-semibold">
+                                      {upcomingBlockedDays.length} {upcomingBlockedDays.length === 1 ? 'próximo día festivo' : 'próximos días festivos'}
+                                    </Badge>
+                                    {blockedDays.length > upcomingBlockedDays.length && (
+                                      <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={handlePurgePastBlockedDays}
+                                        className="text-xs text-muted-foreground hover:text-destructive h-7 px-2"
+                                        title="Elimina de la base de datos los días pasados para no acumular historial antiguo"
+                                      >
+                                        Limpiar {blockedDays.length - upcomingBlockedDays.length} pasados
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
 
                                 <div className="space-y-4 rounded-xl border p-4 bg-muted/20">
@@ -760,6 +864,7 @@ export default function ProfilePage() {
                                             onSelect={setNewBlockedDate} 
                                             locale={es} 
                                             initialFocus 
+                                            disabled={{ before: new Date() }}
                                           />
                                         </PopoverContent>
                                       </Popover>
@@ -767,18 +872,18 @@ export default function ProfilePage() {
                                         type="button" 
                                         onClick={handleAddBlockedDay} 
                                         disabled={!newBlockedDate}
-                                        className="sm:w-auto h-10"
+                                        className="sm:w-auto h-10 font-semibold"
                                       >
                                         <Plus className="w-4 h-4 mr-1.5" />
                                         Bloquear Día
                                       </Button>
                                     </div>
 
-                                    {/* Lista de días festivos e inhábiles registrados */}
-                                    {blockedDays.length > 0 ? (
+                                    {/* Lista de días festivos e inhábiles registrados (SOLO FUTUROS / HOY) */}
+                                    {upcomingBlockedDays.length > 0 ? (
                                       <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                                          {blockedDays.slice().sort().map((dateStr) => {
+                                          {upcomingBlockedDays.map((dateStr) => {
                                             const parts = dateStr.split('-');
                                             const displayDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
                                             return (
@@ -786,7 +891,7 @@ export default function ProfilePage() {
                                                 key={dateStr}
                                                 className="flex items-center justify-between px-3 py-2 bg-background border rounded-lg text-xs font-medium shadow-2xs hover:border-destructive/30 transition-colors"
                                               >
-                                                <span className="font-mono text-slate-800">{displayDate}</span>
+                                                <span className="font-mono text-slate-800 font-semibold">{displayDate}</span>
                                                 <Button
                                                   type="button"
                                                   variant="ghost"
@@ -803,7 +908,7 @@ export default function ProfilePage() {
                                         </div>
                                       </div>
                                     ) : (
-                                      <p className="text-xs text-muted-foreground text-center py-3">No hay días inhábiles registrados.</p>
+                                      <p className="text-xs text-muted-foreground text-center py-3">No hay días festivos o inhábiles programados en adelante.</p>
                                     )}
                                 </div>
                             </div>
@@ -832,16 +937,16 @@ export default function ProfilePage() {
                           </CardContent>
                     </Card>
                 
-                    {/* Botón Guardar Flotante / Inferior */}
-                    <div className="flex justify-center pt-4 pb-12 sticky bottom-4 z-10">
+                    {/* Botón Guardar Inferior (Limpio, integrado en el flujo de la página, sin tapar contenido) */}
+                    <div className="flex justify-center pt-4 pb-12">
                          <Button 
                             type="submit" 
                             size="lg" 
-                            className="w-full max-w-sm h-14 text-base font-bold shadow-2xl hover:scale-105 transition-transform" 
-                            disabled={!form.formState.isDirty}
+                            className="w-full max-w-sm h-14 text-base font-bold shadow-xl hover:scale-105 transition-transform" 
+                            disabled={isSaving}
                          >
-                            <Save className="mr-2 h-5 w-5" />
-                            Guardar Configuración
+                            {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                            Guardar Toda la Configuración
                         </Button>
                     </div>
               </form>
