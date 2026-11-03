@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { usePathname } from 'next/navigation';
 import { getInitialAppointments } from '@/lib/data';
 import type { Appointment, Client, Service, BusinessProfile, VoucherSale, Expense } from '@/lib/types';
 import { format } from 'date-fns';
@@ -80,11 +81,28 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     const [expenses, setExpenses] = React.useState<Expense[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     
+    const pathname = usePathname();
+    const isPublic = React.useMemo(() => {
+        if (!pathname) return false;
+        if (pathname.startsWith('/reservas') || pathname.startsWith('/mi-cuenta') || pathname.startsWith('/api')) {
+            return true;
+        }
+        if (pathname === '/') {
+            if (typeof window !== 'undefined') {
+                const host = window.location.hostname.toLowerCase();
+                return !host.includes('hosted.app') && !host.includes('localhost') && !host.includes('127.0.0.1');
+            }
+            return true;
+        }
+        return false;
+    }, [pathname]);
+
     const isCloudLoadedRef = React.useRef(false);
     const isIncomingFromCloudRef = React.useRef(false);
 
     // 1. Initial Local Storage Hydration
     const loadLocalFallback = React.useCallback(() => {
+        if (isPublic) return;
         try {
             if (typeof window === 'undefined') return;
 
@@ -144,10 +162,21 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error("Error loading local fallback data:", error);
         }
-    }, []);
+    }, [isPublic]);
 
     // 2. Cloud Firestore Realtime Sync
     React.useEffect(() => {
+        if (isPublic) {
+            setIsLoading(false);
+            // Blindaje de privacidad: purgar cualquier clave sensible del localStorage del visitante
+            if (typeof window !== 'undefined') {
+                [APPOINTMENTS_STORAGE_KEY, CLIENTS_STORAGE_KEY, VOUCHER_SALES_STORAGE_KEY, EXPENSES_STORAGE_KEY].forEach(k => {
+                    localStorage.removeItem(k);
+                });
+            }
+            return;
+        }
+
         loadLocalFallback();
 
         const syncDocRef = doc(db, 'gabinete_data', 'main');
@@ -202,10 +231,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         });
 
         return () => unsubscribe();
-    }, [loadLocalFallback]);
+    }, [loadLocalFallback, isPublic]);
 
     // 3. Auto-Save to Local Storage AND Cloud Firestore
     React.useEffect(() => {
+        if (isPublic) return;
         if (!isLoading) {
             localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
             localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));

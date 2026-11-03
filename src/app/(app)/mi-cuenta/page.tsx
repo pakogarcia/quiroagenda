@@ -51,6 +51,7 @@ export default function ClientPortalPage() {
 
   // Logged-in client state
   const [sessionClient, setSessionClient] = React.useState<Client | null>(null);
+  const [sessionToken, setSessionToken] = React.useState<string | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = React.useState<Appointment[]>([]);
   const [pastAppointments, setPastAppointments] = React.useState<Appointment[]>([]);
   const [isInitializing, setIsInitializing] = React.useState(true);
@@ -92,6 +93,16 @@ export default function ClientPortalPage() {
       });
   }, [reschedulingAppointment, newSelectedDate]);
 
+  const getActiveToken = React.useCallback((): string | null => {
+    if (sessionToken) return sessionToken;
+    try {
+      const s = localStorage.getItem(CLIENT_SESSION_KEY);
+      return s ? JSON.parse(s).token : null;
+    } catch {
+      return null;
+    }
+  }, [sessionToken]);
+
   const handleConfirmCancel = async () => {
     if (!cancellingAppointment || !sessionClient) return;
     setIsSubmittingCancel(true);
@@ -104,6 +115,7 @@ export default function ClientPortalPage() {
           phone: sessionClient.phone,
           clientId: sessionClient.id,
           appointmentId: cancellingAppointment.id,
+          token: getActiveToken(),
           reason: cancelReason,
         }),
       });
@@ -155,6 +167,7 @@ export default function ClientPortalPage() {
           phone: sessionClient.phone,
           clientId: sessionClient.id,
           appointmentId: reschedulingAppointment.id,
+          token: getActiveToken(),
           newDateStr,
           newTimeSlot: selectedNewSlot,
         }),
@@ -197,6 +210,7 @@ export default function ClientPortalPage() {
   // Restore session from localStorage if present
   React.useEffect(() => {
     let activePhone = '';
+    let activeToken = '';
     try {
       const saved = localStorage.getItem(CLIENT_SESSION_KEY);
       if (saved) {
@@ -206,6 +220,10 @@ export default function ClientPortalPage() {
           setUpcomingAppointments(parsed.upcomingAppointments || []);
           setPastAppointments(parsed.pastAppointments || []);
           setPhoneInput(parsed.phone);
+          if (parsed.token) {
+            setSessionToken(parsed.token);
+            activeToken = parsed.token;
+          }
           activePhone = parsed.phone;
         }
       }
@@ -215,8 +233,8 @@ export default function ClientPortalPage() {
       setIsInitializing(false);
     }
 
-    if (activePhone) {
-      refreshAppointments(activePhone);
+    if (activePhone && activeToken) {
+      refreshAppointments(activePhone, activeToken);
     }
 
     const handleWindowFocus = () => {
@@ -224,8 +242,8 @@ export default function ClientPortalPage() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (parsed.phone) {
-            refreshAppointments(parsed.phone);
+          if (parsed.phone && parsed.token) {
+            refreshAppointments(parsed.phone, parsed.token);
           }
         } catch (e) {}
       }
@@ -235,12 +253,15 @@ export default function ClientPortalPage() {
     return () => window.removeEventListener('focus', handleWindowFocus);
   }, []);
 
-  const refreshAppointments = React.useCallback(async (phone: string) => {
+  const refreshAppointments = React.useCallback(async (phone: string, tokenParam?: string) => {
     try {
+      const currentToken = tokenParam || getActiveToken();
+      if (!currentToken) return;
+
       const res = await fetch('/api/client-portal/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'refresh', phone }),
+        body: JSON.stringify({ action: 'refresh', phone, token: currentToken }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -248,6 +269,7 @@ export default function ClientPortalPage() {
           localStorage.removeItem(CLIENT_SESSION_KEY);
           localStorage.removeItem('quiro_client_session');
           setSessionClient(null);
+          setSessionToken(null);
           setLookupState('needs_pin');
           setErrorMessage('Tu PIN ha sido restablecido por el administrador. Elige un nuevo PIN de 4 dígitos para entrar.');
           return;
@@ -271,11 +293,19 @@ export default function ClientPortalPage() {
             } catch (err) {}
           }
         }
+      } else if (res.status === 401) {
+        // Token caducado o inválido: solicitar PIN de nuevo limpiamente
+        localStorage.removeItem(CLIENT_SESSION_KEY);
+        localStorage.removeItem('quiro_client_session');
+        setSessionClient(null);
+        setSessionToken(null);
+        setLookupState('enter_pin');
+        setErrorMessage('Tu sesión ha expirado por seguridad. Introduce tu PIN para continuar.');
       }
     } catch (e) {
       console.warn('Error refrescando citas en área de clientes:', e);
     }
-  }, []);
+  }, [getActiveToken]);
 
   // Step 1: Lookup phone
   const handleLookupPhone = async (e: React.FormEvent) => {
@@ -352,11 +382,15 @@ export default function ClientPortalPage() {
       }
 
       // Success: Save session
+      if (data.token) {
+        setSessionToken(data.token);
+      }
       const newSession = {
         phone: phoneInput,
         client: data.client,
         upcomingAppointments: data.upcomingAppointments || [],
         pastAppointments: data.pastAppointments || [],
+        token: data.token,
       };
       localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(newSession));
       localStorage.setItem('quiro_client_session', JSON.stringify(newSession));
@@ -398,11 +432,15 @@ export default function ClientPortalPage() {
       }
 
       // Success: Save session
+      if (data.token) {
+        setSessionToken(data.token);
+      }
       const newSession = {
         phone: phoneInput,
         client: data.client,
         upcomingAppointments: data.upcomingAppointments || [],
         pastAppointments: data.pastAppointments || [],
+        token: data.token,
       };
       localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(newSession));
       localStorage.setItem('quiro_client_session', JSON.stringify(newSession));
@@ -421,6 +459,7 @@ export default function ClientPortalPage() {
     localStorage.removeItem(CLIENT_SESSION_KEY);
     localStorage.removeItem('quiro_client_session');
     setSessionClient(null);
+    setSessionToken(null);
     setLookupState('initial');
     setPhoneInput('');
     setPin('');

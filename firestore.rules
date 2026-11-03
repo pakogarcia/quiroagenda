@@ -1,0 +1,170 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Application: QuiroAgenda
+// Platform: Next.js on Firebase App Hosting
+//
+// 1. Collection: gabinete_data
+//    Document ID: main
+//    Description: Central clinic operational data (appointments, clients, services, etc.)
+//    Fields:
+//      - appointments: list of maps (optional, max 20000 items)
+//      - clients: list of maps (optional, max 10000 items)
+//      - services: list of maps (optional, max 200 items)
+//      - blockedDays: list of string ISO dates (optional, max 1000 items)
+//      - profile: map of business configuration (optional, max 30 keys)
+//      - voucherSales: list of maps (optional, max 10000 items)
+//      - expenses: list of maps (optional, max 10000 items)
+//      - updatedAt: string ISO timestamp (optional, max 50 chars)
+//
+// 2. Collection: gabinete_data
+//    Document ID: client_pins
+//    Description: SHA-256 hashes of client 4-digit PINs.
+//    Access: Strictly confidential. Client SDK access is completely prohibited (allow read, write: if false).
+//            Only privileged server-side backend operations may access this document.
+//
+// 3. Collection: gabinete_data
+//    Document ID: auth_security
+//    Description: PIN authentication attempt logs, rate limiting, and temporary lockouts.
+//    Access: Strictly confidential. Client SDK access is completely prohibited (allow read, write: if false).
+//            Only privileged server-side backend operations may access this document.
+//
+// 4. Collection: settings
+//    Document ID: security
+//    Description: Master clinic administrator access hash.
+//    Fields:
+//      - passwordHash: string (required, 64-character hexadecimal SHA-256 hash)
+//      - updatedAt: string ISO timestamp (optional, max 50 chars)
+//    Access: Publicly readable by the clinic front-end for client-side password verification.
+//            Creation permitted only during initial setup (when document does not exist).
+//            Updates prohibited for unauthenticated users to prevent account takeover.
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasOnlyAllowedFields(data, allowedFields) {
+      return data.keys().hasOnly(allowedFields);
+    }
+
+    function isValidSha256(val) {
+      return val is string &&
+             val.size() == 64 &&
+             val.matches('^[a-fA-F0-9]{64}$');
+    }
+
+    function isValidOptionalIsoDate(field, data) {
+      return !(field in data) || (data[field] is string && data[field].size() <= 50);
+    }
+
+    function isValidOptionalList(field, data, maxSize) {
+      return !(field in data) || (data[field] is list && data[field].size() <= maxSize);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validates administrator security settings document (settings/security)
+    function isValidSecuritySettings(data) {
+      return hasOnlyAllowedFields(data, ['passwordHash', 'updatedAt']) &&
+             ('passwordHash' in data) &&
+             isValidSha256(data.passwordHash) &&
+             isValidOptionalIsoDate('updatedAt', data);
+    }
+
+    // Validates central business data document (gabinete_data/main)
+    function isValidMainData(data) {
+      return hasOnlyAllowedFields(data, [
+        'appointments',
+        'clients',
+        'services',
+        'blockedDays',
+        'profile',
+        'voucherSales',
+        'expenses',
+        'updatedAt'
+      ]) &&
+      isValidOptionalList('appointments', data, 20000) &&
+      isValidOptionalList('clients', data, 10000) &&
+      isValidOptionalList('services', data, 200) &&
+      isValidOptionalList('blockedDays', data, 1000) &&
+      isValidOptionalList('voucherSales', data, 10000) &&
+      isValidOptionalList('expenses', data, 10000) &&
+      isValidOptionalIsoDate('updatedAt', data) &&
+      (!('profile' in data) || (data.profile is map && data.profile.keys().size() <= 30));
+    }
+
+    // ===============================================================
+    // Collection: settings
+    // ===============================================================
+
+    // Master password security settings document
+    match /settings/security {
+      // Allow get so the password gate can retrieve the hash for local validation
+      allow get: if true;
+      allow list: if false;
+
+      // Allow initial creation ONLY if the document does not already exist
+      allow create: if resource == null && isValidSecuritySettings(request.resource.data);
+
+      // Prevent unauthorized overwrites once configured; updates require authentication
+      allow update: if isAuthenticated() && isValidSecuritySettings(request.resource.data);
+
+      // Disallow deletion of the master security settings
+      allow delete: if false;
+    }
+
+    // Default deny for any other document in settings
+    match /settings/{otherDoc} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // Collection: gabinete_data
+    // ===============================================================
+
+    // Core operational document (appointments, clients, profile, services)
+    match /gabinete_data/main {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isValidMainData(request.resource.data);
+      allow update: if isValidMainData(request.resource.data);
+      allow delete: if false; // Protect against accidental or malicious complete database wipe
+    }
+
+    // Client 4-digit PIN hashes - strictly confidential, client SDK access denied
+    match /gabinete_data/client_pins {
+      allow read, write: if false;
+    }
+
+    // Authentication rate-limiting and security lockout logs - client SDK access denied
+    match /gabinete_data/auth_security {
+      allow read, write: if false;
+    }
+
+    // Default deny for any unexpected documents inside gabinete_data
+    match /gabinete_data/{otherDoc} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // Root Catch-All: Default Deny
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

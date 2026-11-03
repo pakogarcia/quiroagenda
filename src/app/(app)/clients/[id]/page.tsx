@@ -124,10 +124,11 @@ export default function ClientDetailPage() {
         if (!client) return;
         if (!confirm(`¿Deseas restablecer el PIN de acceso web de ${client.name}? La próxima vez que entre al Área de Clientes podrá elegir uno nuevo de 4 dígitos.`)) return;
         try {
+            const adminHash = typeof window !== 'undefined' ? localStorage.getItem('quiroagenda_pwd_hash') : null;
             const res = await fetch('/api/client-portal/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'reset_pin', clientId: client.id, phone: client.phone }),
+                body: JSON.stringify({ action: 'reset_pin', clientId: client.id, phone: client.phone, adminHash }),
             });
             if (res.ok) {
                 setHasWebPin(false);

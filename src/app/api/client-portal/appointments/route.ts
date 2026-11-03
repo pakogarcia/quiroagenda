@@ -4,22 +4,23 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { calculateAvailableSlots, madridDateTimeToUtc, getAppointmentMadridDetails } from '@/lib/availability';
-
-function normalizePhone(phone: string): string {
-  const digits = (phone || '').replace(/\D/g, '');
-  if (digits.length >= 9) {
-    return digits.slice(-9);
-  }
-  return digits;
-}
+import { normalizePhone, verifyClientSessionToken } from '@/lib/client-auth';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { action, phone, clientId, appointmentId, reason, newDateStr, newTimeSlot } = body;
+    const { action, phone, clientId, appointmentId, token, reason, newDateStr, newTimeSlot } = body;
 
     if (!appointmentId) {
       return NextResponse.json({ error: 'Identificador de cita no proporcionado.' }, { status: 400 });
+    }
+
+    // Blindaje de seguridad: Verificación de token criptográfico de sesión firmado
+    const tokenResult = verifyClientSessionToken(token, clientId, phone);
+    if (!tokenResult.valid) {
+      return NextResponse.json({
+        error: 'Sesión no válida o expirada. Por favor, introduce tu PIN de nuevo en el Área de Clientes.'
+      }, { status: 401 });
     }
 
     const syncDocRef = doc(db, 'gabinete_data', 'main');

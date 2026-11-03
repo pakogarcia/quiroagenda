@@ -95,7 +95,8 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Could not access password check', error);
-        setStatus('unlocked');
+        // Fail-safe: ante error de red, mantener bloqueado por seguridad
+        setStatus('locked');
       }
     };
 
