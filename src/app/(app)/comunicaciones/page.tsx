@@ -3,14 +3,21 @@
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX, CalendarOff, Megaphone, ShoppingCart } from 'lucide-react';
+import { ArrowRight, Bell, Cake, Clock, Gift, Users, AlertCircle, UserX, CalendarOff, Megaphone, ShoppingCart, Smartphone, Sparkles } from 'lucide-react';
 import { CampaignDialog, CampaignType } from '@/components/campaign-dialog';
 
 const campaignOptions = [
   {
+    type: 'clientPortalLaunch',
+    title: 'Novedad: Área Clientes y WhatsApp',
+    description: 'Comunica el nuevo acceso privado con PIN y el número oficial de WhatsApp.',
+    icon: Smartphone,
+    highlight: true,
+  },
+  {
     type: 'reminders',
     title: 'Recordatorios de Citas',
-    description: 'Envía recordatorios de citas futuras a tus clientes.',
+    description: 'Envía recordatorios de citas futuras a tus clientes con enlace a su área privada.',
     icon: Bell,
   },
   {
@@ -92,9 +99,16 @@ export default function CommunicationsPage() {
             {campaignOptions.map((campaign) => (
               <Card
                 key={campaign.type}
-                className="hover:shadow-xl hover:border-primary/50 transition-all cursor-pointer group"
+                className={`hover:shadow-xl hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden ${
+                  'highlight' in campaign && campaign.highlight ? 'border-primary/40 bg-primary/[0.03] shadow-md' : ''
+                }`}
                 onClick={() => setSelectedCampaign(campaign.type)}
               >
+                {'highlight' in campaign && campaign.highlight && (
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-bl flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Novedad
+                  </div>
+                )}
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-accent">
                     <campaign.icon className="h-6 w-6" />
