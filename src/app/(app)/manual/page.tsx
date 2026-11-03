@@ -4,7 +4,47 @@ import * as React from 'react';
 import { AppHeader } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Leaf, CalendarDays, Users, Calculator, Gift, Send, UserCog, Euro, History, FileText, AlertCircle, ShoppingCart, BarChart, Eye, MessageSquare, Tag, Image as ImageIcon, Globe, Clock, Cake, Bell, CheckCircle, Trash2, Edit, ShieldCheck, KeyRound, Receipt, TrendingDown, CalendarOff, Megaphone } from 'lucide-react';
+import { 
+  Leaf, 
+  CalendarDays, 
+  Users, 
+  Calculator, 
+  Gift, 
+  Send, 
+  UserCog, 
+  Euro, 
+  History, 
+  FileText, 
+  AlertCircle, 
+  ShoppingCart, 
+  BarChart, 
+  Eye, 
+  MessageSquare, 
+  Tag, 
+  Image as ImageIcon, 
+  Globe, 
+  Clock, 
+  Cake, 
+  Bell, 
+  CheckCircle, 
+  Trash2, 
+  Edit, 
+  ShieldCheck, 
+  KeyRound, 
+  Receipt, 
+  TrendingDown, 
+  CalendarOff, 
+  Megaphone,
+  Smartphone,
+  Lock,
+  RefreshCw,
+  Sparkles,
+  CheckCircle2,
+  MessageCircle,
+  CalendarCheck,
+  CalendarX,
+  CalendarClock
+} from 'lucide-react';
 
 export default function ManualPage() {
   return (
@@ -23,42 +63,47 @@ export default function ManualPage() {
 
         <div className="max-w-5xl mx-auto space-y-8 pb-20">
           
-          {/* SECCIÓN 1: IDENTIDAD Y HORARIOS */}
+          {/* SECCIÓN 1: IDENTIDAD, HORARIOS Y ANTELACIÓN MÍNIMA */}
           <Card className="shadow-lg border-l-4 border-l-primary overflow-hidden">
             <CardHeader className="bg-primary/5">
-              <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog className="w-6 h-6"/> Perfil y Configuración</CardTitle>
-              <CardDescription>Establece tu marca, tus datos del negocio y tu disponibilidad laboral.</CardDescription>
+              <CardTitle className="text-2xl text-accent flex items-center gap-3"><UserCog className="w-6 h-6"/> Perfil, Horarios y Antelación Mínima</CardTitle>
+              <CardDescription>Establece tu marca, tus turnos semanales de trabajo y el margen de aviso previo para reservas.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="antelacion-minima">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-primary'><Clock className="w-4 h-4 text-primary" />Antelación Mínima para Reservas Online (Margen de Preparación)</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Protege tu ritmo de trabajo evitando reservas o cancelaciones sorpresa de última hora:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Margen Configurable en Horas:</strong> En "Quién Eres", define las horas mínimas que necesitas de preaviso (por defecto <strong>6 horas</strong>, o mediante accesos rápidos de 2h, 4h, 6h, 12h y 24h).</li>
+                      <li><strong>Filtrado Automático en el Calendario:</strong> Si son las 14:00h y tienes configuradas 6 horas de antelación, los clientes solo podrán reservar citas a partir de las 20:00h. Cualquier hora anterior desaparece del selector.</li>
+                      <li><strong>Avance Inteligente de Día:</strong> Si para el día de hoy ya no quedan huecos libres que cumplan con la antelación exigida, el día se marca automáticamente como no disponible y el calendario sugiere directamente el siguiente día con horas libres.</li>
+                      <li><strong>Protección del Servidor:</strong> Cualquier intento de reserva o cancelación fuera del margen mínimo es rechazado por el sistema con un mensaje explicativo invitando a contactar contigo directamente por WhatsApp.</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
                 <AccordionItem value="horarios">
-                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><Clock className="w-4 h-4 text-primary" />Gestión Flexible de Turnos</div></AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><CalendarDays className="w-4 h-4 text-primary" />Turnos de Trabajo por Día de la Semana</div></AccordionTrigger>
                   <AccordionContent className="space-y-4 text-muted-foreground">
-                    <p>Configura tu jornada laboral para que la agenda solo muestre tus horas reales de trabajo:</p>
+                    <p>Configura tu jornada de lunes a domingo para que la web solo ofrezca tus horas reales disponibles:</p>
                     <ul className="list-disc pl-5 space-y-2">
-                      <li><strong>Interruptores de Turno:</strong> Activa o desactiva de forma independiente el turno de mañana y tarde en "Quién Eres". Si una mañana no trabajas, la agenda ocultará ese bloque automáticamente.</li>
-                      <li><strong>Personalización Horaria:</strong> Define las horas exactas de inicio y fin para cada turno. Tu rejilla de citas se ajustará a estos límites.</li>
-                      <li><strong>Vacaciones:</strong> Añade rangos de fechas de descanso. Durante estos días, la agenda mostrará un mensaje de "Día no disponible" y bloqueará cualquier intento de cita.</li>
+                      <li><strong>Doble Turno Independiente:</strong> Activa o desactiva de forma independiente los turnos de Mañana y Tarde para cada día de la semana.</li>
+                      <li><strong>Copiar Horario en 1 Clic:</strong> Puedes configurar un día y copiar su horario a toda la semana laboral (Lunes a Viernes) o a toda la semana completa.</li>
+                      <li><strong>Vacaciones y Festivos / Inhábiles:</strong> Bloquea períodos completos de descanso o días festivos específicos. Esos días quedan completamente cerrados tanto en tu agenda como en el portal web. La app limpia automáticamente las fechas festivas ya pasadas.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
+
                 <AccordionItem value="marca">
-                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><ImageIcon className="w-4 h-4 text-primary" />Identidad Visual y Redes</div></AccordionTrigger>
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><ImageIcon className="w-4 h-4 text-primary" />Identidad Visual, Redes y WhatsApp Business</div></AccordionTrigger>
                   <AccordionContent className="space-y-4 text-muted-foreground">
-                    <p>Haz que tu negocio sea reconocible y profesional:</p>
+                    <p>Datos visibles en tu web pública, portal de clientes y recordatorios:</p>
                     <ul className="list-disc pl-5 space-y-2">
-                      <li><strong>Logotipo Personalizado:</strong> Sube tu logo en formato JPG/PNG. Se utilizará en la pantalla de carga y en la cabecera de la aplicación.</li>
-                      <li><strong>Conexión Social:</strong> Enlaza tu Web, Instagram, Facebook y TikTok. Estos datos se incorporan automáticamente en las plantillas de comunicación enviadas a tus clientes.</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="reservas-online">
-                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-primary'><Globe className="w-4 h-4 text-primary" />Reservas Online Directas y Área de Clientes</div></AccordionTrigger>
-                  <AccordionContent className="space-y-4 text-muted-foreground">
-                    <p>QuiroAgenda dispone de su propio sistema de reservas online 100% independiente:</p>
-                    <ul className="list-disc pl-5 space-y-2">
-                      <li><strong>Catálogo y Reserva Directa (/reservas):</strong> Tus clientes eligen servicio, duración y franja horaria en tiempo real según tus horarios semanales configurados. La cita se guarda al instante en tu agenda en la nube.</li>
-                      <li><strong>Área de Clientes (/mi-cuenta):</strong> Acceso privado con su teléfono móvil y un PIN de 4 dígitos para consultar sus citas programadas, historial y saldo de sesiones en sus bonos activos.</li>
+                      <li><strong>Logotipo y Datos:</strong> Imagen de cabecera JPG, nombre comercial, dirección física y teléfono de contacto.</li>
+                      <li><strong>WhatsApp Business Oficial (+34 634 43 24 87):</strong> Centralizado en la base de datos para que todos los botones de contacto y confirmación abran chat directamente contigo.</li>
+                      <li><strong>Canal de Telegram y Redes Sociales:</strong> Enlaces visibles a Instagram, Facebook, TikTok y tu canal de Telegram para que los clientes te sigan.</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -66,7 +111,104 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 2: LA AGENDA (EL DIETARIO PRO) */}
+          {/* SECCIÓN 2: ÁREA PRIVADA DE CLIENTES Y PIN CONFIDENCIAL */}
+          <Card className="shadow-lg border-l-4 border-l-amber-600 overflow-hidden">
+            <CardHeader className="bg-amber-600/5">
+              <CardTitle className="text-2xl text-amber-800 dark:text-amber-400 flex items-center gap-3"><Lock className="w-6 h-6"/> Área Privada de Clientes y Sistema de PIN (/mi-cuenta)</CardTitle>
+              <CardDescription>Portal de autoservicio para pacientes: consulta de bonos, próximas citas y autogestión.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="acceso-pin">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300'><KeyRound className="w-4 h-4 text-amber-600" />Acceso Blindado con Teléfono y PIN de 4 Dígitos</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Privacidad total para cada paciente sin necesidad de crear complejas cuentas de usuario:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Identificación por Móvil:</strong> El paciente accede introduciendo el número de teléfono con el que está registrado o reservó su cita.</li>
+                      <li><strong>Creación de PIN (Primera Vez):</strong> Si accede por primera vez, el sistema le solicita crear un PIN confidencial de 4 números y confirmarlo.</li>
+                      <li><strong>Seguridad Inmutable:</strong> Los PINs se almacenan de forma aislada y encriptada mediante algoritmo HMAC SHA-256 en la nube. Ni siquiera las actualizaciones de datos administrativos pueden borrar o alterar el PIN del cliente.</li>
+                      <li><strong>Reseteo por el Administrador:</strong> Si un paciente olvida su PIN, puedes entrar a su ficha en "Clientes" y pulsar el botón <em>"Resetear PIN Web"</em> para que pueda definir uno nuevo en su siguiente acceso.</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="bonos-cliente">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold'><Gift className="w-4 h-4 text-amber-600" />Visualización de Bonos de Masajes Activos</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>El paciente tiene control total sobre sus sesiones contratadas:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Saldo en Tiempo Real:</strong> Muestra claramente las sesiones restantes disponibles sobre el total (ej. <em>4 de 5 sesiones disponibles</em>).</li>
+                      <li><strong>Barra de Progreso Dinámica:</strong> Indica gráficamente el avance y consumo del bono con indicativo de <em>Sin Caducidad</em>.</li>
+                      <li><strong>Botón Consultar Bonos:</strong> Si no dispone de bonos activos, se le ofrece un botón directo de WhatsApp para solicitar información y adquirir un bono de 5 o 10 sesiones con descuento.</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="autogestion-citas">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-primary'><RefreshCw className="w-4 h-4 text-primary" />Autogestión de Citas: Cancelar y Reprogramar Online</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Tus clientes pueden gestionar sus propias citas sin molestarte por teléfono:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Botón "Cambiar Cita":</strong> Abre una ventana donde el paciente elige una nueva fecha y hora entre tus huecos libres reales. La cita anterior se reubica automáticamente y tú recibes una alerta inmediata en Telegram.</li>
+                      <li><strong>Botón "Cancelar Cita":</strong> Permite al paciente anular su cita tras confirmar y dejar un motivo opcional. El hueco se libera al segundo en tu agenda para que otro paciente pueda reservarlo.</li>
+                      <li><strong>Añadir a Google Calendar:</strong> Botón directo para que el paciente guarde la sesión en el calendario de su móvil con un solo clic.</li>
+                      <li><strong>Avisar por WhatsApp:</strong> Botón secundario para escribirte directamente si necesita consultar algún detalle especial sobre su sesión.</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 3: ALERTAS INSTANTÁNEAS EN TU MÓVIL (TELEGRAM) */}
+          <Card className="shadow-lg border-l-4 border-l-sky-500 overflow-hidden">
+            <CardHeader className="bg-sky-500/5">
+              <CardTitle className="text-2xl text-sky-700 dark:text-sky-400 flex items-center gap-3"><Bell className="w-6 h-6"/> Avisos Automáticos en tu Móvil (Bot de Telegram)</CardTitle>
+              <CardDescription>Notificaciones push al instante en tu smartphone cada vez que ocurra un movimiento en tu web.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="alertas-tipos">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-sky-700 dark:text-sky-300'><Smartphone className="w-4 h-4 text-sky-500" />¿Qué alertas recibes en tu Telegram?</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Tu bot personal <strong>@Quiroagenda_bot</strong> te avisa con sonido y vibración en los siguientes eventos:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Nueva Reserva Online:</strong> Recibes el nombre del cliente, teléfono (con enlace para llamar), masaje contratado, duración, fecha, hora, importe, notas del cliente y un enlace directo para abrir su chat de WhatsApp con el saludo pre-redactado.</li>
+                      <li><strong>Cancelación de Cita:</strong> Notificación inmediata indicando qué paciente ha cancelado, día, hora, motivo indicado y confirmación de que el hueco ha quedado liberado en tu agenda.</li>
+                      <li><strong>Cambio de Cita:</strong> Mensaje detallado con la comparativa de la cita anterior (fecha y hora tachadas) y la nueva fecha/hora confirmada.</li>
+                      <li><strong>100% Gratuito:</strong> Funciona mediante la API oficial de Telegram, sin cuotas mensuales ni costes por mensaje.</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 4: RESERVAS ONLINE Y CATÁLOGO PÚBLICO */}
+          <Card className="shadow-lg border-l-4 border-l-emerald-600 overflow-hidden">
+            <CardHeader className="bg-emerald-600/5">
+              <CardTitle className="text-2xl text-emerald-800 dark:text-emerald-400 flex items-center gap-3"><Globe className="w-6 h-6"/> Catálogo y Portal de Reservas Directas (/reservas)</CardTitle>
+              <CardDescription>Tu recepción virtual abierta 24/7 para que los clientes elijan masaje y hora.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="motor-reservas">
+                  <AccordionTrigger><div className='flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-300'><Sparkles className="w-4 h-4 text-emerald-600" />Catálogo con Múltiples Duraciones y Tarifas</div></AccordionTrigger>
+                  <AccordionContent className="space-y-4 text-muted-foreground">
+                    <p>Experiencia intuitiva y rápida para cualquier paciente desde su móvil:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Tarifas por Duración:</strong> Los masajes permiten elegir la duración deseada (ej. 30 min por 25€, 60 min por 45€ o 90 min por 65€). El cálculo de huecos libres se adapta a la duración exacta seleccionada.</li>
+                      <li><strong>Reconocimiento de Pacientes:</strong> Si el cliente ya dispone de sesión iniciada en su móvil, el sistema autocompleta sus datos y le saluda por su nombre sin volver a preguntarle si es nuevo.</li>
+                      <li><strong>Confirmación con 1 Clic por WhatsApp:</strong> Al completar la reserva, la pantalla de éxito le ofrece el botón <em>"Avisar a Pako por WhatsApp"</em> con el mensaje pre-redactado para máxima tranquilidad del cliente.</li>
+                      <li><strong>Botón Flotante Permanente de WhatsApp:</strong> Disponible en todo momento en la esquina inferior derecha con tu número oficial <strong>+34 634 43 24 87</strong> para resolver dudas previas.</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 5: LA AGENDA (EL DIETARIO PRO) */}
           <Card className="shadow-lg border-l-4 border-l-accent overflow-hidden">
             <CardHeader className="bg-accent/5">
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><CalendarDays className="w-6 h-6"/> Agenda Profesional (El Dietario)</CardTitle>
@@ -111,7 +253,7 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 3: CONTABILIDAD Y GASTOS */}
+          {/* SECCIÓN 6: CONTABILIDAD Y GASTOS */}
           <Card className="shadow-lg border-l-4 border-l-destructive overflow-hidden">
             <CardHeader className="bg-destructive/5">
               <CardTitle className="text-2xl text-destructive flex items-center gap-3"><Calculator className="w-6 h-6"/> Contabilidad, Gastos y Balances</CardTitle>
@@ -146,7 +288,7 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 4: CENTRO DE COMUNICACIONES (WHATSAPP) */}
+          {/* SECCIÓN 7: CENTRO DE COMUNICACIONES (WHATSAPP) */}
           <Card className="shadow-lg border-l-4 border-l-green-600 overflow-hidden">
             <CardHeader className="bg-green-600/5">
               <CardTitle className="text-2xl text-green-700 dark:text-green-400 flex items-center gap-3"><MessageSquare className="w-6 h-6"/> Centro de Comunicaciones WhatsApp</CardTitle>
@@ -174,7 +316,7 @@ export default function ManualPage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 5: CLIENTES, BONOS Y RESPALDOS */}
+          {/* SECCIÓN 8: CLIENTES, BONOS Y RESPALDOS */}
           <Card className="shadow-lg border-l-4 border-l-primary overflow-hidden">
             <CardHeader className="bg-primary/5">
               <CardTitle className="text-2xl text-accent flex items-center gap-3"><Users className="w-6 h-6"/> Fichero de Clientes, Bonos y Copias de Seguridad</CardTitle>
@@ -210,7 +352,7 @@ export default function ManualPage() {
 
           <footer className="text-center text-sm text-muted-foreground pt-12 border-t mt-12">
             <p>QuiroAgenda - La herramienta definitiva para profesionales del bienestar.</p>
-            <p className="mt-1 font-semibold">Versión 3.0 "Gestión Integral y Comunicaciones Pro"</p>
+            <p className="mt-1 font-semibold">Versión 4.0 "Área Privada de Clientes, Autogestión y Alertas en Tiempo Real"</p>
           </footer>
         </div>
       </main>
