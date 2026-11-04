@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Plus, User, Phone, Gift, CalendarClock, Users, AlertCircle, MessageSquare } from 'lucide-react';
+import { Plus, User, Phone, Gift, CalendarClock, Users, AlertCircle, MessageSquare, Tag } from 'lucide-react';
 import type { Client, Appointment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -152,9 +152,15 @@ export default function ClientsPage() {
                                       <CardHeader>
                                           <div className="flex justify-between items-start">
                                               <div>
-                                                  <CardTitle className="text-xl text-accent flex items-center gap-2">
+                                                  <CardTitle className="text-xl text-accent flex flex-wrap items-center gap-2">
                                                       <User className="w-5 h-5"/>
-                                                      {`${client.name} ${client.lastName}`}
+                                                      <span>{`${client.name} ${client.lastName}`}</span>
+                                                      {client.discount && client.discount.value > 0 && (
+                                                          <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 flex items-center gap-1" title={`Descuento fidelidad: ${client.discount.type === 'percentage' ? `${client.discount.value}%` : `${client.discount.value}€`}`}>
+                                                              <Tag className="w-3 h-3 text-emerald-600" />
+                                                              -{client.discount.type === 'percentage' ? `${client.discount.value}%` : `${client.discount.value}€`}
+                                                          </span>
+                                                      )}
                                                        {hasPendingPayment && (
                                                           <TooltipProvider>
                                                               <Tooltip>

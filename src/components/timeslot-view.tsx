@@ -103,6 +103,16 @@ export function TimeSlotView({
                                                 </p>
                                                 <p className="text-sm font-bold text-slate-800 truncate flex items-center gap-1 mt-1">
                                                     <Clock className="w-3.5 h-3.5 text-primary" /> {slot.appointment.serviceName || 'Cita'}
+                                                    {slot.appointment.servicePrice !== undefined && (
+                                                        <span className="text-xs text-slate-600 font-semibold ml-1">
+                                                            • {slot.appointment.servicePrice} €
+                                                        </span>
+                                                    )}
+                                                    {slot.appointment.discountApplied && (
+                                                        <span className="text-[10px] text-emerald-800 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-300/50 ml-1">
+                                                            -{slot.appointment.discountApplied.type === 'percentage' ? `${slot.appointment.discountApplied.value}%` : `${slot.appointment.discountApplied.value}€`}
+                                                        </span>
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="shrink-0">

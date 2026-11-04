@@ -19,6 +19,12 @@ export type Appointment = {
   serviceId?: string;
   serviceName?: string;
   servicePrice?: number;
+  originalPrice?: number; // Precio base antes de aplicar descuento de fidelidad
+  discountApplied?: {
+    type: 'fixed' | 'percentage';
+    value: number;
+    amount: number; // Euros descontados
+  };
   duration?: number; // Duración de la sesión en minutos (ej. 15, 30, 45, 60, 75, 90)
 };
 
@@ -26,6 +32,11 @@ export type Voucher = {
   sessions: number;
   totalSessions: number;
   price: number;
+};
+
+export type ClientDiscount = {
+  type: 'fixed' | 'percentage';
+  value: number;
 };
 
 export type Client = {
@@ -37,7 +48,27 @@ export type Client = {
   details?: string;
   voucher?: Voucher;
   pinHash?: string;
+  discount?: ClientDiscount;
 };
+
+export function calculateDiscountedPrice(
+  basePrice: number,
+  discount?: ClientDiscount
+): { finalPrice: number; discountAmount: number } {
+  if (!discount || !discount.value || discount.value <= 0) {
+    return { finalPrice: basePrice, discountAmount: 0 };
+  }
+
+  let discountAmount = 0;
+  if (discount.type === 'percentage') {
+    discountAmount = Math.round((basePrice * (discount.value / 100)) * 100) / 100;
+  } else {
+    discountAmount = discount.value;
+  }
+
+  const finalPrice = Math.max(0, Math.round((basePrice - discountAmount) * 100) / 100);
+  return { finalPrice, discountAmount };
+}
 
 export type Vacation = {
   from: string; // ISO string

@@ -311,9 +311,27 @@ export default function ClientDetailPage() {
                                         </Badge>
                                     )}
                                 </div>
+                                {client.discount && client.discount.value > 0 && (
+                                    <div className="inline-flex items-center gap-2 pl-2 border-l border-muted">
+                                        <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 flex items-center gap-1 font-semibold text-[11px]">
+                                            <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                                            Descuento Fiel: {client.discount.type === 'percentage' ? `${client.discount.value}%` : `${client.discount.value} €`} / sesión
+                                        </Badge>
+                                    </div>
+                                )}
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
+                            {client.discount && client.discount.value > 0 && (
+                                <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 rounded-md">
+                                    <p className="font-semibold text-sm flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
+                                        <Tag className="w-4 h-4 text-emerald-600" /> Tarifa Especial por Fidelidad
+                                    </p>
+                                    <p className="text-muted-foreground text-sm mt-1">
+                                        Este cliente tiene asignado un descuento automático de <span className="font-bold text-foreground">{client.discount.type === 'percentage' ? `${client.discount.value}%` : `${client.discount.value} €`}</span> por cita. Al programar o cobrar una sesión, QuiroAgenda calculará automáticamente su precio final reducido.
+                                    </p>
+                                </div>
+                            )}
                             {client.details && (
                                 <div className="p-3 bg-muted/50 rounded-md">
                                     <p className="font-semibold text-sm flex items-center gap-2 text-primary"><FileText className="w-4 h-4" /> Detalles Importantes</p>

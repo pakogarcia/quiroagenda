@@ -10,9 +10,9 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { type Appointment, type Client, type BusinessProfile, Payment, Voucher } from '@/lib/types';
+import { type Appointment, type Client, type BusinessProfile, Payment, Voucher, calculateDiscountedPrice } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Tag } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { useAppData } from '@/context/app-data-context';
@@ -64,6 +64,17 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
   const initializedAppointmentIdRef = React.useRef<string | null>(null);
 
+  const cleanAptPhone = (appointment?.clientPhone || '').replace(/\D/g, '');
+  const matchedClient = React.useMemo(() => {
+    if (!appointment) return null;
+    return clients.find(c => 
+      (appointment.clientId && c.id === appointment.clientId) ||
+      (c.phone && appointment.clientPhone && c.phone === appointment.clientPhone) ||
+      (cleanAptPhone.length >= 9 && (c.phone || '').replace(/\D/g, '').endsWith(cleanAptPhone.slice(-9))) ||
+      (`${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (appointment.clientName || '').trim().toLowerCase())
+    ) || null;
+  }, [appointment, clients, cleanAptPhone]);
+
   React.useEffect(() => {
     if (appointment && appointment.id !== initializedAppointmentIdRef.current) {
         initializedAppointmentIdRef.current = appointment.id;
@@ -72,30 +83,30 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
         setConfirmationData(null);
 
         const defaultPayment = appointment.payment;
-        const cleanAptPhone = (appointment.clientPhone || '').replace(/\D/g, '');
-        const currentClient = clients.find(c => 
-            (appointment.clientId && c.id === appointment.clientId) ||
-            (c.phone && appointment.clientPhone && c.phone === appointment.clientPhone) ||
-            (cleanAptPhone.length >= 9 && (c.phone || '').replace(/\D/g, '').endsWith(cleanAptPhone.slice(-9))) ||
-            (`${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (appointment.clientName || '').trim().toLowerCase())
-        );
-        
-        const defaultAmount = defaultPayment?.method !== 'voucher'
-            ? defaultPayment?.amount ?? appointment?.servicePrice
-            : appointment?.servicePrice;
+        let defaultAmount = defaultPayment?.amount;
+
+        if (defaultAmount === undefined) {
+          if (appointment?.servicePrice !== undefined) {
+            defaultAmount = appointment.servicePrice;
+          } else if (matchedClient?.discount && matchedClient.discount.value > 0) {
+            const base = appointment?.originalPrice ?? 40;
+            const { finalPrice } = calculateDiscountedPrice(base, matchedClient.discount);
+            defaultAmount = finalPrice;
+          }
+        }
 
         form.reset({
             amount: defaultAmount ?? undefined,
-            paymentMethod: defaultPayment?.method || (currentClient?.voucher && currentClient.voucher.sessions > 0 ? 'voucher' : 'cash'),
+            paymentMethod: defaultPayment?.method || (matchedClient?.voucher && matchedClient.voucher.sessions > 0 ? 'voucher' : 'cash'),
             voucherPayerId: defaultPayment?.method === 'voucher'
                 ? defaultPayment.payerClientId
-                : (currentClient?.voucher && currentClient.voucher.sessions > 0 ? currentClient.id : undefined),
+                : (matchedClient?.voucher && matchedClient.voucher.sessions > 0 ? matchedClient.id : undefined),
             refundVoucher: true,
         });
     } else if (!appointment) {
         initializedAppointmentIdRef.current = null;
     }
-  }, [appointment, isEditing, form]);
+  }, [appointment, isEditing, form, matchedClient]);
   
   const clientsWithVouchers = React.useMemo(() => {
     const clientSet = new Set<Client>();
@@ -275,19 +286,29 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
                 )}
 
                 {(paymentMethod === 'cash' || paymentMethod === 'bizum' || paymentMethod === 'paypal') && (
-                    <FormField
-                        control={form.control}
-                        name="amount"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Importe Abonado (€)</FormLabel>
-                            <FormControl>
-                            <Input type="number" step="0.01" placeholder="p. ej., 40" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
+                    <div className="space-y-2">
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Importe Abonado (€)</FormLabel>
+                                <FormControl>
+                                <Input type="number" step="0.01" placeholder="p. ej., 40" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        {matchedClient?.discount && matchedClient.discount.value > 0 && (
+                            <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200">
+                                <Tag className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span>
+                                    <strong>Tarifa especial de cliente fiel:</strong> Descuento de {matchedClient.discount.type === 'percentage' ? `${matchedClient.discount.value}%` : `${matchedClient.discount.value} €`} aplicado automáticamente al importe sugerido.
+                                </span>
+                            </div>
                         )}
-                    />
+                    </div>
                 )}
                 
                 {isChangingFromVoucher && (

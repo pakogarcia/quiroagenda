@@ -7,13 +7,14 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import type { Client, Voucher } from '@/lib/types';
+import type { Client, Voucher, ClientDiscount } from '@/lib/types';
 import { Separator } from './ui/separator';
-import { Gift, Trash2, FileText, Cake } from 'lucide-react';
+import { Gift, Trash2, FileText, Cake, Tag, Percent } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from './ui/textarea';
 import { useAppData } from '@/context/app-data-context';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import React from 'react';
 
 const createClientSchema = (allClients: Client[], editingClientId?: string) => 
@@ -25,6 +26,8 @@ const createClientSchema = (allClients: Client[], editingClientId?: string) =>
     details: z.string().optional(),
     voucherSessions: z.coerce.number().optional(),
     voucherPrice: z.coerce.number().optional(),
+    discountType: z.enum(['none', 'fixed', 'percentage']).optional(),
+    discountValue: z.coerce.number().min(0, { message: 'El descuento debe ser mayor o igual a 0.' }).optional(),
   }).superRefine((data, ctx) => {
     const phoneExists = allClients.some(
       (c) => c.phone === data.phone && c.id !== editingClientId
@@ -62,8 +65,13 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
       details: client?.details || '',
       voucherSessions: client?.voucher?.totalSessions || undefined,
       voucherPrice: client?.voucher?.price || undefined,
+      discountType: client?.discount?.type || 'none',
+      discountValue: client?.discount?.value || undefined,
     },
   });
+
+  const watchDiscountType = form.watch('discountType') || 'none';
+  const watchDiscountValue = form.watch('discountValue');
 
   const handleSubmit = (values: ClientFormValues) => {
     let voucher: Voucher | undefined;
@@ -80,6 +88,14 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
         voucher = undefined;
     }
 
+    let discount: ClientDiscount | undefined = undefined;
+    if (values.discountType && values.discountType !== 'none' && values.discountValue && values.discountValue > 0) {
+      discount = {
+        type: values.discountType as 'fixed' | 'percentage',
+        value: Number(values.discountValue),
+      };
+    }
+
     onSubmit({
       name: values.name,
       lastName: values.lastName,
@@ -87,6 +103,7 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
       birthDate: values.birthDate,
       details: values.details,
       voucher: voucher,
+      discount: discount,
     });
 
     toast({
@@ -105,6 +122,7 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
       birthDate: form.getValues('birthDate'),
       details: form.getValues('details'),
       voucher: undefined,
+      discount: client?.discount,
     });
      toast({
         title: "Bono eliminado",
@@ -189,6 +207,96 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
             )}
             />
             
+            <Separator />
+            
+            {/* Sección de Descuento Personalizado / Tarifa Fiel */}
+            <div className="space-y-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 p-4 bg-emerald-50/30 dark:bg-emerald-950/20">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
+                  <Tag className="w-4 h-4 text-emerald-600" /> Descuento Personalizado / Fidelidad
+                </h3>
+                {watchDiscountType !== 'none' && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                    Activo
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Aplica automáticamente una rebaja a este cliente en sus citas. Si en el futuro subes los precios de tus masajes, QuiroAgenda calculará su precio especial sobre el nuevo valor sin que tengas que acordarte de nada.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="discountType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Tipo de Descuento</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value || 'none'}
+                        value={field.value || 'none'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona tipo de descuento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Sin descuento (Precio estándar)</SelectItem>
+                          <SelectItem value="fixed">Descuento fijo en Euros (€)</SelectItem>
+                          <SelectItem value="percentage">Descuento en Porcentaje (%)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {watchDiscountType !== 'none' && (
+                  <FormField
+                    control={form.control}
+                    name="discountValue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">
+                          {watchDiscountType === 'fixed' ? 'Cantidad a descontar (€)' : 'Porcentaje a descontar (%)'}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            step={watchDiscountType === 'fixed' ? '0.5' : '1'}
+                            placeholder={watchDiscountType === 'fixed' ? 'p. ej., 5' : 'p. ej., 10'}
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+
+              {watchDiscountType !== 'none' && Number(watchDiscountValue) > 0 && (
+                <div className="text-xs rounded-lg p-2.5 bg-background/80 border border-emerald-300/60 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 space-y-1">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <span>✨</span> Simulación de cobro automático:
+                  </p>
+                  <p className="text-muted-foreground">
+                    Para un masaje con precio base de <span className="font-semibold text-foreground">40,00 €</span>:
+                    {' '}este cliente pagará <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                      {watchDiscountType === 'fixed' 
+                        ? `${Math.max(0, 40 - Number(watchDiscountValue)).toFixed(2)} €`
+                        : `${Math.max(0, 40 * (1 - Number(watchDiscountValue) / 100)).toFixed(2)} €`}
+                    </span>{' '}
+                    ({watchDiscountType === 'fixed' ? `-${Number(watchDiscountValue).toFixed(2)} €` : `-${watchDiscountValue}%`}).
+                  </p>
+                </div>
+              )}
+            </div>
+
             <Separator />
             
             <div>

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Appointment, Client, Service } from '@/lib/types';
+import { type Appointment, type Client, type Service, calculateDiscountedPrice } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Tag } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -87,29 +87,73 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
 
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
-    const selectedClient = clients.find(c => c.id === clientId);
-    if (selectedClient) {
-      const fullName = `${selectedClient.name} ${selectedClient.lastName || ''}`.trim();
+    const selected = clients.find(c => c.id === clientId);
+    if (selected) {
+      const fullName = `${selected.name} ${selected.lastName || ''}`.trim();
       form.setValue('clientName', fullName, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-      form.setValue('clientPhone', selectedClient.phone || '+34 ', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+      form.setValue('clientPhone', selected.phone || '+34 ', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     }
   };
 
-  const selectedClient = clients.find(c => c.id === selectedClientId);
+  const watchClientPhone = form.watch('clientPhone');
+  const watchClientName = form.watch('clientName');
+
+  const resolvedClient = React.useMemo(() => {
+    if (selectedClientId) {
+      const found = clients.find(c => c.id === selectedClientId);
+      if (found) return found;
+    }
+    const cleanPhone = (watchClientPhone || '').replace(/\D/g, '');
+    return clients.find(c => 
+      (cleanPhone.length >= 9 && (c.phone || '').replace(/\D/g, '').endsWith(cleanPhone.slice(-9))) ||
+      (`${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (watchClientName || '').trim().toLowerCase())
+    );
+  }, [selectedClientId, clients, watchClientPhone, watchClientName]);
+
+  const selectedClient = resolvedClient;
+
+  const serviceId = form.watch('serviceId');
+  const selectedService = services.find(s => s.id === serviceId);
+
+  const pricing = React.useMemo(() => {
+    const basePrice = selectedService?.price ?? 0;
+    if (!resolvedClient?.discount || resolvedClient.discount.value <= 0) {
+      return { basePrice, finalPrice: basePrice, discountAmount: 0, hasDiscount: false };
+    }
+    const { finalPrice, discountAmount } = calculateDiscountedPrice(basePrice, resolvedClient.discount);
+    return {
+      basePrice,
+      finalPrice,
+      discountAmount,
+      hasDiscount: discountAmount > 0,
+      discountType: resolvedClient.discount.type,
+      discountValue: resolvedClient.discount.value,
+    };
+  }, [selectedService, resolvedClient]);
   
   const handleSubmit = (values: AppointmentFormValues) => {
     const [hours, minutes] = values.time.split(':').map(Number);
     const combinedDateTime = set(values.date, { hours, minutes });
-    const selectedService = services.find(s => s.id === values.serviceId);
     
+    const finalPrice = pricing.hasDiscount ? pricing.finalPrice : selectedService?.price;
+    const originalPrice = selectedService?.price;
+    const discountApplied = pricing.hasDiscount ? {
+      type: pricing.discountType!,
+      value: pricing.discountValue!,
+      amount: pricing.discountAmount,
+    } : undefined;
+
     onSubmit({
+      clientId: resolvedClient?.id,
       clientName: values.clientName,
       clientPhone: values.clientPhone,
       dateTime: combinedDateTime,
       notes: values.notes || '',
       serviceId: values.serviceId,
       serviceName: selectedService?.name,
-      servicePrice: selectedService?.price,
+      servicePrice: finalPrice,
+      originalPrice: originalPrice,
+      discountApplied: discountApplied,
       duration: selectedService?.duration || 60,
     });
   };
@@ -118,8 +162,6 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
     blockedDays.map(dayStr => parse(dayStr, 'yyyy-MM-dd', new Date())),
   [blockedDays]);
 
-  const serviceId = form.watch('serviceId');
-  const selectedService = services.find(s => s.id === serviceId);
   const serviceDuration = selectedService?.duration || 60; // Default to 60 mins if no service selected
 
   const timeSlots = React.useMemo(() => {
@@ -242,11 +284,23 @@ export function AppointmentForm({ onSubmit, appointment, selectedDate }: Appoint
                             <SelectContent>
                                 {services.map(service => (
                                     <SelectItem key={service.id} value={service.id}>
-                                        {service.name} ({service.duration} min)
+                                        {service.name} ({service.duration} min - {service.price} €)
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
+                        {pricing.hasDiscount && (
+                            <div className="flex items-center gap-2 p-2.5 mt-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 shadow-xs">
+                                <Tag className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <div className="flex-1">
+                                    <span className="font-bold">Tarifa especial aplicada automáticamente: </span>
+                                    <span>
+                                        {pricing.discountType === 'percentage' ? `-${pricing.discountValue}%` : `-${pricing.discountValue} €`}
+                                        {' '}(Precio base: <span className="line-through text-muted-foreground">{pricing.basePrice.toFixed(2)} €</span> → A cobrar: <span className="font-bold text-emerald-700 dark:text-emerald-300">{pricing.finalPrice.toFixed(2)} €</span>)
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                         <FormMessage />
                     </FormItem>
                 )}
