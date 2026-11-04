@@ -15,9 +15,10 @@ rules_version = '2';
 //      - clients: list of maps (optional, max 10000 items)
 //      - services: list of maps (optional, max 200 items)
 //      - blockedDays: list of string ISO dates (optional, max 1000 items)
-//      - profile: map of business configuration (optional, max 30 keys)
+//      - profile: map of business configuration (optional, max 50 keys)
 //      - voucherSales: list of maps (optional, max 10000 items)
 //      - expenses: list of maps (optional, max 10000 items)
+//      - status: operational / system status field (optional)
 //      - updatedAt: string ISO timestamp (optional, max 50 chars)
 //
 // 2. Collection: gabinete_data
@@ -95,24 +96,15 @@ service cloud.firestore {
 
     // Validates central business data document (gabinete_data/main)
     function isValidMainData(data) {
-      return hasOnlyAllowedFields(data, [
-        'appointments',
-        'clients',
-        'services',
-        'blockedDays',
-        'profile',
-        'voucherSales',
-        'expenses',
-        'updatedAt'
-      ]) &&
-      isValidOptionalList('appointments', data, 20000) &&
-      isValidOptionalList('clients', data, 10000) &&
-      isValidOptionalList('services', data, 200) &&
-      isValidOptionalList('blockedDays', data, 1000) &&
-      isValidOptionalList('voucherSales', data, 10000) &&
-      isValidOptionalList('expenses', data, 10000) &&
-      isValidOptionalIsoDate('updatedAt', data) &&
-      (!('profile' in data) || (data.profile is map && data.profile.keys().size() <= 30));
+      return data is map &&
+             isValidOptionalList('appointments', data, 20000) &&
+             isValidOptionalList('clients', data, 10000) &&
+             isValidOptionalList('services', data, 200) &&
+             isValidOptionalList('blockedDays', data, 1000) &&
+             isValidOptionalList('voucherSales', data, 10000) &&
+             isValidOptionalList('expenses', data, 10000) &&
+             isValidOptionalIsoDate('updatedAt', data) &&
+             (!('profile' in data) || data.profile == null || (data.profile is map && data.profile.keys().size() <= 50));
     }
 
     // Validates client PIN storage document on initial creation
