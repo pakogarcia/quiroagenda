@@ -20,7 +20,7 @@ import { SplashScreen } from '@/components/layout/splash-screen';
 
 
 export default function ClientsPage() {
-    const { clients, setClients, appointments, isLoading } = useAppData();
+    const { clients, setClients, appointments, isLoading, addClient, updateClient } = useAppData();
     const [today, setToday] = React.useState<Date | null>(null);
 
     React.useEffect(() => {
@@ -85,22 +85,22 @@ export default function ClientsPage() {
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [editingClient, setEditingClient] = React.useState<Client | undefined>(undefined);
     
-    const handleAddClient = (data: Omit<Client, 'id'>) => {
+    const handleAddClient = async (data: Omit<Client, 'id'>) => {
         const newClient: Client = { ...data, id: crypto.randomUUID() };
-        setClients(prev => [...prev, newClient].sort((a, b) => {
-            const nameComp = a.name.localeCompare(b.name);
-            if (nameComp !== 0) return nameComp;
-            return (a.lastName || '').localeCompare(b.lastName || '');
-        }));
+        try {
+            await addClient(newClient);
+        } catch (e) {
+            console.error("Error al añadir cliente:", e);
+        }
         setIsFormOpen(false);
     };
 
-    const handleUpdateClient = (id: string, data: Omit<Client, 'id'>) => {
-        setClients(prev => prev.map((client) => (client.id === id ? { ...client, ...data } : client)).sort((a, b) => {
-            const nameComp = a.name.localeCompare(b.name);
-            if (nameComp !== 0) return nameComp;
-            return (a.lastName || '').localeCompare(b.lastName || '');
-        }));
+    const handleUpdateClient = async (id: string, data: Omit<Client, 'id'>) => {
+        try {
+            await updateClient(id, data);
+        } catch (e) {
+            console.error("Error al actualizar cliente:", e);
+        }
         setIsFormOpen(false);
         setEditingClient(undefined);
     };

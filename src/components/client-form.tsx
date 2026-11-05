@@ -29,13 +29,19 @@ const createClientSchema = (allClients: Client[], editingClientId?: string) =>
     discountType: z.enum(['none', 'fixed', 'percentage']).optional(),
     discountValue: z.coerce.number().min(0, { message: 'El descuento debe ser mayor o igual a 0.' }).optional(),
   }).superRefine((data, ctx) => {
-    const phoneExists = allClients.some(
-      (c) => c.phone === data.phone && c.id !== editingClientId
-    );
+    const cleanInputPhone = (data.phone || '').replace(/\D/g, '');
+    const phoneExists = allClients.some((c) => {
+      if (c.id === editingClientId) return false;
+      const cleanExisting = (c.phone || '').replace(/\D/g, '');
+      if (cleanInputPhone.length >= 9 && cleanExisting.length >= 9) {
+        return cleanExisting.endsWith(cleanInputPhone.slice(-9));
+      }
+      return c.phone === data.phone;
+    });
     if (phoneExists) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Este número de teléfono ya está registrado.',
+        message: 'Este número de teléfono ya está registrado con otro cliente.',
         path: ['phone'],
       });
     }
@@ -69,6 +75,22 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
       discountValue: client?.discount?.value || undefined,
     },
   });
+
+  React.useEffect(() => {
+    if (client) {
+      form.reset({
+        name: client.name || '',
+        lastName: client.lastName || '',
+        phone: client.phone || '+34 ',
+        birthDate: client.birthDate || '',
+        details: client.details || '',
+        voucherSessions: client.voucher?.totalSessions || undefined,
+        voucherPrice: client.voucher?.price || undefined,
+        discountType: client.discount?.type || 'none',
+        discountValue: client.discount?.value || undefined,
+      });
+    }
+  }, [client, form]);
 
   const watchDiscountType = form.watch('discountType') || 'none';
   const watchDiscountValue = form.watch('discountValue');

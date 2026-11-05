@@ -24,14 +24,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { EditVoucherSaleDialog } from '@/components/edit-voucher-sale-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { NewAppointmentConfirmationDialog } from '@/components/new-appointment-confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 type HistoryItem = (Appointment & { type: 'appointment' }) | (VoucherSale & { type: 'voucher_sale' });
 
 export default function ClientDetailPage() {
-    const { clients, setClients, appointments, setAppointments, voucherSales, setVoucherSales, isLoading } = useAppData();
+    const { clients, setClients, appointments, setAppointments, voucherSales, setVoucherSales, isLoading, updateClient, deleteClient } = useAppData();
     const router = useRouter();
     const params = useParams();
     const clientId = params.id as string;
+    const { toast } = useToast();
 
     const [client, setClient] = React.useState<Client | null>(null);
     const [hasWebPin, setHasWebPin] = React.useState<boolean>(false);
@@ -109,16 +111,38 @@ export default function ClientDetailPage() {
         }
     }, [clientId, router, clients, appointments, voucherSales, isLoading]);
 
-    const handleUpdateClient = (id: string, data: Omit<Client, 'id'>) => {
-        const updatedClient = { ...client, ...data } as Client;
-        setClient(updatedClient);
-        setClients(prev => prev.map(c => (c.id === id ? updatedClient : c)));
-        setIsFormOpen(false);
+    const handleUpdateClient = async (id: string, data: Omit<Client, 'id'>) => {
+        try {
+            const updatedClient = { ...client, ...data } as Client;
+            setClient(updatedClient);
+            await updateClient(id, data);
+            setIsFormOpen(false);
+            toast({
+                title: "Cliente actualizado",
+                description: "Los datos y descuentos se han guardado correctamente en la nube.",
+            });
+        } catch (err) {
+            console.error("Error guardando cliente:", err);
+            toast({
+                title: "Error al guardar",
+                description: "No se pudieron guardar los cambios en la nube. Inténtalo de nuevo.",
+                variant: "destructive"
+            });
+        }
     };
 
-    const handleDeleteClient = () => {
-        setClients(prev => prev.filter(c => c.id !== clientId));
-        router.push('/clients');
+    const handleDeleteClient = async () => {
+        try {
+            await deleteClient(clientId);
+            router.push('/clients');
+        } catch (err) {
+            console.error("Error eliminando cliente:", err);
+            toast({
+                title: "Error al eliminar",
+                description: "No se pudo eliminar el cliente. Inténtalo de nuevo.",
+                variant: "destructive"
+            });
+        }
     };
 
     const handleResetPin = async () => {
@@ -535,6 +559,7 @@ export default function ClientDetailPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <ClientForm 
+                        key={client.id + (client.discount ? `${client.discount.type}_${client.discount.value}` : 'nodiscount') + String(isFormOpen)}
                         onSubmit={(data) => handleUpdateClient(client.id, data)}
                         client={client}
                     />

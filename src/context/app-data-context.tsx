@@ -60,6 +60,9 @@ type AppDataContextType = {
     isLoading: boolean;
     loadData: () => void;
     refreshData: () => Promise<void>;
+    addClient: (newClient: Client) => Promise<void>;
+    updateClient: (id: string, data: Partial<Client>) => Promise<void>;
+    deleteClient: (id: string) => Promise<void>;
     addAppointment: (apt: Appointment) => Promise<void>;
     updateAppointment: (id: string, data: Partial<Appointment>) => Promise<void>;
     deleteAppointment: (id: string) => Promise<void>;
@@ -291,7 +294,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                         });
                         const safeClientsList = Array.from(clientUnion.values());
 
-                        await setDoc(syncDocRef, {
+                        const cleanPayload = JSON.parse(JSON.stringify({
                             appointments: safeAppointments,
                             clients: safeClientsList,
                             services,
@@ -300,7 +303,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
                             voucherSales: voucherSales.map(v => ({ ...v, date: new Date(v.date).toISOString() })),
                             expenses: expenses.map(e => ({ ...e, date: new Date(e.date).toISOString() })),
                             updatedAt: new Date().toISOString()
-                        }, { merge: true });
+                        }));
+
+                        await setDoc(syncDocRef, cleanPayload, { merge: true });
                     } catch (cloudErr) {
                         console.warn("Failed syncing update to Firestore:", cloudErr);
                     }
@@ -340,6 +345,81 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             console.warn("Error refreshing from Firestore:", e);
         }
     }, []);
+
+    const addClient = async (newClient: Client) => {
+        setClients(prev => [...prev.filter(c => c.id !== newClient.id), newClient].sort((a, b) => {
+            const nameComp = a.name.localeCompare(b.name);
+            if (nameComp !== 0) return nameComp;
+            return (a.lastName || '').localeCompare(b.lastName || '');
+        }));
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            const snap = await getDoc(syncDocRef);
+            if (snap.exists()) {
+                const cloud = snap.data();
+                const existing = cloud.clients || [];
+                const updatedList = [...existing.filter((c: any) => c.id !== newClient.id), newClient];
+                const cleanPayload = JSON.parse(JSON.stringify({
+                    clients: updatedList,
+                    updatedAt: new Date().toISOString()
+                }));
+                await setDoc(syncDocRef, cleanPayload, { merge: true });
+            }
+        } catch (err) {
+            console.error("Error direct adding client to Firestore:", err);
+            throw err;
+        }
+    };
+
+    const updateClient = async (id: string, clientData: Partial<Client>) => {
+        setClients(prev => prev.map(c => c.id === id ? { ...c, ...clientData } : c));
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            const snap = await getDoc(syncDocRef);
+            if (snap.exists()) {
+                const cloud = snap.data();
+                const existing = cloud.clients || [];
+                const updatedList = existing.map((c: any) => {
+                    if (c.id === id) {
+                        return {
+                            ...c,
+                            ...clientData,
+                        };
+                    }
+                    return c;
+                });
+                const cleanPayload = JSON.parse(JSON.stringify({
+                    clients: updatedList,
+                    updatedAt: new Date().toISOString()
+                }));
+                await setDoc(syncDocRef, cleanPayload, { merge: true });
+            }
+        } catch (err) {
+            console.error("Error direct updating client in Firestore:", err);
+            throw err;
+        }
+    };
+
+    const deleteClient = async (id: string) => {
+        setClients(prev => prev.filter(c => c.id !== id));
+        try {
+            const syncDocRef = doc(db, 'gabinete_data', 'main');
+            const snap = await getDoc(syncDocRef);
+            if (snap.exists()) {
+                const cloud = snap.data();
+                const existing = cloud.clients || [];
+                const updatedList = existing.filter((c: any) => c.id !== id);
+                const cleanPayload = JSON.parse(JSON.stringify({
+                    clients: updatedList,
+                    updatedAt: new Date().toISOString()
+                }));
+                await setDoc(syncDocRef, cleanPayload, { merge: true });
+            }
+        } catch (err) {
+            console.error("Error direct deleting client from Firestore:", err);
+            throw err;
+        }
+    };
 
     const addAppointment = async (newApt: Appointment) => {
         setAppointments(prev => [...prev.filter(a => a.id !== newApt.id), newApt]);
@@ -519,6 +599,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
             isLoading,
             loadData: loadLocalFallback,
             refreshData,
+            addClient,
+            updateClient,
+            deleteClient,
             addAppointment,
             updateAppointment,
             deleteAppointment,
