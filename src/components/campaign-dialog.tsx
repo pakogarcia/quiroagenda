@@ -15,7 +15,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from './ui/checkbox';
 import { useAppData } from '@/context/app-data-context';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,23 +47,49 @@ const campaignDetails = {
 export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: CampaignType | null; onOpenChange: (isOpen: boolean) => void }) {
   const { clients, profile, appointments, setAppointments, services } = useAppData();
   
+  const [activeCampaign, setActiveCampaign] = useState<CampaignType | null>(campaignType);
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([]);
   const [step, setStep] = useState<'select' | 'finished'>('select');
-  
-  const [isConfirmSentOpen, setIsConfirmSentOpen] = React.useState(false);
   
   const [inactiveDays, setInactiveDays] = useState<number>(90);
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
 
-  const {toast} = useToast();
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (campaignType) {
+      setActiveCampaign(campaignType);
+      setStep('select');
+      setSelectedClientIds([]);
+      setGeneratedMessages([]);
+    }
+  }, [campaignType]);
+
+  const handleClose = useCallback((open: boolean) => {
+    if (!open) {
+      onOpenChange(false);
+      // Garantizar que ningún bloqueo de puntero o scroll de Radix UI quede residual en document.body
+      setTimeout(() => {
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+        document.body.removeAttribute('data-scroll-locked');
+        const main = document.querySelector('main');
+        if (main) main.removeAttribute('aria-hidden');
+        const header = document.querySelector('header');
+        if (header) header.removeAttribute('aria-hidden');
+      }, 50);
+    }
+  }, [onOpenChange]);
+
+  const currentType = campaignType || activeCampaign;
 
   const targetClients = useMemo(() => {
-    if (!campaignType) return [];
+    if (!currentType) return [];
     const today = startOfToday();
 
-    switch (campaignType) {
+    switch (currentType) {
         case 'reminders': {
             const nextAppointmentByClient: { [phone: string]: Appointment } = {};
             appointments
@@ -150,10 +175,11 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
         default:
             return [];
     }
-  }, [campaignType, clients, appointments, inactiveDays]);
+  }, [currentType, clients, appointments, inactiveDays]);
 
   React.useEffect(() => {
     if (campaignType) {
+      setActiveCampaign(campaignType);
       setStep('select');
       setGeneratedMessages([]);
       setSelectedClientIds([]);
@@ -255,20 +281,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
     setStep('finished');
   }, [campaignType, selectedClientIds, clients, appointments, profile, toast, newClientName, newClientPhone, services]);
 
-  const handleMarkAsSent = () => {
-     if (campaignType === 'reminders') {
-        const sentAppointmentIds = generatedMessages.map(msg => msg.appointmentId).filter(id => id !== undefined) as string[];
-        setAppointments(prev => prev.map(apt => sentAppointmentIds.includes(apt.id) ? { ...apt, reminderSent: true } : apt));
+  const handleMarkAsSentAndClose = () => {
+    if (currentType === 'reminders') {
+      const sentAppointmentIds = generatedMessages.map(msg => msg.appointmentId).filter(id => id !== undefined) as string[];
+      setAppointments(prev => prev.map(apt => sentAppointmentIds.includes(apt.id) ? { ...apt, reminderSent: true } : apt));
+      toast({ title: "Recordatorios actualizados", description: "Las citas han quedado marcadas como notificadas." });
     }
-    setIsConfirmSentOpen(false);
-    onOpenChange(false);
+    handleClose(false);
   };
   
   const handleSelectAll = (checked: boolean) => {
     setSelectedClientIds(checked ? targetClients.map(c => c.id) : []);
   };
   
-  const details = campaignType ? campaignDetails[campaignType] : null;
+  const details = currentType ? campaignDetails[currentType] : null;
 
   const renderConfiguration = () => {
       if (step !== 'select') return null;
@@ -369,39 +395,32 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
     )
   }
 
-  if (!campaignType || !details) return null;
+  if (!details) return null;
 
   return (
-    <>
-      <Dialog open={!!campaignType} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3"><details.icon className="h-6 w-6 text-primary"/>{details.title}</DialogTitle>
-            <DialogDescription>{step === 'finished' ? '¡Mensajes listos!' : 'Selecciona destinatarios.'}</DialogDescription>
-          </DialogHeader>
-          <div className="py-4">{renderContent()}</div>
-          <DialogFooter className="sm:justify-end gap-2 pt-4">
-              {step === 'finished' ? (
-                  <Button onClick={() => setIsConfirmSentOpen(true)}>{campaignType === 'reminders' ? 'Marcar y Cerrar' : 'Cerrar'}</Button>
-              ) : (
-                  <Button onClick={generateMessages} disabled={selectedClientIds.length === 0 && campaignType !== 'newClients'}>Generar Mensaje(s)</Button>
-              )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <AlertDialog open={isConfirmSentOpen} onOpenChange={setIsConfirmSentOpen}>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-                  <AlertDialogTitle>¿Confirmar cierre?</AlertDialogTitle>
-                  <AlertDialogDescription>{campaignType === 'reminders' ? "Se marcarán como enviados." : "Se cerrará la ventana."}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleMarkAsSent}>Confirmar</AlertDialogAction>
-              </AlertDialogFooter>
-          </AlertDialogContent>
-      </AlertDialog>
-    </>
+    <Dialog open={Boolean(campaignType)} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3"><details.icon className="h-6 w-6 text-primary"/>{details.title}</DialogTitle>
+          <DialogDescription>{step === 'finished' ? '¡Mensajes listos!' : 'Selecciona destinatarios.'}</DialogDescription>
+        </DialogHeader>
+        <div className="py-4">{renderContent()}</div>
+        <DialogFooter className="sm:justify-end gap-2 pt-4">
+            {step === 'finished' ? (
+                currentType === 'reminders' ? (
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Button variant="outline" onClick={() => handleClose(false)}>Cerrar sin marcar</Button>
+                        <Button onClick={handleMarkAsSentAndClose}>Marcar como enviados y cerrar</Button>
+                    </div>
+                ) : (
+                    <Button onClick={() => handleClose(false)}>Cerrar</Button>
+                )
+            ) : (
+                <Button onClick={generateMessages} disabled={selectedClientIds.length === 0 && currentType !== 'newClients'}>Generar Mensaje(s)</Button>
+            )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -431,7 +450,11 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
                 <div className="font-bold text-primary flex items-center gap-2"><Smartphone className="w-4 h-4"/>{message.clientName}</div>
                 <div className="flex items-center">
                     <Button variant="ghost" size="sm" onClick={handleCopy}>{isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}</Button>
-                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer"><Button variant="ghost" size="sm"><Send className="w-4 h-4" /></Button></a>
+                    <Button variant="ghost" size="sm" asChild>
+                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                            <Send className="w-4 h-4 text-primary" />
+                        </a>
+                    </Button>
                 </div>
             </div>
             <Separator className="my-2" />

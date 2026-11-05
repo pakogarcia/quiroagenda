@@ -111,6 +111,7 @@ export default function ClientDetailPage() {
 
     const handleUpdateClient = (id: string, data: Omit<Client, 'id'>) => {
         const updatedClient = { ...client, ...data } as Client;
+        setClient(updatedClient);
         setClients(prev => prev.map(c => (c.id === id ? updatedClient : c)));
         setIsFormOpen(false);
     };
@@ -322,14 +323,38 @@ export default function ClientDetailPage() {
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
-                            {client.discount && client.discount.value > 0 && (
-                                <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 rounded-md">
-                                    <p className="font-semibold text-sm flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
-                                        <Tag className="w-4 h-4 text-emerald-600" /> Tarifa Especial por Fidelidad
-                                    </p>
-                                    <p className="text-muted-foreground text-sm mt-1">
-                                        Este cliente tiene asignado un descuento automático de <span className="font-bold text-foreground">{client.discount.type === 'percentage' ? `${client.discount.value}%` : `${client.discount.value} €`}</span> por cita. Al programar o cobrar una sesión, QuiroAgenda calculará automáticamente su precio final reducido.
-                                    </p>
+                            {client.discount && client.discount.value > 0 ? (
+                                <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-semibold text-sm flex items-center gap-2 text-emerald-900 dark:text-emerald-200">
+                                                <Tag className="w-4 h-4 text-emerald-600" /> Tarifa Especial por Fidelidad
+                                            </p>
+                                            <Badge variant="outline" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border-emerald-300 font-bold text-xs">
+                                                -{client.discount.type === 'percentage' ? `${client.discount.value}%` : `${client.discount.value} €`} / sesión
+                                            </Badge>
+                                        </div>
+                                        <p className="text-muted-foreground text-xs leading-relaxed">
+                                            Este cliente tiene asignado un descuento automático de <strong className="text-foreground">{client.discount.type === 'percentage' ? `${client.discount.value}%` : `${client.discount.value} €`}</strong> en cada sesión. Al agendar o cobrar una cita, QuiroAgenda calcula su precio reducido automáticamente.
+                                        </p>
+                                    </div>
+                                    <Button variant="outline" size="sm" className="self-start sm:self-center border-emerald-300 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100/60 shrink-0" onClick={() => setIsFormOpen(true)}>
+                                        <Edit className="w-3.5 h-3.5 mr-1.5" /> Modificar Descuento
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="p-3.5 bg-muted/30 border border-dashed border-muted-foreground/30 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <p className="font-semibold text-sm flex items-center gap-2 text-foreground/90">
+                                            <Tag className="w-4 h-4 text-primary" /> Descuento Personalizado / Tarifa Fiel
+                                        </p>
+                                        <p className="text-muted-foreground text-xs mt-1">
+                                            Sin descuento asignado (este cliente abona la tarifa habitual de tus masajes).
+                                        </p>
+                                    </div>
+                                    <Button variant="outline" size="sm" className="self-start sm:self-center shrink-0 border-primary/40 text-primary hover:bg-primary/10" onClick={() => setIsFormOpen(true)}>
+                                        <Tag className="w-3.5 h-3.5 mr-1.5 text-primary" /> Asignar Descuento
+                                    </Button>
                                 </div>
                             )}
                             {client.details && (

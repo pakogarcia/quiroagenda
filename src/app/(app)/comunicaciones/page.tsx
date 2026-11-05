@@ -129,7 +129,9 @@ export default function CommunicationsPage() {
 
       <CampaignDialog
         campaignType={selectedCampaign}
-        onOpenChange={() => setSelectedCampaign(null)}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setSelectedCampaign(null);
+        }}
       />
     </>
   );
