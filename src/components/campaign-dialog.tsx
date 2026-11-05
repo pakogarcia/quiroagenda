@@ -173,8 +173,8 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
 
     if (campaignType === 'newClients') {
         const clientName = newClientName.split(' ')[0] || 'futuro cliente';
-        const serviceList = services.map(s => `- ${s.name} (${s.duration} min): ${s.price.toFixed(2)}€`).join('\n');
-        const message = `¡Hola ${clientName}!\n\nGracias por tu interés en ${profile.name}. ¡Será un placer cuidarte!\n\nAquí tienes nuestra carta de servicios:\n\n💆 Nuestros tratamientos:\n${serviceList}\n\n📍 Nos encontramos en:\n${profile.address || 'Contacta para más detalles'}\n\n🗓️ Puedes reservar tu cita cómodamente online aquí:\n👉 https://citas.pakogarcia.es/reservas\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
+        const serviceList = services.map(s => `• ${s.name} (${s.duration} min): ${s.price.toFixed(2)}€`).join('\n');
+        const message = `¡Hola ${clientName}!\n\nGracias por tu interés en *${profile.name}*. ¡Será un placer atenderte!\n\nAquí tienes nuestra carta de servicios:\n\nTratamientos disponibles:\n${serviceList}\n\nUbicación:\n${profile.address || 'Contacta para más detalles'}\n\nPuedes reservar tu cita cómodamente online aquí:\nhttps://citas.pakogarcia.es/reservas\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
         messages.push({ clientId: 'new-client', clientName: newClientName, clientPhone: newClientPhone, message: message });
     } else {
         for (const clientId of selectedClientIds) {
@@ -186,20 +186,20 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
 
             if (campaignType === 'clientPortalLaunch') {
                 const clientName = client.name.split(' ')[0];
-                message = `¡Hola ${clientName}! 👋 Te escribo desde el *WhatsApp Oficial de ${profile.name}* (guarda este número en tu agenda). 💆‍♂️\n\n✨ Hemos estrenado nuestra nueva *Área de Clientes* online. Desde ella podrás:\n• Consultar tus próximas citas y horarios\n• Modificar o cancelar citas si te surge algún imprevisto\n• Ver tus bonos activos y sesiones restantes\n\n📲 Entra con tu móvil e introduce tu PIN de seguridad (si es tu primera vez, créalo en 1 minuto):\n👉 https://citas.pakogarcia.es/mi-cuenta\n\n*(Nota: tu PIN está protegido y nadie tiene acceso a él. Si lo olvidas, avísame y te lo reinicio).* ¡Espero que te resulte muy cómodo!\n\nUn saludo,\n${profile.name}`;
+                message = `¡Hola ${clientName}!\n\nTe escribo desde el *nuevo WhatsApp Oficial de ${profile.name}* (guarda este número en tu agenda).\n\nA partir de ahora, este será el *canal exclusivo para citas y comunicaciones profesionales*. Mi otro teléfono (el que la mayoría teníais guardado hasta ahora) lo reservo a partir de hoy como número personal.\n\nAdemás, hemos estrenado nuestra nueva *Área de Clientes* online. Desde tu móvil podrás:\n• Consultar tus próximas citas y horarios\n• Modificar o cancelar citas si te surge algún imprevisto\n• Ver tus bonos activos y sesiones restantes\n\nPara acceder, solo introduce tu móvil y tu PIN de seguridad (si es tu primera vez, lo creas en 1 minuto):\nhttps://citas.pakogarcia.es/mi-cuenta\n\n*(Nota: tu PIN es privado y seguro. Si alguna vez lo olvidas, avísame y te lo reinicio al instante).* ¡Espero que te resulte muy cómodo y útil!\n\nUn saludo,\n${profile.name}`;
             } else if (campaignType === 'reminders') {
                 const appointment = appointments
                     .filter(apt => apt.clientPhone === client?.phone && apt.status === 'scheduled' && isFuture(apt.dateTime))
                     .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
                 if (appointment) {
                     appointmentId = appointment.id;
-                    message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en *${profile.name}*.\n\n🗓️ Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n⏰ Hora: ${format(appointment.dateTime, "p", { locale: es })}\n📍 Ubicación: ${profile.address}\n💳 Pago: en consulta (efectivo preferible).\n\n⚙️ Puedes consultar o gestionar tu cita en tu área privada:\n👉 https://citas.pakogarcia.es/mi-cuenta\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
+                    message = `Hola ${client.name.split(' ')[0]},\n\nTe escribo para recordarte tu próxima cita en *${profile.name}*:\n\n• Fecha: ${format(appointment.dateTime, "EEEE, d 'de' MMMM", { locale: es })}\n• Hora: ${format(appointment.dateTime, "p", { locale: es })}\n• Ubicación: ${profile.address}\n• Pago: en consulta (efectivo preferible).\n\nPuedes consultar o gestionar tu cita en tu área privada:\nhttps://citas.pakogarcia.es/mi-cuenta\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
                 }
             } else if (campaignType === 'voucherPurchase') {
                  if (client.voucher) {
                     const clientName = client.name.split(' ')[0];
                     const sessions = client.voucher.totalSessions;
-                    message = `¡Hola ${clientName}!\n\nMuchísimas gracias por adquirir tu bono de *${sessions} sesiones* en ${profile.name}. Es un placer para mí seguir cuidando de tu bienestar.\n\nPuedes consultar tus sesiones y gestionar tus citas en tu área privada:\n👉 https://citas.pakogarcia.es/mi-cuenta\n\nO reservar tu próxima sesión online:\n👉 https://citas.pakogarcia.es/reservas\n\n¡Nos vemos pronto!\n\nUn saludo,\n${profile.name}`;
+                    message = `¡Hola ${clientName}!\n\nMuchísimas gracias por adquirir tu bono de *${sessions} sesiones* en ${profile.name}. Es un placer para mí seguir cuidando de tu bienestar.\n\nPuedes consultar tus sesiones y gestionar tus citas en tu área privada:\nhttps://citas.pakogarcia.es/mi-cuenta\n\nO reservar tu próxima sesión online:\nhttps://citas.pakogarcia.es/reservas\n\n¡Nos vemos pronto!\n\nUn saludo,\n${profile.name}`;
                 }
             } else if (campaignType === 'pendingPayments') {
                 const appointment = appointments
@@ -215,7 +215,7 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
                 if (client.voucher) {
                     const clientName = client.name.split(' ')[0];
                     const remaining = client.voucher.sessions;
-                    message = `Hola ${clientName},\n\nTe recordamos que tienes un bono activo con *${remaining} sesión(es) disponible(s)* en ${profile.name}.\n\n🗓️ Reserva tu próxima sesión online:\n👉 https://citas.pakogarcia.es/reservas\n\n📲 O consulta tus datos en tu área privada:\n👉 https://citas.pakogarcia.es/mi-cuenta\n\n¡Te esperamos pronto!\n\nUn saludo,\n${profile.name}`;
+                    message = `Hola ${clientName},\n\nTe recordamos que tienes un bono activo con *${remaining} sesión(es) disponible(s)* en ${profile.name}.\n\nReserva tu próxima sesión online:\nhttps://citas.pakogarcia.es/reservas\n\nO consulta tus datos en tu área privada:\nhttps://citas.pakogarcia.es/mi-cuenta\n\n¡Te esperamos pronto!\n\nUn saludo,\n${profile.name}`;
                 }
             } else if (campaignType === 'cancellation') {
                 const appointment = appointments
@@ -231,19 +231,19 @@ export function CampaignDialog({ campaignType, onOpenChange }: { campaignType: C
                 }
             } else if (campaignType === 'noShow') {
                 const clientName = client.name.split(' ')[0];
-                message = `Hola ${clientName},\n\nTe escribo de parte de *${profile.name}*. He notado que no pudiste asistir a tu última cita.\n\nEspero que todo esté bien. Si deseas agendar una nueva fecha, puedes reservar directamente online cuando mejor te venga:\n👉 https://citas.pakogarcia.es/reservas\n\n¡Un saludo!\n${profile.name}`;
+                message = `Hola ${clientName},\n\nTe escribo de parte de *${profile.name}*. He notado que no pudiste asistir a tu última cita.\n\nEspero que todo esté bien. Si deseas agendar una nueva fecha, puedes reservar directamente online cuando mejor te venga:\nhttps://citas.pakogarcia.es/reservas\n\n¡Un saludo!\n${profile.name}`;
             } else if (campaignType === 'offer') {
                 const clientName = client.name.split(' ')[0];
-                message = `¡Hola ${clientName}!\n\nEn *${profile.name}* tenemos una promoción especial pensada para ti. 🎁\n\n🗓️ Puedes consultar horarios y reservar tu sesión online:\n👉 https://citas.pakogarcia.es/reservas\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
+                message = `¡Hola ${clientName}!\n\nEn *${profile.name}* tenemos una promoción especial pensada para ti.\n\nPuedes consultar horarios y reservar tu sesión online:\nhttps://citas.pakogarcia.es/reservas\n\n¡Te esperamos!\n\nUn saludo,\n${profile.name}`;
             } else if (campaignType === 'generalMessage') {
                 const clientName = client.name.split(' ')[0];
                 message = `Hola ${clientName},\n\nTe escribimos de parte de *${profile.name}* para informarte de la siguiente novedad:\n\n[Escribe aquí tu comunicado]\n\n¡Muchas gracias!\n\nUn saludo,\n${profile.name}`;
             } else if (campaignType === 'birthdays') {
                 const clientName = client.name.split(' ')[0];
-                message = `¡Hola ${clientName}!\n\n¡Feliz cumpleaños! 🎉 De parte de todo el equipo de ${profile.name}, te deseamos un día maravilloso.\n\n¡Esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
+                message = `¡Hola ${clientName}!\n\n¡Feliz cumpleaños! De parte de todo el equipo de ${profile.name}, te deseamos un día maravilloso.\n\n¡Esperamos verte pronto!\n\nUn saludo,\n${profile.name}`;
             } else if (campaignType === 'inactiveClients') {
                 const clientName = client.name.split(' ')[0];
-                message = `¡Hola ${clientName}!\n\nHace un tiempo que no te vemos por *${profile.name}* y queríamos saber cómo estás. 😊\n\nTu bienestar es lo más importante. Si necesitas una sesión para aliviar tensiones o regalarte un momento de descanso, puedes reservar tu cita online cómodamente aquí:\n👉 https://citas.pakogarcia.es/reservas\n\n¡Nos encantará volver a atenderte!\n\nUn saludo,\n${profile.name}`;
+                message = `¡Hola ${clientName}!\n\nHace un tiempo que no te vemos por *${profile.name}* y queríamos saber cómo estás.\n\nTu bienestar es lo más importante. Si necesitas una sesión para aliviar tensiones o regalarte un momento de descanso, puedes reservar tu cita online cómodamente aquí:\nhttps://citas.pakogarcia.es/reservas\n\n¡Nos encantará volver a atenderte!\n\nUn saludo,\n${profile.name}`;
             }
 
             if (message) {
@@ -414,7 +414,9 @@ function MessageCard({ message }: { message: GeneratedMessage; }) {
     if (cleanPhone.length === 9 && /^[6789]/.test(cleanPhone)) {
         cleanPhone = `34${cleanPhone}`;
     }
-    const whatsappLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(editedMessage)}`;
+    // Sanitizamos selectores de variación Unicode (\uFE0E, \uFE0F, \u200D) que provocan el rombo con interrogación () en WhatsApp
+    const cleanMessageForUrl = editedMessage.replace(/[\uFE0E\uFE0F\u200D]/g, '');
+    const whatsappLink = `https://api.whatsapp.com/send/?phone=${cleanPhone}&text=${encodeURIComponent(cleanMessageForUrl)}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(editedMessage);
