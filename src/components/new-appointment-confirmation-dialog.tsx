@@ -32,6 +32,15 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
   const { profile: businessProfile, services } = useAppData();
 
   const mode: DialogMode | null = appointment ? 'newAppointment' : voucherUpdateData ? 'voucherUpdate' : voucherPurchaseData ? 'voucherPurchase' : null;
+  const [cachedMode, setCachedMode] = React.useState<DialogMode | null>(mode);
+
+  React.useEffect(() => {
+    if (mode) {
+      setCachedMode(mode);
+    }
+  }, [mode]);
+
+  const activeMode = mode || cachedMode;
   
   const generateMessage = React.useCallback(() => {
     if (!mode || !businessProfile) return;
@@ -118,10 +127,10 @@ export function NewAppointmentConfirmationDialog({ appointment, voucherUpdateDat
 
   const showSocials = businessProfile && (businessProfile.website || businessProfile.instagram || businessProfile.facebook || businessProfile.tiktok || businessProfile.youtube);
 
-  if (!mode) return null;
+  if (!activeMode) return null;
 
   return (
-    <Dialog open={!!mode} onOpenChange={handleClose}>
+    <Dialog open={Boolean(mode)} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{getDialogTitle()}</DialogTitle>

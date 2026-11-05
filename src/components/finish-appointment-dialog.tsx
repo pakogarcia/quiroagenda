@@ -62,18 +62,27 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   });
 
+  const [cachedAppointment, setCachedAppointment] = React.useState<Appointment | null>(appointment);
+
+  React.useEffect(() => {
+    if (appointment) {
+      setCachedAppointment(appointment);
+    }
+  }, [appointment]);
+
+  const activeAppointment = appointment || cachedAppointment;
   const initializedAppointmentIdRef = React.useRef<string | null>(null);
 
-  const cleanAptPhone = (appointment?.clientPhone || '').replace(/\D/g, '');
+  const cleanAptPhone = (activeAppointment?.clientPhone || '').replace(/\D/g, '');
   const matchedClient = React.useMemo(() => {
-    if (!appointment) return null;
+    if (!activeAppointment) return null;
     return clients.find(c => 
-      (appointment.clientId && c.id === appointment.clientId) ||
-      (c.phone && appointment.clientPhone && c.phone === appointment.clientPhone) ||
+      (activeAppointment.clientId && c.id === activeAppointment.clientId) ||
+      (c.phone && activeAppointment.clientPhone && c.phone === activeAppointment.clientPhone) ||
       (cleanAptPhone.length >= 9 && (c.phone || '').replace(/\D/g, '').endsWith(cleanAptPhone.slice(-9))) ||
-      (`${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (appointment.clientName || '').trim().toLowerCase())
+      (`${c.name} ${c.lastName || ''}`.trim().toLowerCase() === (activeAppointment.clientName || '').trim().toLowerCase())
     ) || null;
-  }, [appointment, clients, cleanAptPhone]);
+  }, [activeAppointment, clients, cleanAptPhone]);
 
   React.useEffect(() => {
     if (appointment && appointment.id !== initializedAppointmentIdRef.current) {
@@ -368,14 +377,14 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
     }
   }
 
-  if (!appointment && !confirmationData) return null;
+  if (!activeAppointment && !confirmationData) return null;
 
   return (
     <>
-        <Dialog open={!!appointment} onOpenChange={onOpenChange}>
+        <Dialog open={Boolean(appointment)} onOpenChange={onOpenChange}>
         <DialogContent>
             <DialogHeader>
-            <DialogTitle>{isEditing ? 'Editar Pago' : 'Finalizar Cita'}: {appointment?.clientName}</DialogTitle>
+            <DialogTitle>{isEditing ? 'Editar Pago' : 'Finalizar Cita'}: {activeAppointment?.clientName}</DialogTitle>
             {step === 'selectAction' && (
                 <DialogDescription>Elige una acción para esta cita.</DialogDescription>
             )}
@@ -411,7 +420,7 @@ export function FinishAppointmentDialog({ appointment, onOpenChange, onAppointme
 
         <NewAppointmentConfirmationDialog
             voucherUpdateData={confirmationData}
-            onOpenChange={() => setConfirmationData(null)}
+            onOpenChange={(isOpen) => { if (!isOpen) setConfirmationData(null); }}
         />
     </>
   );

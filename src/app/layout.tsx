@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { LicenseGate } from '@/components/license-gate';
 import { AppDataProvider } from '@/context/app-data-context';
 import { PasswordGate } from '@/components/password-gate';
+import { PointerEventsGuardian } from '@/components/pointer-events-guardian';
 
 export const metadata: Metadata = {
   title: 'Quiromasajista Pako García · Pide tu Cita Online',
@@ -45,6 +46,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning={true}>
+        <PointerEventsGuardian />
         <LicenseGate>
           <PasswordGate>
             <AppDataProvider>

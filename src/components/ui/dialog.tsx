@@ -32,27 +32,51 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 sm:rounded-lg",
-        className
-      )}
-      {...props}
-    >
-      <div className="max-h-[85vh] overflow-y-auto">
-        {children}
-      </div>
-      <DialogPrimitive.Close className="absolute right-3 top-3 z-50 rounded-full p-1.5 bg-white/90 dark:bg-slate-800/90 border border-slate-200 opacity-80 ring-offset-background transition-opacity hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none shadow-sm">
-        <X className="h-4 w-4 text-slate-700 dark:text-slate-200" />
-        <span className="sr-only">Cerrar</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
+>(({ className, children, onCloseAutoFocus, ...props }, ref) => {
+  React.useEffect(() => {
+    return () => {
+      setTimeout(() => {
+        const hasOpenModal = document.querySelector(
+          '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]'
+        );
+        if (!hasOpenModal) {
+          document.body.style.pointerEvents = '';
+          document.body.style.overflow = '';
+          document.body.removeAttribute('data-scroll-locked');
+        }
+      }, 50);
+    };
+  }, []);
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 sm:rounded-lg",
+          className
+        )}
+        onCloseAutoFocus={(e) => {
+          if (onCloseAutoFocus) {
+            onCloseAutoFocus(e);
+          } else {
+            e.preventDefault();
+          }
+        }}
+        {...props}
+      >
+        <div className="max-h-[85vh] overflow-y-auto">
+          {children}
+        </div>
+        <DialogPrimitive.Close className="absolute right-3 top-3 z-50 rounded-full p-1.5 bg-white/90 dark:bg-slate-800/90 border border-slate-200 opacity-80 ring-offset-background transition-opacity hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none shadow-sm">
+          <X className="h-4 w-4 text-slate-700 dark:text-slate-200" />
+          <span className="sr-only">Cerrar</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({

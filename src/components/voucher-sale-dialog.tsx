@@ -14,8 +14,6 @@ type VoucherSaleDialogProps = {
 };
 
 export function VoucherSaleDialog({ isOpen, onOpenChange, onVoucherSold }: VoucherSaleDialogProps) {
-  if (!isOpen) return null;
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>

@@ -48,11 +48,21 @@ export function EditVoucherSaleDialog({ sale, onOpenChange, onVoucherSaleUpdated
     }
   }, [sale, form]);
 
+  const [cachedSale, setCachedSale] = React.useState<VoucherSale | null>(sale);
+
+  React.useEffect(() => {
+    if (sale) {
+      setCachedSale(sale);
+    }
+  }, [sale]);
+
+  const activeSale = sale || cachedSale;
+
   const handleSaleUpdate = (values: EditVoucherSaleFormValues) => {
-    if (!sale) return;
+    if (!activeSale) return;
 
     const updatedSale: VoucherSale = {
-      ...sale,
+      ...activeSale,
       amount: values.amount,
       paymentMethod: values.paymentMethod,
     };
@@ -66,10 +76,10 @@ export function EditVoucherSaleDialog({ sale, onOpenChange, onVoucherSaleUpdated
     onOpenChange(false);
   };
 
-  if (!sale) return null;
+  if (!activeSale) return null;
 
   return (
-    <Dialog open={!!sale} onOpenChange={onOpenChange}>
+    <Dialog open={Boolean(sale)} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Edit className="w-5 h-5"/> Editar Venta de Bono</DialogTitle>

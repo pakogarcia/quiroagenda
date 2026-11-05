@@ -534,7 +534,7 @@ export default function ContabilidadPage() {
             />
             <NewAppointmentConfirmationDialog
                 voucherPurchaseData={voucherPurchaseData}
-                onOpenChange={() => setVoucherPurchaseData(null)}
+                onOpenChange={(isOpen) => { if (!isOpen) setVoucherPurchaseData(null); }}
             />
         </>
     );

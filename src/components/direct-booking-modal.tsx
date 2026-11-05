@@ -49,7 +49,16 @@ interface DirectBookingModalProps {
   onClose: () => void;
 }
 
-export function DirectBookingModal({ service, isOpen, onClose }: DirectBookingModalProps) {
+export function DirectBookingModal({ service: propService, isOpen, onClose }: DirectBookingModalProps) {
+  const [cachedService, setCachedService] = React.useState<ServiceModalInfo | null>(propService);
+
+  React.useEffect(() => {
+    if (propService) {
+      setCachedService(propService);
+    }
+  }, [propService]);
+
+  const service = propService || cachedService;
   const [step, setStep] = React.useState<'schedule' | 'client_choice' | 'client_existing' | 'client_new' | 'confirmed'>('schedule');
   const [selectedTier, setSelectedTier] = React.useState<ServiceTier | null>(null);
 

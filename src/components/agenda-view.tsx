@@ -365,11 +365,14 @@ export default function AgendaView() {
 
       <FinishAppointmentDialog 
         appointment={finishingAppointment} 
-        onOpenChange={() => setFinishingAppointment(null)} 
+        onOpenChange={(isOpen) => { if (!isOpen) setFinishingAppointment(null); }} 
         onAppointmentFinished={handleFinishAppointment} 
       />
       
-      <NewAppointmentConfirmationDialog appointment={confirmationAppointment} onOpenChange={() => setConfirmationAppointment(null)} />
+      <NewAppointmentConfirmationDialog 
+        appointment={confirmationAppointment} 
+        onOpenChange={(isOpen) => { if (!isOpen) setConfirmationAppointment(null); }} 
+      />
 
       <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <AlertDialogContent>

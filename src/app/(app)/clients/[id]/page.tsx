@@ -558,20 +558,20 @@ export default function ClientDetailPage() {
             
             <FinishAppointmentDialog
                 appointment={editingAppointment}
-                onOpenChange={() => setEditingAppointment(null)}
+                onOpenChange={(isOpen) => { if (!isOpen) setEditingAppointment(null); }}
                 onAppointmentFinished={handleAppointmentFinished}
                 isEditing
             />
             
             <EditVoucherSaleDialog
                 sale={editingVoucherSale}
-                onOpenChange={() => setEditingVoucherSale(null)}
+                onOpenChange={(isOpen) => { if (!isOpen) setEditingVoucherSale(null); }}
                 onVoucherSaleUpdated={handleVoucherSaleUpdated}
             />
 
             <NewAppointmentConfirmationDialog
                 voucherPurchaseData={voucherPurchaseData}
-                onOpenChange={() => setVoucherPurchaseData(null)}
+                onOpenChange={(isOpen) => { if (!isOpen) setVoucherPurchaseData(null); }}
             />
 
         </div>
