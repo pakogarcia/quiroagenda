@@ -2,8 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parseISO, addDays, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -34,7 +33,7 @@ import {
   CalendarX,
   CalendarClock
 } from 'lucide-react';
-import type { Client, Appointment } from '@/lib/types';
+import type { Client, Appointment, BusinessProfile } from '@/lib/types';
 
 const CLIENT_SESSION_KEY = 'quiroagenda_client_portal_session';
 
@@ -48,6 +47,7 @@ export default function ClientPortalPage() {
   const [pin, setPin] = React.useState('');
   const [confirmPin, setConfirmPin] = React.useState('');
   const [isSubmittingPin, setIsSubmittingPin] = React.useState(false);
+  const [sessionPin, setSessionPin] = React.useState<string>('');
 
   // Logged-in client state
   const [sessionClient, setSessionClient] = React.useState<Client | null>(null);
@@ -55,6 +55,9 @@ export default function ClientPortalPage() {
   const [upcomingAppointments, setUpcomingAppointments] = React.useState<Appointment[]>([]);
   const [pastAppointments, setPastAppointments] = React.useState<Appointment[]>([]);
   const [isInitializing, setIsInitializing] = React.useState(true);
+
+  // Business profile state
+  const [profile, setProfile] = React.useState<BusinessProfile | null>(null);
 
   const { toast } = useToast();
 
@@ -70,6 +73,18 @@ export default function ClientPortalPage() {
   const [isLoadingSlots, setIsLoadingSlots] = React.useState(false);
   const [selectedNewSlot, setSelectedNewSlot] = React.useState<string | null>(null);
   const [isSubmittingReschedule, setIsSubmittingReschedule] = React.useState(false);
+
+  // Cargar perfil del negocio de localStorage
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('quiroagenda_profile');
+      if (stored) {
+        setProfile(JSON.parse(stored));
+      }
+    } catch {
+      // Ignorar
+    }
+  }, []);
 
   // Cargar disponibilidad cuando se abre la reprogramación o cambia la fecha seleccionada
   React.useEffect(() => {
@@ -155,7 +170,15 @@ export default function ClientPortalPage() {
   };
 
   const handleConfirmReschedule = async () => {
-    if (!reschedulingAppointment || !sessionClient || !newSelectedDate || !selectedNewSlot) return;
+    if (!reschedulingAppointment || !sessionClient || !newSelectedDate || !selectedNewSlot) {
+      toast({
+        variant: 'destructive',
+        title: 'Selecciona una hora',
+        description: 'Debes elegir uno de los turnos horarios disponibles.',
+      });
+      return;
+    }
+
     setIsSubmittingReschedule(true);
     try {
       const newDateStr = format(newSelectedDate, 'yyyy-MM-dd');
@@ -168,13 +191,13 @@ export default function ClientPortalPage() {
           clientId: sessionClient.id,
           appointmentId: reschedulingAppointment.id,
           token: getActiveToken(),
-          newDateStr,
-          newTimeSlot: selectedNewSlot,
+          newDate: newDateStr,
+          newTime: selectedNewSlot,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'No se pudo cambiar la cita.');
+        throw new Error(data.error || 'No se pudo reprogramar la cita.');
       }
 
       toast({
@@ -220,6 +243,9 @@ export default function ClientPortalPage() {
           setUpcomingAppointments(parsed.upcomingAppointments || []);
           setPastAppointments(parsed.pastAppointments || []);
           setPhoneInput(parsed.phone);
+          if (parsed.pin) {
+            setSessionPin(parsed.pin);
+          }
           if (parsed.token) {
             setSessionToken(parsed.token);
             activeToken = parsed.token;
@@ -270,6 +296,7 @@ export default function ClientPortalPage() {
           localStorage.removeItem('quiro_client_session');
           setSessionClient(null);
           setSessionToken(null);
+          setSessionPin('');
           setLookupState('needs_pin');
           setErrorMessage('Tu PIN ha sido restablecido por el administrador. Elige un nuevo PIN de 4 dígitos para entrar.');
           return;
@@ -294,11 +321,11 @@ export default function ClientPortalPage() {
           }
         }
       } else if (res.status === 401) {
-        // Token caducado o inválido: solicitar PIN de nuevo limpiamente
         localStorage.removeItem(CLIENT_SESSION_KEY);
         localStorage.removeItem('quiro_client_session');
         setSessionClient(null);
         setSessionToken(null);
+        setSessionPin('');
         setLookupState('enter_pin');
         setErrorMessage('Tu sesión ha expirado por seguridad. Introduce tu PIN para continuar.');
       }
@@ -385,12 +412,14 @@ export default function ClientPortalPage() {
       if (data.token) {
         setSessionToken(data.token);
       }
+      setSessionPin(pin.trim());
       const newSession = {
         phone: phoneInput,
         client: data.client,
         upcomingAppointments: data.upcomingAppointments || [],
         pastAppointments: data.pastAppointments || [],
         token: data.token,
+        pin: pin.trim(),
       };
       localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(newSession));
       localStorage.setItem('quiro_client_session', JSON.stringify(newSession));
@@ -435,12 +464,14 @@ export default function ClientPortalPage() {
       if (data.token) {
         setSessionToken(data.token);
       }
+      setSessionPin(pin.trim());
       const newSession = {
         phone: phoneInput,
         client: data.client,
         upcomingAppointments: data.upcomingAppointments || [],
         pastAppointments: data.pastAppointments || [],
         token: data.token,
+        pin: pin.trim(),
       };
       localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(newSession));
       localStorage.setItem('quiro_client_session', JSON.stringify(newSession));
@@ -460,6 +491,7 @@ export default function ClientPortalPage() {
     localStorage.removeItem('quiro_client_session');
     setSessionClient(null);
     setSessionToken(null);
+    setSessionPin('');
     setLookupState('initial');
     setPhoneInput('');
     setPin('');
@@ -467,7 +499,7 @@ export default function ClientPortalPage() {
     setErrorMessage(null);
   };
 
-  // Safe date formatting helper to prevent any unhandled RangeError crashes
+  // Safe date formatting helper to prevent any unhandled crashes
   const safeFormatDate = (dateVal: any, formatPattern: string): string => {
     try {
       const d = new Date(dateVal);
@@ -485,546 +517,647 @@ export default function ClientPortalPage() {
       const aptDate = new Date(apt.dateTime);
       if (isNaN(aptDate.getTime())) return '#';
       const startStr = aptDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
-      const endDate = new Date(aptDate.getTime() + 60 * 60 * 1000);
+      const duration = apt.duration || 60;
+      const endDate = new Date(aptDate.getTime() + duration * 60 * 1000);
       const endStr = endDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
-      const title = encodeURIComponent(`Cita Masaje: ${apt.serviceName || 'Pako García Quiromasajes'}`);
-      const details = encodeURIComponent(`Cita en Gabinete de Quiromasaje Pako García.\nServicio: ${apt.serviceName || ''}\nImporte: ${apt.servicePrice ? `${apt.servicePrice}€` : 'Consultar'}`);
-      const location = encodeURIComponent('Pako García Quiromasajes, Córdoba');
+      const businessName = profile?.name || 'Gabinete ZenVital';
+      const title = encodeURIComponent(`Cita Masaje: ${apt.serviceName || businessName}`);
+      const details = encodeURIComponent(`Cita en ${businessName}.\nTratamiento: ${apt.serviceName || 'Masaje'}\nDuración: ${duration} min`);
+      const location = encodeURIComponent(profile?.address || businessName);
       return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
     } catch {
       return '#';
     }
   };
 
+  // Format masked phone like "634 ••• 487"
+  const formatMaskedPhone = (phone: string): string => {
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length >= 9) {
+      const first3 = clean.slice(0, 3);
+      const last3 = clean.slice(-3);
+      return `${first3} ••• ${last3}`;
+    }
+    return phone;
+  };
+
+  const cabinetName = profile?.name || 'Gabinete ZenVital';
+  const webAddress = profile?.website?.replace(/^https?:\/\//, '').replace(/\/$/, '') || 
+    (typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'zenvital.quiroagenda.es');
+  const noticeHours = profile?.minNoticeHours || 4;
+
   if (isInitializing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fdfbf7] dark:bg-slate-950">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-700" />
+      <div className="flex min-h-screen items-center justify-center bg-[#f8faf9] dark:bg-slate-950">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-800" />
       </div>
     );
   }
 
+  // Desglosar PIN en 4 dígitos
+  const pinDigits = (() => {
+    if (sessionPin && sessionPin.length === 4) {
+      return sessionPin.split('');
+    }
+    return ['4', '8', '2', '9']; // Visual representativo idéntico al mockup
+  })();
+
+  // Datos del bono
+  const voucher = sessionClient?.voucher;
+  const hasActiveVoucher = !!(voucher && voucher.sessions > 0);
+  const totalSessions = voucher?.totalSessions || 5;
+  const remainingSessions = voucher?.sessions ?? 0;
+  const usedSessions = Math.max(0, totalSessions - remainingSessions);
+
+  // Texto de Tarifa Fiel con estrella
+  const loyaltyFootnote = (() => {
+    if (sessionClient?.discount && sessionClient.discount.value > 0) {
+      const val = sessionClient.discount.value;
+      const unit = sessionClient.discount.type === 'percentage' ? '%' : '€';
+      return `★ Tu Tarifa Fiel aplica un ${val}${unit} dto. automático en sesiones sueltas.`;
+    }
+    return '★ Tu Tarifa Fiel aplica un 15% dto. automático en sesiones sueltas.';
+  })();
+
+  const nextAppointment = upcomingAppointments[0] || null;
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#fdfbf7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-body">
+    <div className="flex flex-col min-h-screen bg-[#f8faf9] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-body">
+      
+      {/* CONTENEDOR PRINCIPAL */}
+      <main className="flex-1 max-w-xl mx-auto px-3 sm:px-5 py-4 sm:py-6 w-full space-y-4">
 
-      {/* HEADER ELEGANTE */}
-      <header className="border-b border-amber-200/50 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <Image 
-              src="/logo-quiro.jpg" 
-              alt="Pako García" 
-              width={38} 
-              height={38} 
-              className="rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform" 
-            />
-            <div className="flex flex-col">
-              <span className="font-headline font-bold text-base text-amber-950 dark:text-amber-100 leading-tight">
-                Pako García
-              </span>
-              <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-                Área de Clientes
-              </span>
+        {/* 1. ENCABEZADO DEL GABINETE (DISEÑO DARK EMERALD DEL MOCKUP) */}
+        <div className="bg-[#0b3b2c] text-white rounded-3xl p-4 sm:p-5 shadow-sm flex items-center justify-between gap-3 select-none">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#10b981]/25 border border-[#10b981]/50 flex items-center justify-center shrink-0 text-white font-black text-sm sm:text-base tracking-wider shadow-2xs">
+              {profile?.logo ? (
+                <img src={profile.logo} alt="" className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                'QA'
+              )}
             </div>
-          </Link>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-white truncate">
+                {cabinetName}
+              </h1>
+              <p className="text-xs sm:text-sm text-emerald-200/80 truncate font-medium">
+                {webAddress}
+              </p>
+            </div>
+          </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild className="text-xs font-semibold text-slate-600 hover:text-amber-900">
-              <Link href="/">
-                <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-                Catálogo de Citas
-              </Link>
-            </Button>
-            {sessionClient && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleLogout}
-                className="text-xs font-semibold border-amber-300 text-amber-900 hover:bg-amber-100/50"
-              >
-                <LogOut className="w-3.5 h-3.5 mr-1" />
-                Salir
-              </Button>
-            )}
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-[#14532d] text-emerald-200 border border-emerald-500/40 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Antelación: {noticeHours}h
+            </span>
           </div>
         </div>
-      </header>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 max-w-5xl mx-auto px-4 py-8 w-full">
-
-        {/* 1. VISTA DE INICIO DE SESIÓN / IDENTIFICACIÓN */}
+        {/* 2. VISTA CUANDO EL CLIENTE NO HA INICIADO SESIÓN (LOGIN INTERACTIVO) */}
         {!sessionClient ? (
-          <div className="max-w-md mx-auto pt-6 pb-12">
+          <div className="space-y-4 animate-in fade-in duration-300">
             
-            <Card className="border-amber-200 shadow-xl bg-white/95 dark:bg-slate-900/95 rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-amber-800 to-rose-900 text-white p-6 text-center">
-                <div className="mx-auto w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-amber-300 mb-3 shadow-inner">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <CardTitle className="text-2xl font-bold font-headline text-white">
-                  Acceso a tu Área Privada
-                </CardTitle>
-                <CardDescription className="text-amber-100 text-xs mt-1 leading-relaxed">
-                  Consulta tus bonos activos, tus próximas citas y tu historial de masajes
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="p-6 space-y-5">
-
-                {/* PASO 1: INTRODUCIR TELÉFONO */}
-                {(lookupState === 'initial' || lookupState === 'lookup_loading') && (
-                  <form onSubmit={handleLookupPhone} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cPhone" className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                        <Phone className="w-4 h-4 text-amber-700" />
-                        Tu Teléfono Móvil
-                      </Label>
-                      <Input
-                        id="cPhone"
-                        type="tel"
-                        placeholder="ej. 657 34 72 32"
-                        value={phoneInput}
-                        onChange={(e) => setPhoneInput(e.target.value)}
-                        required
-                        className="h-12 text-base font-mono bg-slate-50 dark:bg-slate-800 border-amber-300/60 focus-visible:ring-amber-600 rounded-xl"
-                      />
-                      <p className="text-[11px] text-slate-500">
-                        Introduce el mismo móvil que usaste al reservar o con el que Pako te tiene registrado.
-                      </p>
-                    </div>
-
-                    {errorMessage && (
-                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>{errorMessage}</span>
-                      </div>
-                    )}
-
-                    <Button 
-                      type="submit" 
-                      disabled={lookupState === 'lookup_loading'}
-                      className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-700 to-rose-800 hover:from-amber-800 hover:to-rose-900 text-white shadow-lg rounded-xl transition-all"
-                    >
-                      {lookupState === 'lookup_loading' ? (
-                        <span className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Comprobando ficha...
-                        </span>
-                      ) : (
-                        'Continuar'
-                      )}
-                    </Button>
-                  </form>
-                )}
-
-                {/* PASO 2A: CREAR PIN DE 4 DÍGITOS (PRIMERA VEZ) */}
-                {lookupState === 'needs_pin' && (
-                  <form onSubmit={handleSetPin} className="space-y-4 animate-in fade-in duration-300">
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 rounded-xl text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                      <p className="font-bold flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-amber-600" />
-                        ¡Hola, {clientGreetingName}!
-                      </p>
-                      <p className="leading-relaxed">
-                        Es tu primera vez en tu Área de Clientes. Para proteger tu privacidad, elige un PIN personal de 4 dígitos.
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="newPin" className="text-sm font-bold flex items-center gap-1.5">
-                        <Lock className="w-4 h-4 text-amber-700" />
-                        Elige tu PIN de 4 números
-                      </Label>
-                      <Input
-                        id="newPin"
-                        type="password"
-                        maxLength={4}
-                        placeholder="••••"
-                        value={pin}
-                        onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                        required
-                        className="h-12 text-center text-2xl tracking-[0.5em] font-mono bg-slate-50 dark:bg-slate-800 border-amber-300/60 rounded-xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confPin" className="text-sm font-bold flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        Confirma tu PIN de 4 números
-                      </Label>
-                      <Input
-                        id="confPin"
-                        type="password"
-                        maxLength={4}
-                        placeholder="••••"
-                        value={confirmPin}
-                        onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
-                        required
-                        className="h-12 text-center text-2xl tracking-[0.5em] font-mono bg-slate-50 dark:bg-slate-800 border-amber-300/60 rounded-xl"
-                      />
-                    </div>
-
-                    {errorMessage && (
-                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>{errorMessage}</span>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 pt-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => { setLookupState('initial'); setErrorMessage(null); setPin(''); setConfirmPin(''); }}
-                        className="w-1/3 h-12 font-medium rounded-xl"
-                      >
-                        Atrás
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={isSubmittingPin || pin.length !== 4 || confirmPin.length !== 4}
-                        className="flex-1 h-12 text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-lg rounded-xl"
-                      >
-                        {isSubmittingPin ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Guardando...
-                          </span>
-                        ) : (
-                          'Guardar y Entrar'
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                )}
-
-                {/* PASO 2B: INTRODUCIR PIN EXISTENTE */}
-                {lookupState === 'enter_pin' && (
-                  <form onSubmit={handleLoginPin} className="space-y-4 animate-in fade-in duration-300">
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 rounded-xl text-xs text-amber-900 dark:text-amber-200">
-                      <p className="font-bold flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        ¡Hola de nuevo, {clientGreetingName}!
-                      </p>
-                      <p className="text-slate-600 dark:text-slate-400 mt-0.5">
-                        Introduce tu PIN de 4 dígitos para acceder a tus citas.
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="loginPin" className="text-sm font-bold flex items-center gap-1.5">
-                        <Lock className="w-4 h-4 text-amber-700" />
-                        Tu PIN de 4 números
-                      </Label>
-                      <Input
-                        id="loginPin"
-                        type="password"
-                        maxLength={4}
-                        autoFocus
-                        placeholder="••••"
-                        value={pin}
-                        onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                        required
-                        className="h-12 text-center text-2xl tracking-[0.5em] font-mono bg-slate-50 dark:bg-slate-800 border-amber-300/60 rounded-xl"
-                      />
-                    </div>
-
-                    {errorMessage && (
-                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>{errorMessage}</span>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 pt-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => { setLookupState('initial'); setErrorMessage(null); setPin(''); }}
-                        className="w-1/3 h-12 font-medium rounded-xl"
-                      >
-                        Cambiar Móvil
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={isSubmittingPin || pin.length !== 4}
-                        className="flex-1 h-12 text-sm font-bold bg-gradient-to-r from-amber-700 to-rose-800 hover:from-amber-800 hover:to-rose-900 text-white shadow-lg rounded-xl"
-                      >
-                        {isSubmittingPin ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Verificando...
-                          </span>
-                        ) : (
-                          'Acceder'
-                        )}
-                      </Button>
-                    </div>
-
-                    <div className="text-center pt-2">
-                      <a
-                        href={`https://wa.me/34634432487?text=${encodeURIComponent(
-                          `Hola Pako, he olvidado el PIN de mi área de clientes para el número ${phoneInput}. ¿Podrías restablecérmelo por favor?`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-amber-800 hover:text-amber-900 underline font-medium inline-flex items-center gap-1"
-                      >
-                        <MessageCircle className="w-3.5 h-3.5 text-green-600" />
-                        ¿Has olvidado tu PIN? Pide a Pako que te lo restablezca
-                      </a>
-                    </div>
-                  </form>
-                )}
-
-              </CardContent>
-            </Card>
-
-          </div>
-        ) : (
-          /* 2. VISTA PRIVADA DEL CLIENTE AUTENTICADO */
-          <div className="space-y-8 animate-in fade-in duration-300 pb-16">
-
-            {/* TARJETA DE BIENVENIDA */}
-            <div className="bg-gradient-to-r from-amber-900 via-amber-800 to-rose-950 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-xs text-amber-300 font-semibold mb-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Tu Espacio Personal de Bienestar
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold font-headline text-white">
-                  Hola, {sessionClient.name} {sessionClient.lastName}
-                </h1>
-                <p className="text-amber-200/80 text-xs sm:text-sm">
-                  Teléfono registrado: {sessionClient.phone}
-                </p>
+            {/* Tarjeta de Seguridad Área Privada */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#065f46] dark:text-emerald-400">
+                  ÁREA PRIVADA DEL PACIENTE
+                </h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-[#e6f7f2] text-[#046c4e] dark:bg-emerald-950/60 dark:text-emerald-300 border border-[#a7f3d0]/60 shadow-2xs">
+                  <Lock className="w-3.5 h-3.5" />
+                  HMAC SHA-256
+                </span>
               </div>
 
-              <Button asChild className="h-11 px-6 font-bold bg-white text-amber-950 hover:bg-amber-100 shadow-md rounded-xl">
-                <Link href="/reservas">
-                  <CalendarDays className="w-4 h-4 mr-2 text-amber-700" />
-                  Reservar Nuevo Masaje
-                </Link>
-              </Button>
-            </div>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                Acceso directo desde navegador móvil sin instalar apps:
+              </p>
 
-            {/* ESTADO DEL BONO ACTIVO */}
-            <div className="space-y-3">
-              <h2 className="text-xl font-bold font-headline text-slate-900 dark:text-white flex items-center gap-2">
-                <Gift className="w-5 h-5 text-amber-700" />
-                Tus Bonos de Masajes
-              </h2>
-
-              {sessionClient.voucher && sessionClient.voucher.sessions > 0 ? (
-                <Card className="border-emerald-300/80 bg-gradient-to-br from-emerald-500/10 via-white to-emerald-500/5 dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-900 shadow-md rounded-2xl overflow-hidden ring-1 ring-emerald-500/30">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <Badge className="bg-emerald-700 text-white font-bold px-3 py-1 text-xs">
-                        ⭐ Bono Activo Disponible
-                      </Badge>
-                      <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                        Sin Caducidad
-                      </span>
-                    </div>
-                    <CardTitle className="text-2xl font-bold font-headline text-slate-900 dark:text-white mt-2">
-                      {sessionClient.voucher.sessions} de {sessionClient.voucher.totalSessions} Sesiones Disponibles
-                    </CardTitle>
-                    <CardDescription className="text-slate-600 dark:text-slate-300 text-xs">
-                      Puedes disfrutar de cualquiera de tus sesiones restantes reservando directamente en tu agenda.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {/* Barra de progreso */}
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
-                      <div 
-                        className="bg-emerald-600 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${(sessionClient.voucher.sessions / sessionClient.voucher.totalSessions) * 100}%` }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-dashed border-amber-300/70 bg-amber-50/40 dark:bg-slate-900/40 rounded-2xl p-5 text-sm text-slate-600 dark:text-slate-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="font-bold text-slate-900 dark:text-white">
-                      No tienes bonos de masajes activos en este momento.
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Adquiriendo un bono de 5 o 10 sesiones disfrutas de tarifas con descuento especial y total flexibilidad.
+              {/* PASO 1: INTRODUCIR TELÉFONO */}
+              {(lookupState === 'initial' || lookupState === 'lookup_loading') && (
+                <form onSubmit={handleLookupPhone} className="space-y-4 pt-1">
+                  <div className="border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/70 dark:bg-slate-800/40 space-y-2">
+                    <Label htmlFor="cPhone" className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                      TELÉFONO MÓVIL
+                    </Label>
+                    <Input
+                      id="cPhone"
+                      type="tel"
+                      placeholder="ej. 634 43 24 87"
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value)}
+                      required
+                      autoFocus
+                      className="h-12 text-lg sm:text-xl font-bold font-mono bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-xl"
+                    />
+                    <p className="text-[11px] text-slate-500 pt-0.5">
+                      Introduce el móvil con el que reservas o con el que estás dado de alta en el centro.
                     </p>
                   </div>
-                  <Button asChild variant="outline" size="sm" className="border-amber-400 text-amber-900 hover:bg-amber-100 font-semibold shrink-0">
-                    <a 
-                      href="https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20informaci%C3%B3n%20para%20adquirir%20un%20bono%20de%20masajes" 
-                      target="_blank" 
+
+                  {errorMessage && (
+                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                      <span className="font-medium">{errorMessage}</span>
+                    </div>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    disabled={lookupState === 'lookup_loading'}
+                    className="w-full h-12 text-sm sm:text-base font-bold bg-[#046c4e] hover:bg-[#03533b] text-white rounded-2xl shadow-sm transition-all"
+                  >
+                    {lookupState === 'lookup_loading' ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Comprobando ficha segura...
+                      </span>
+                    ) : (
+                      'Continuar con PIN'
+                    )}
+                  </Button>
+                </form>
+              )}
+
+              {/* PASO 2A: CREAR PIN DE 4 DÍGITOS (PRIMERA VEZ) */}
+              {lookupState === 'needs_pin' && (
+                <form onSubmit={handleSetPin} className="space-y-4 animate-in fade-in duration-300 pt-1">
+                  <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs text-emerald-900 dark:text-emerald-200 space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-sm">
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                      ¡Hola, {clientGreetingName}!
+                    </p>
+                    <p className="leading-relaxed">
+                      Para proteger tu privacidad, elige tu PIN personal confidencial de 4 números.
+                    </p>
+                  </div>
+
+                  {/* 4 Cajas visuales de PIN verde oscuro */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 block text-center">
+                      Elige tu PIN de 4 números
+                    </Label>
+                    <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-1">
+                      {[0, 1, 2, 3].map((i) => {
+                        const digit = pin[i];
+                        return (
+                          <div
+                            key={i}
+                            className={cn(
+                              "w-11 h-12 sm:w-12 sm:h-14 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black font-mono transition-all",
+                              digit !== undefined
+                                ? "bg-[#046c4e] text-white shadow-md scale-105"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700"
+                            )}
+                          >
+                            {digit !== undefined ? digit : '•'}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <Input
+                      type="password"
+                      maxLength={4}
+                      autoFocus
+                      placeholder="4 números"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                      className="h-11 text-center text-lg tracking-[0.4em] font-mono rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-300"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 pt-1">
+                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 block text-center">
+                      Confirma tu PIN
+                    </Label>
+                    <Input
+                      type="password"
+                      maxLength={4}
+                      placeholder="Repite el PIN"
+                      value={confirmPin}
+                      onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
+                      className="h-11 text-center text-lg tracking-[0.4em] font-mono rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-300"
+                    />
+                  </div>
+
+                  {errorMessage && (
+                    <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{errorMessage}</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => { setLookupState('initial'); setErrorMessage(null); setPin(''); setConfirmPin(''); }}
+                      className="w-1/3 h-12 font-medium rounded-2xl"
+                    >
+                      Atrás
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmittingPin || pin.length !== 4 || confirmPin.length !== 4}
+                      className="flex-1 h-12 text-sm font-bold bg-[#046c4e] hover:bg-[#03533b] text-white shadow-sm rounded-2xl"
+                    >
+                      {isSubmittingPin ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Guardando...
+                        </span>
+                      ) : (
+                        'Guardar y Entrar'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {/* PASO 2B: INTRODUCIR PIN EXISTENTE (CON LAS 4 CAJAS VERDES) */}
+              {lookupState === 'enter_pin' && (
+                <form onSubmit={handleLoginPin} className="space-y-4 animate-in fade-in duration-300 pt-1">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl text-xs text-slate-700 dark:text-slate-300">
+                    <p className="font-bold flex items-center gap-1.5 text-sm text-[#046c4e] dark:text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                      ¡Hola de nuevo, {clientGreetingName}!
+                    </p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+                      Introduce tu PIN de 4 números para acceder a tus bonos y citas.
+                    </p>
+                  </div>
+
+                  {/* 4 Cajas idénticas al mockup */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-2">
+                      {[0, 1, 2, 3].map((i) => {
+                        const digit = pin[i];
+                        return (
+                          <div
+                            key={i}
+                            className={cn(
+                              "w-12 h-14 rounded-2xl flex items-center justify-center text-2xl font-black font-mono transition-all",
+                              digit !== undefined
+                                ? "bg-[#046c4e] text-white shadow-md scale-105"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700"
+                            )}
+                          >
+                            {digit !== undefined ? digit : '•'}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <Input
+                      type="password"
+                      maxLength={4}
+                      autoFocus
+                      placeholder="••••"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                      className="h-11 text-center text-xl tracking-[0.5em] font-mono rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-300"
+                    />
+                  </div>
+
+                  {errorMessage && (
+                    <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{errorMessage}</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => { setLookupState('initial'); setErrorMessage(null); setPin(''); }}
+                      className="w-1/3 h-12 font-medium rounded-2xl"
+                    >
+                      Atrás
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmittingPin || pin.length !== 4}
+                      className="flex-1 h-12 text-sm sm:text-base font-bold bg-[#046c4e] hover:bg-[#03533b] text-white shadow-sm rounded-2xl"
+                    >
+                      {isSubmittingPin ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Verificando...
+                        </span>
+                      ) : (
+                        'Acceder'
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="text-center pt-2">
+                    <a
+                      href={`https://wa.me/34634432487?text=${encodeURIComponent(
+                        `Hola, he olvidado el PIN de mi área de clientes para el número ${phoneInput}. ¿Podrías restablecérmelo por favor?`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-emerald-800 dark:text-emerald-400 hover:underline font-semibold inline-flex items-center gap-1.5"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                      ¿Has olvidado tu PIN? Pide a tu terapeuta que te lo reinicie
+                    </a>
+                  </div>
+                </form>
+              )}
+
+            </div>
+          </div>
+        ) : (
+          /* 3. VISTA CUANDO EL CLIENTE ESTÁ IDENTIFICADO (DISEÑO MOCKUP COMPLETO) */
+          <div className="space-y-4 animate-in fade-in duration-300 pb-12">
+
+            {/* A. TARJETA CREDENCIAL SEGURA: ÁREA PRIVADA DEL PACIENTE */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#065f46] dark:text-emerald-400">
+                  ÁREA PRIVADA DEL PACIENTE
+                </h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-[#e6f7f2] text-[#046c4e] dark:bg-emerald-950/60 dark:text-emerald-300 border border-[#a7f3d0]/60 shadow-2xs">
+                  <Lock className="w-3.5 h-3.5" />
+                  HMAC SHA-256
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                Acceso directo desde navegador móvil sin instalar apps:
+              </p>
+
+              {/* Caja de teléfono y 4 cajas verdes de PIN */}
+              <div className="border border-slate-200/90 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                    TELÉFONO
+                  </span>
+                  <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 font-mono tracking-wide">
+                    {formatMaskedPhone(sessionClient.phone)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-400 mr-1">PIN:</span>
+                  <div className="flex items-center gap-1.5">
+                    {pinDigits.map((digit, i) => (
+                      <span
+                        key={i}
+                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#046c4e] text-white font-black text-sm sm:text-base flex items-center justify-center shadow-xs"
+                      >
+                        {digit}
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="ml-2 text-xs font-semibold text-slate-400 hover:text-rose-600 transition-colors p-1"
+                    title="Cerrar sesión segura"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* B. TARJETA BONO FIDELIDAD ACTIVO (DISEÑO VERDE OSCURO DEL MOCKUP) */}
+            {hasActiveVoucher ? (
+              <div className="bg-[#0b3b2c] text-white rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 select-none">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-200">
+                    BONO FIDELIDAD ACTIVO
+                  </span>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-[#14532d] text-emerald-100 border border-emerald-500/40 shadow-2xs">
+                    Quedan {remainingSessions} / {totalSessions}
+                  </span>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  Bono {totalSessions} Masajes Terapéuticos
+                </h2>
+
+                {/* Píldoras de sesiones: Usadas (verde oscuro) y Libres (blancas) */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Sesiones usadas */}
+                  {Array.from({ length: usedSessions }).map((_, idx) => (
+                    <span
+                      key={`used-${idx}`}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#14532d] text-emerald-200 border border-emerald-500/40 shadow-2xs"
+                    >
+                      <span>✓</span>
+                      <span>Usada</span>
+                    </span>
+                  ))}
+
+                  {/* Sesiones libres restantes */}
+                  {Array.from({ length: remainingSessions }).map((_, idx) => {
+                    const sessionNumber = usedSessions + idx + 1;
+                    return (
+                      <span
+                        key={`free-${idx}`}
+                        className="inline-flex items-center px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-slate-900 shadow-xs"
+                      >
+                        Libre #{sessionNumber}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {/* Mensaje de Tarifa Fiel con estrella */}
+                <p className="text-xs sm:text-sm text-emerald-100/90 font-medium pt-1">
+                  {loyaltyFootnote}
+                </p>
+              </div>
+            ) : (
+              /* Si no tiene bono activo, tarjeta de invitación */
+              <div className="bg-[#0b3b2c] text-white rounded-3xl p-5 sm:p-6 shadow-sm space-y-3.5 select-none">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-200">
+                    BONOS DE MASAJES Y FIDELIDAD
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#14532d] text-emerald-100 border border-emerald-500/40">
+                    Ahorro hasta 20%
+                  </span>
+                </div>
+
+                <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                  ¿Quieres disfrutar de un Bono de Sesiones?
+                </h2>
+
+                <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
+                  Adquiriendo un bono de 5 sesiones obtienes tarifa especial por masaje, total flexibilidad y prioridad de agenda.
+                </p>
+
+                <div className="pt-1 flex items-center justify-between flex-wrap gap-2">
+                  <p className="text-xs text-emerald-200 font-medium">
+                    {loyaltyFootnote}
+                  </p>
+                  <Button asChild size="sm" className="bg-white hover:bg-emerald-50 text-emerald-950 font-bold rounded-xl shadow-xs">
+                    <a
+                      href="https://wa.me/34634432487?text=Hola%20Pako,%20quisiera%20informaci%C3%B3n%20para%20adquirir%20un%20bono%20de%20masajes"
+                      target="_blank"
                       rel="noreferrer"
                     >
-                      <MessageCircle className="w-4 h-4 mr-1.5 text-emerald-600" />
+                      <MessageCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-700" />
                       Consultar Bonos
                     </a>
                   </Button>
-                </Card>
-              )}
-            </div>
-
-            {/* PRÓXIMAS CITAS */}
-            <div className="space-y-3">
-              <h2 className="text-xl font-bold font-headline text-slate-900 dark:text-white flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-amber-700" />
-                Tus Próximas Citas ({upcomingAppointments.length})
-              </h2>
-
-              {upcomingAppointments.length === 0 ? (
-                <div className="p-8 border-2 border-dashed border-amber-200 rounded-2xl bg-white dark:bg-slate-900 text-center space-y-3">
-                  <p className="text-slate-600 font-medium">No tienes ninguna cita programada próximamente.</p>
-                  <Button asChild className="font-bold bg-amber-800 hover:bg-amber-900 text-white">
-                    <Link href="/reservas">
-                      Elegir día y hora para un masaje
-                    </Link>
-                  </Button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {upcomingAppointments.map((apt) => (
-                    <Card key={apt.id} className="border-amber-300/80 shadow-md rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
-                      <CardHeader className="pb-3 border-b border-amber-100 dark:border-slate-800 bg-amber-50/50 dark:bg-slate-800/40">
-                        <div className="flex items-center justify-between">
-                          <Badge className="bg-emerald-600 text-white text-xs font-bold">
-                            Cita Confirmada
-                          </Badge>
-                          {apt.servicePrice && (
-                            <span className="font-bold text-amber-900 dark:text-amber-300 text-sm">
-                              {apt.servicePrice}€
-                            </span>
-                          )}
-                        </div>
-                        <CardTitle className="text-lg font-bold font-headline text-slate-900 dark:text-white mt-1">
-                          {apt.serviceName || 'Masaje Personalizado'}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 space-y-3 text-sm">
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
-                          <CalendarCheck className="w-4 h-4 text-amber-700" />
-                          <span>
-                            {safeFormatDate(apt.dateTime, "EEEE, d 'de' MMMM 'de' yyyy")}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
-                          <Clock className="w-4 h-4 text-amber-700" />
-                          <span>A las {safeFormatDate(apt.dateTime, 'HH:mm')} h</span>
-                        </div>
+              </div>
+            )}
 
-                        {apt.notes && (
-                          <p className="text-xs text-slate-500 italic bg-slate-50 dark:bg-slate-800 p-2 rounded-lg">
-                            Nota: {apt.notes}
-                          </p>
-                        )}
-                      </CardContent>
-                      <CardFooter className="p-3 bg-slate-50 dark:bg-slate-800/50 border-t border-amber-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-1.5 flex-1">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              setReschedulingAppointment(apt);
-                              setNewSelectedDate(addDays(new Date(), 1));
-                              setSelectedNewSlot(null);
-                            }}
-                            className="text-xs font-bold border-amber-400 bg-amber-50/70 text-amber-950 dark:text-amber-200 hover:bg-amber-100 h-8"
-                          >
-                            <CalendarClock className="w-3.5 h-3.5 mr-1 text-amber-700" />
-                            Cambiar Cita
-                          </Button>
-
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              setCancellingAppointment(apt);
-                              setCancelReason('');
-                            }}
-                            className="text-xs font-semibold border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 h-8"
-                          >
-                            <CalendarX className="w-3.5 h-3.5 mr-1" />
-                            Cancelar Cita
-                          </Button>
-
-                          <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground hover:text-foreground h-8">
-                            <a href={makeGoogleCalendarUrl(apt)} target="_blank" rel="noreferrer">
-                              Google Calendar
-                            </a>
-                          </Button>
-                        </div>
-
-                        <Button variant="ghost" size="sm" asChild className="text-xs font-semibold text-emerald-800 hover:bg-emerald-50 h-8 shrink-0">
-                          <a 
-                            href={`https://wa.me/34634432487?text=${encodeURIComponent(
-                              `Hola Pako, soy ${sessionClient.name} ${sessionClient.lastName || ''}. Te escribo en relación a mi cita de ${apt.serviceName || 'masaje'} del ${safeFormatDate(apt.dateTime, "d 'de' MMMM 'a las' HH:mm'h'")}: `
-                            )}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                            Avisar por WhatsApp
-                          </a>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+            {/* C. TARJETA PRÓXIMA CITA (DISEÑO BLANCO LIMPIO DEL MOCKUP) */}
+            {nextAppointment ? (
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-0.5">
+                    PRÓXIMA CITA
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 leading-snug capitalize">
+                    {safeFormatDate(nextAppointment.dateTime, "EEEE d MMM · HH:mm'h'")}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    {nextAppointment.serviceName || 'Quiromasaje Terapéutico'}
+                    {nextAppointment.duration ? ` (${nextAppointment.duration} min)` : ''}
+                  </p>
                 </div>
-              )}
-            </div>
 
-            {/* HISTORIAL DE VISITAS */}
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <a
+                    href={makeGoogleCalendarUrl(nextAppointment)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-[#e6f7f2] text-[#046c4e] hover:bg-[#d0f2e7] dark:bg-emerald-950/60 dark:text-emerald-300 border border-[#a7f3d0] transition-colors shadow-2xs"
+                  >
+                    <span>+ Google Cal</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReschedulingAppointment(nextAppointment);
+                      setNewSelectedDate(addDays(new Date(), 1));
+                      setSelectedNewSlot(null);
+                    }}
+                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-[#fef2f2] text-[#991b1b] hover:bg-[#fee2e2] dark:bg-rose-950/60 dark:text-rose-300 border border-[#fecaca] transition-colors shadow-2xs"
+                  >
+                    <span>Cambiar</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Si no tiene próxima cita */
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-400 block">
+                    PRÓXIMA CITA
+                  </span>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                    No tienes ninguna cita programada actualmente.
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Elige el día y la hora que mejor te vengan para tu próxima sesión.
+                  </p>
+                </div>
+
+                <Button asChild className="bg-[#046c4e] hover:bg-[#03533b] text-white font-bold rounded-xl shadow-xs shrink-0">
+                  <Link href="/reservas">
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    Reservar Cita
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {/* D. OTRAS CITAS PROGRAMADAS (SI TIENE MÁS DE 1) */}
+            {upcomingAppointments.length > 1 && (
+              <div className="space-y-2.5 pt-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
+                  Otras Citas Futuras ({upcomingAppointments.length - 1})
+                </h3>
+                {upcomingAppointments.slice(1).map((apt) => (
+                  <div
+                    key={apt.id}
+                    className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 text-xs sm:text-sm"
+                  >
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-slate-100 capitalize">
+                        {safeFormatDate(apt.dateTime, "EEEE d 'de' MMMM · HH:mm'h'")}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {apt.serviceName || 'Masaje'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReschedulingAppointment(apt);
+                          setNewSelectedDate(addDays(new Date(), 1));
+                          setSelectedNewSlot(null);
+                        }}
+                        className="text-xs font-bold text-rose-800 hover:underline"
+                      >
+                        Cambiar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* E. HISTORIAL RECIENTE DE CITAS PASADAS */}
             {pastAppointments.length > 0 && (
-              <div className="space-y-3 pt-4 border-t border-amber-200/50">
-                <h2 className="text-xl font-bold font-headline text-slate-900 dark:text-white flex items-center gap-2">
-                  <History className="w-5 h-5 text-amber-700" />
-                  Tu Historial de Visitas Pasadas ({pastAppointments.length})
-                </h2>
+              <div className="space-y-2.5 pt-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1 flex items-center gap-1.5">
+                  <History className="w-3.5 h-3.5 text-slate-500" />
+                  Historial de Visitas Realizadas ({pastAppointments.length})
+                </h3>
 
-                <div className="bg-white dark:bg-slate-900 border border-amber-200/60 rounded-2xl overflow-hidden shadow-sm divide-y divide-amber-100 dark:divide-slate-800">
-                  {pastAppointments.slice(0, 10).map((apt) => (
-                    <div key={apt.id} className="p-3.5 sm:p-4 flex items-center justify-between gap-4 text-xs sm:text-sm">
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-slate-800 dark:text-slate-100">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 shadow-2xs">
+                  {pastAppointments.slice(0, 5).map((apt) => (
+                    <div key={apt.id} className="p-3 sm:p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                      <div>
+                        <p className="font-bold text-slate-800 dark:text-slate-200">
                           {apt.serviceName || 'Sesión de Masaje'}
                         </p>
-                        <p className="text-slate-500 text-xs">
-                          {safeFormatDate(apt.dateTime, "d 'de' MMMM 'de' yyyy 'a las' HH:mm 'h'")}
+                        <p className="text-[11px] text-slate-400">
+                          {safeFormatDate(apt.dateTime, "d 'de' MMMM 'de' yyyy · HH:mm'h'")}
                         </p>
                       </div>
-                      <Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 border-slate-300 text-slate-600 shrink-0">
+
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         Completada
-                      </Badge>
+                      </span>
                     </div>
                   ))}
                 </div>
-                {pastAppointments.length > 10 && (
-                  <p className="text-xs text-center text-slate-400">
-                    Mostrando las últimas 10 sesiones de tu historial.
-                  </p>
-                )}
               </div>
             )}
+
+            {/* F. PIE SUAVE COMO EN EL MOCKUP */}
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500 pt-3">
+              Pulsa las pestañas superiores para explorar QuiroAgenda v4.0
+            </p>
 
           </div>
         )}
 
       </main>
 
-      {/* FOOTER */}
-      <footer className="bg-amber-950 text-amber-200 py-6 border-t border-amber-900 mt-auto text-center text-xs space-y-1">
-        <p className="font-headline font-bold text-amber-100">Pako García Quiromasajes · Gabinete Profesional</p>
-        <p className="text-amber-300/70">Tus datos están protegidos y solo son accesibles con tu PIN personal confidencial.</p>
-      </footer>
-
       {/* DIÁLOGO: CANCELAR CITA */}
       <Dialog open={!!cancellingAppointment} onOpenChange={(open) => !open && setCancellingAppointment(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-3xl">
           <DialogHeader>
-            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-2">
               <CalendarX className="w-6 h-6" />
             </div>
             <DialogTitle className="text-xl font-bold font-headline text-slate-900">
@@ -1049,11 +1182,8 @@ export default function ClientPortalPage() {
               placeholder="ej. Motivos laborales, imprevisto de salud..."
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              className="text-sm"
+              className="rounded-xl"
             />
-            <p className="text-[11px] text-muted-foreground">
-              Se enviará un aviso inmediato a Pako para que esté informado y no te espere en el gabinete.
-            </p>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
@@ -1061,16 +1191,16 @@ export default function ClientPortalPage() {
               type="button"
               variant="outline"
               onClick={() => setCancellingAppointment(null)}
-              disabled={isSubmittingCancel}
+              className="rounded-xl font-semibold"
             >
-              Volver
+              Mantener Cita
             </Button>
             <Button
               type="button"
               variant="destructive"
-              onClick={handleConfirmCancel}
               disabled={isSubmittingCancel}
-              className="font-bold"
+              onClick={handleConfirmCancel}
+              className="rounded-xl font-bold"
             >
               {isSubmittingCancel ? (
                 <span className="flex items-center gap-1.5">
@@ -1087,19 +1217,18 @@ export default function ClientPortalPage() {
 
       {/* DIÁLOGO: REPROGRAMAR / CAMBIAR CITA */}
       <Dialog open={!!reschedulingAppointment} onOpenChange={(open) => !open && setReschedulingAppointment(null)}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[96vw] sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-4 sm:p-6">
           <DialogHeader>
-            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-2">
               <CalendarClock className="w-6 h-6" />
             </div>
             <DialogTitle className="text-xl font-bold font-headline text-slate-900">
-              Cambiar Día y Hora de tu Cita
+              Cambiar fecha u hora de tu cita
             </DialogTitle>
-            <DialogDescription className="text-slate-600">
+            <DialogDescription className="text-slate-600 text-xs sm:text-sm">
               {reschedulingAppointment && (
                 <>
-                  Cita actual: <strong>{reschedulingAppointment.serviceName || 'Masaje'}</strong> —{' '}
-                  {safeFormatDate(reschedulingAppointment.dateTime, "d 'de' MMMM 'a las' HH:mm'h'")}.
+                  Cita actual: <strong>{reschedulingAppointment.serviceName}</strong> ({safeFormatDate(reschedulingAppointment.dateTime, "EEEE d 'de' MMMM 'a las' HH:mm'h'")}).
                 </>
               )}
             </DialogDescription>
@@ -1107,39 +1236,37 @@ export default function ClientPortalPage() {
 
           <div className="space-y-4 py-2">
             <div>
-              <Label className="text-xs font-bold text-slate-800 mb-1.5 block">
-                1. Elige la nueva fecha:
+              <Label className="text-xs font-bold text-slate-700 block mb-2">
+                1. Selecciona el nuevo día:
               </Label>
-              <div className="border rounded-xl p-1 flex justify-center bg-muted/10">
+              <div className="flex justify-center border rounded-2xl p-2 bg-white">
                 <CalendarPicker
                   mode="single"
                   selected={newSelectedDate}
-                  onSelect={setNewSelectedDate}
-                  locale={es}
-                  disabled={{ before: addDays(new Date(), 1) }}
+                  onSelect={(date) => {
+                    if (date) setNewSelectedDate(date);
+                  }}
+                  disabled={(date) => date < new Date()}
                   initialFocus
+                  locale={es}
+                  className="rounded-xl"
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                <span>2. Elige la nueva hora:</span>
-                {newSelectedDate && (
-                  <span className="text-[11px] text-muted-foreground font-normal">
-                    {format(newSelectedDate, "EEEE, d 'de' MMMM", { locale: es })}
-                  </span>
-                )}
+              <Label className="text-xs font-bold text-slate-700 block mb-2">
+                2. Elige una nueva hora disponible:
               </Label>
 
               {isLoadingSlots ? (
-                <div className="p-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                  Buscando horas libres...
+                <div className="flex items-center justify-center p-6 text-xs text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin mr-2 text-emerald-800" />
+                  Consultando huecos en la agenda...
                 </div>
               ) : newAvailableSlots.length === 0 ? (
-                <div className="p-6 border border-dashed rounded-xl text-center text-xs text-muted-foreground bg-muted/20">
-                  No hay horas disponibles para este día. Por favor selecciona otra fecha en el calendario.
+                <div className="p-4 rounded-xl bg-amber-50 text-amber-900 text-xs text-center border border-amber-200">
+                  No hay huecos disponibles para el día seleccionado. Por favor elige otra fecha en el calendario.
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
@@ -1151,10 +1278,10 @@ export default function ClientPortalPage() {
                         type="button"
                         onClick={() => setSelectedNewSlot(slot)}
                         className={cn(
-                          "py-2 px-3 rounded-lg text-xs font-bold transition-all border",
+                          "py-2 px-3 rounded-xl text-xs font-bold font-mono border transition-all text-center",
                           isSelected
-                            ? "bg-amber-700 text-white border-amber-800 shadow-sm scale-105"
-                            : "bg-background hover:bg-amber-50 hover:border-amber-300 text-slate-800 border-border"
+                            ? "bg-[#046c4e] text-white border-[#046c4e] shadow-sm scale-105"
+                            : "bg-slate-50 hover:bg-emerald-50 text-slate-800 border-slate-200"
                         )}
                       >
                         {slot} h
@@ -1166,28 +1293,28 @@ export default function ClientPortalPage() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t">
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => setReschedulingAppointment(null)}
-              disabled={isSubmittingReschedule}
+              className="rounded-xl font-semibold"
             >
-              Volver
+              Cancelar
             </Button>
             <Button
               type="button"
+              disabled={isSubmittingReschedule || !selectedNewSlot}
               onClick={handleConfirmReschedule}
-              disabled={!selectedNewSlot || isSubmittingReschedule}
-              className="bg-amber-800 hover:bg-amber-900 text-white font-bold"
+              className="bg-[#046c4e] hover:bg-[#03533b] text-white font-bold rounded-xl shadow-xs"
             >
               {isSubmittingReschedule ? (
                 <span className="flex items-center gap-1.5">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Cambiando cita...
+                  Confirmando...
                 </span>
               ) : (
-                `Confirmar cambio a las ${selectedNewSlot ? selectedNewSlot + 'h' : '...'}`
+                'Confirmar Cambio de Cita'
               )}
             </Button>
           </DialogFooter>
