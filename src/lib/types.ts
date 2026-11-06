@@ -26,6 +26,9 @@ export type Appointment = {
     amount: number; // Euros descontados
   };
   duration?: number; // Duración de la sesión en minutos (ej. 15, 30, 45, 60, 75, 90)
+  source?: 'manual' | 'web_direct' | string;
+  createdAt?: string;
+  clientEmail?: string;
 };
 
 export type Voucher = {
