@@ -1,11 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { startOfWeek, addDays, format, isSameDay } from 'date-fns';
+import { startOfToday, startOfDay, addDays, format, isSameDay, isAfter, isBefore, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { Appointment, BusinessProfile } from '@/lib/types';
 import { getDaySchedule } from '@/lib/schedule';
+import { RotateCcw } from 'lucide-react';
 
 type WeekTrafficLightProps = {
   selectedDate: Date;
@@ -42,12 +43,16 @@ export function WeekTrafficLight({
   isDayBlocked,
   className,
 }: WeekTrafficLightProps) {
+  const today = startOfToday();
+  const isSelectedBeyondWeek = isAfter(selectedDate, addDays(today, 6));
+  const isSelectedInPast = isBefore(selectedDate, today);
+  const baseDay = isSelectedBeyondWeek ? startOfDay(selectedDate) : today;
+
   const weekDays = React.useMemo(() => {
-    const monday = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const days: DayLoadInfo[] = [];
 
     for (let i = 0; i < 7; i++) {
-      const currentDay = addDays(monday, i);
+      const currentDay = addDays(baseDay, i);
       const isBlocked = isDayBlocked(currentDay);
       const daySchedule = profile ? getDaySchedule(profile, currentDay) : null;
       const isDayEnabled = daySchedule ? daySchedule.enabled : true;
@@ -150,10 +155,15 @@ export function WeekTrafficLight({
         };
       }
 
-      // Formato abreviado del día: "LUN 10", "MAR 11", etc.
-      const rawDay = format(currentDay, 'EEE d', { locale: es });
-      // Limpiar puntos de abreviatura en español: "lun. 10" -> "LUN 10"
-      const cleanDay = rawDay.replace('.', '').toUpperCase();
+      // Formato abreviado del día: "HOY 6", "SÁB 7", "DOM 8", etc.
+      let cleanDay = '';
+      if (isToday(currentDay)) {
+        cleanDay = `HOY ${format(currentDay, 'd')}`;
+      } else {
+        const rawDay = format(currentDay, 'EEE d', { locale: es });
+        // Limpiar puntos de abreviatura en español: "sáb. 7" -> "SÁB 7"
+        cleanDay = rawDay.replace('.', '').toUpperCase();
+      }
 
       days.push({
         date: currentDay,
@@ -167,15 +177,32 @@ export function WeekTrafficLight({
     }
 
     return days;
-  }, [selectedDate, appointments, profile, isDayBlocked]);
+  }, [baseDay, appointments, profile, isDayBlocked]);
 
   return (
-    <div
-      className={cn(
-        'w-full flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar scroll-smooth snap-x snap-mandatory',
-        className
+    <div className="flex flex-col gap-1 w-full">
+      {(!isSameDay(baseDay, today) || isSelectedInPast) && (
+        <div className="flex items-center justify-between px-1 text-xs">
+          <span className="text-slate-500 dark:text-slate-400 font-medium">
+            Visualizando desde el {format(baseDay, "d 'de' MMMM", { locale: es })}
+          </span>
+          <button
+            type="button"
+            onClick={() => onSelectDate(today)}
+            className="inline-flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 hover:underline"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Volver a Hoy</span>
+          </button>
+        </div>
       )}
-    >
+
+      <div
+        className={cn(
+          'w-full flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar scroll-smooth snap-x snap-mandatory',
+          className
+        )}
+      >
       {weekDays.map((day) => {
         const isSelected = isSameDay(day.date, selectedDate);
 
@@ -226,6 +253,7 @@ export function WeekTrafficLight({
           </button>
         );
       })}
+      </div>
     </div>
   );
 }
