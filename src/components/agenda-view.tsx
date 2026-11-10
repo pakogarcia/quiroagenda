@@ -459,32 +459,32 @@ export default function AgendaView() {
           {/* Tarjeta resumen de accesos rápidos */}
           <div className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 flex flex-col gap-2.5 text-xs text-slate-600 dark:text-slate-400">
             <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-200">
-              <span>Leyenda Semáforo</span>
-              <span className="text-[10px] uppercase font-semibold text-slate-500">Capacidad</span>
+              <span>Leyenda Disponibilidad</span>
+              <span className="text-[10px] uppercase font-semibold text-slate-500">Ocupación</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Verde
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Disponible
               </span>
-              <span>1 - 2 citas (Disponible)</span>
+              <span>0 - 2 citas (Huecos libres)</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Naranja
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Carga Media
               </span>
-              <span>3 - 4 citas (Media)</span>
+              <span>3 - 4 citas</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-rose-700 dark:text-rose-400 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Rojo
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Casi Lleno
               </span>
-              <span>5 - 6 citas (Alta)</span>
+              <span>5 - 6 citas</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-[#880d24] dark:text-rose-300 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#5c0617]" /> Granate
+                <span className="w-2.5 h-2.5 rounded-full bg-[#5c0617]" /> Completo
               </span>
-              <span>7+ citas (Completo)</span>
+              <span>7+ citas (Agenda llena)</span>
             </div>
           </div>
         </aside>

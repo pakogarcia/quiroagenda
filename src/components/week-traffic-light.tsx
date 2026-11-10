@@ -19,11 +19,12 @@ type WeekTrafficLightProps = {
 
 export type DayLoadInfo = {
   date: Date;
-  dayLabel: string; // e.g. "LUN 10"
-  statusLabel: 'Verde' | 'Naranja' | 'Rojo' | 'Granate' | 'Cerrado';
-  subtitle: string; // e.g. "3 libres", "Media", "Alta", "Completo", "Inhábil"
+  dayLabel: string; // e.g. "HOY 10", "MIÉ 11"
+  statusLabel: string; // e.g. "Libre", "3 Libres", "Casi lleno", "Completo", "Cerrado"
+  subtitle: string; // e.g. "Sin citas", "2 citas", "5 citas", "Inhábil"
   appointmentCount: number;
   isBlocked: boolean;
+  isDark?: boolean;
   colorScheme: {
     bg: string;
     text: string;
@@ -87,12 +88,13 @@ export function WeekTrafficLight({
 
       const freeSlots = Math.max(0, estimatedSlots - count);
 
-      let statusLabel: DayLoadInfo['statusLabel'] = 'Verde';
-      let subtitle = `${freeSlots} libres`;
+      let statusLabel = 'Libre';
+      let subtitle = count === 0 ? 'Sin citas' : count === 1 ? '1 cita' : `${count} citas`;
+      let isDark = false;
       let colorScheme = {
-        bg: 'bg-emerald-50',
-        text: 'text-emerald-800',
-        border: 'border-emerald-300',
+        bg: 'bg-[#e6f7f2]',
+        text: 'text-[#065f46]',
+        border: 'border-[#a7f3d0]',
         darkBg: 'dark:bg-emerald-950/40',
         darkText: 'dark:text-emerald-300',
         darkBorder: 'dark:border-emerald-800',
@@ -110,8 +112,9 @@ export function WeekTrafficLight({
           darkBorder: 'dark:border-slate-700',
         };
       } else if (count >= 7 || freeSlots === 0) {
-        statusLabel = 'Granate';
-        subtitle = 'Completo';
+        statusLabel = 'Completo';
+        subtitle = count === 1 ? '1 cita' : `${count} citas`;
+        isDark = true;
         colorScheme = {
           bg: 'bg-[#5c0617]',
           text: 'text-white',
@@ -121,8 +124,8 @@ export function WeekTrafficLight({
           darkBorder: 'dark:border-rose-950',
         };
       } else if (count >= 5 || freeSlots === 1) {
-        statusLabel = 'Rojo';
-        subtitle = freeSlots === 1 ? '1 libre' : 'Alta';
+        statusLabel = freeSlots === 1 ? '1 Libre' : 'Casi lleno';
+        subtitle = count === 1 ? '1 cita' : `${count} citas`;
         colorScheme = {
           bg: 'bg-rose-50',
           text: 'text-rose-800',
@@ -132,8 +135,8 @@ export function WeekTrafficLight({
           darkBorder: 'dark:border-rose-800',
         };
       } else if (count >= 3) {
-        statusLabel = 'Naranja';
-        subtitle = 'Media';
+        statusLabel = freeSlots > 0 ? `${freeSlots} Libres` : 'Carga Media';
+        subtitle = count === 1 ? '1 cita' : `${count} citas`;
         colorScheme = {
           bg: 'bg-amber-50',
           text: 'text-amber-800',
@@ -143,8 +146,13 @@ export function WeekTrafficLight({
           darkBorder: 'dark:border-amber-800',
         };
       } else {
-        statusLabel = 'Verde';
-        subtitle = count === 0 ? 'Disponible' : `${freeSlots} libres`;
+        if (count === 0) {
+          statusLabel = 'Libre';
+          subtitle = 'Sin citas';
+        } else {
+          statusLabel = freeSlots > 0 ? `${freeSlots} Libres` : `${count} Citas`;
+          subtitle = count === 1 ? '1 cita' : `${count} citas`;
+        }
         colorScheme = {
           bg: 'bg-[#e6f7f2]',
           text: 'text-[#065f46]',
@@ -172,6 +180,7 @@ export function WeekTrafficLight({
         subtitle,
         appointmentCount: count,
         isBlocked,
+        isDark,
         colorScheme,
       });
     }
@@ -227,7 +236,7 @@ export function WeekTrafficLight({
             <span
               className={cn(
                 'text-[11px] sm:text-xs font-black tracking-tight leading-none mb-1',
-                day.statusLabel === 'Granate' ? 'text-white/90' : 'opacity-80'
+                day.isDark ? 'text-white/90' : 'opacity-80'
               )}
             >
               {day.dayLabel}
@@ -236,7 +245,7 @@ export function WeekTrafficLight({
             <span
               className={cn(
                 'text-sm sm:text-base font-extrabold tracking-tight leading-tight',
-                day.statusLabel === 'Granate' ? 'text-white' : ''
+                day.isDark ? 'text-white' : ''
               )}
             >
               {day.statusLabel}
@@ -245,7 +254,7 @@ export function WeekTrafficLight({
             <span
               className={cn(
                 'text-[10px] sm:text-[11px] font-medium leading-none mt-1 truncate max-w-full',
-                day.statusLabel === 'Granate' ? 'text-white/80' : 'opacity-75'
+                day.isDark ? 'text-white/80' : 'opacity-75'
               )}
             >
               {day.subtitle}
