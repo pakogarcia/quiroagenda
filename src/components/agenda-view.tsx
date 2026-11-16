@@ -140,23 +140,37 @@ export default function AgendaView() {
       .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
   }, [appointments, selectedDate]);
 
-  // Última reserva online recibida (o más reciente) para la alerta de Telegram
+  // Helper para obtener el timestamp real de creación de una reserva
+  const getBookingCreationTime = React.useCallback((apt: Appointment): number => {
+    if (apt.createdAt) {
+      const t = new Date(apt.createdAt).getTime();
+      if (!isNaN(t)) return t;
+    }
+    if (apt.id && apt.id.startsWith('apt_')) {
+      const parts = apt.id.split('_');
+      const ts = Number(parts[1]);
+      if (!isNaN(ts) && ts > 0) return ts;
+    }
+    return new Date(apt.dateTime).getTime();
+  }, []);
+
+  // Última reserva online recibida (ordenada por fecha real de solicitud, no por fecha futura de la cita)
   const latestOnlineBooking = React.useMemo(() => {
     if (!appointments || appointments.length === 0) return null;
 
     // Buscar primero citas reservadas vía web
     const webAppointments = appointments
       .filter((a) => a.source === 'web_direct' || (a.id && a.id.startsWith('apt_')))
-      .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+      .sort((a, b) => getBookingCreationTime(b) - getBookingCreationTime(a));
 
     if (webAppointments.length > 0) return webAppointments[0];
 
     // Fallback: cita más reciente del sistema
     const sorted = [...appointments].sort(
-      (a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+      (a, b) => getBookingCreationTime(b) - getBookingCreationTime(a)
     );
     return sorted[0] || null;
-  }, [appointments]);
+  }, [appointments, getBookingCreationTime]);
 
   const timeSlots = React.useMemo(() => {
     if (!selectedDate || !profile) return [];
@@ -393,26 +407,20 @@ export default function AgendaView() {
     const serviceName = latestOnlineBooking.serviceName || 'Tratamiento';
     const duration = latestOnlineBooking.duration || 60;
     const timeStr = format(aptDate, 'HH:mm');
-
-    // Nombre recortado: "Marta S."
-    const nameParts = (latestOnlineBooking.clientName || 'Cliente').trim().split(' ');
-    const shortName =
-      nameParts.length > 1
-        ? `${nameParts[0]} ${nameParts[1].charAt(0).toUpperCase()}.`
-        : nameParts[0];
+    const clientFullName = (latestOnlineBooking.clientName || 'Cliente').trim();
 
     let when = '';
     if (isDateToday(aptDate)) {
-      when = `para hoy ${timeStr}h`;
+      when = `para hoy a las ${timeStr}h`;
     } else if (isTomorrow(aptDate)) {
-      when = `para mañana ${timeStr}h`;
+      when = `para mañana a las ${timeStr}h`;
     } else {
-      when = `para el ${format(aptDate, "d 'de' MMM", { locale: es })} a las ${timeStr}h`;
+      when = `para el ${format(aptDate, "EEEE d 'de' MMMM", { locale: es })} a las ${timeStr}h`;
     }
 
     return (
       <>
-        <strong className="text-white font-bold">{shortName}</strong> reservó{' '}
+        <strong className="text-white font-bold">{clientFullName}</strong> reservó{' '}
         <strong className="text-white font-bold">
           {serviceName} ({duration}m)
         </strong>{' '}
@@ -748,16 +756,34 @@ export default function AgendaView() {
           )}
 
           {/* 5. Alerta en Vivo / Bot de Telegram (Diseño Azul Marino del Mockup) */}
-          <div className="bg-[#0c2e47] text-white rounded-3xl p-4 sm:p-4.5 shadow-sm flex items-center gap-3.5 border border-sky-900/60 mt-auto select-none">
-            <div className="w-11 h-11 rounded-2xl bg-[#0ea5e9] text-white flex items-center justify-center shrink-0 shadow-md">
+          <div 
+            onClick={() => {
+              if (latestOnlineBooking?.dateTime) {
+                const targetDate = new Date(latestOnlineBooking.dateTime);
+                setSelectedDate(targetDate);
+                toast({
+                  title: '📅 Mostrando en agenda',
+                  description: `Visualizando la fecha de la cita de ${latestOnlineBooking.clientName} (${format(targetDate, "EEEE d 'de' MMMM", { locale: es })}).`,
+                });
+              }
+            }}
+            className="bg-[#0c2e47] hover:bg-[#0e3755] text-white rounded-3xl p-4 sm:p-4.5 shadow-sm flex items-center gap-3.5 border border-sky-900/60 mt-auto select-none cursor-pointer transition-colors group"
+            title="Pulsa para abrir directamente esta fecha en tu agenda"
+          >
+            <div className="w-11 h-11 rounded-2xl bg-[#0ea5e9] group-hover:bg-[#0284c7] text-white flex items-center justify-center shrink-0 shadow-md transition-colors">
               <Send className="w-5 h-5 ml-0.5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-bold text-sky-200 flex items-center gap-1.5 leading-snug">
-                <span>🔔 Bot Telegram</span>
-                <span className="opacity-70">·</span>
-                <span>Nueva Reserva Online</span>
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs sm:text-sm font-bold text-sky-200 flex items-center gap-1.5 leading-snug">
+                  <span>🔔 Bot Telegram</span>
+                  <span className="opacity-70">·</span>
+                  <span>Última Reserva Online</span>
+                </p>
+                <span className="text-[10px] text-sky-300/80 font-medium hidden sm:inline group-hover:underline">
+                  Ver en agenda →
+                </span>
+              </div>
               <p className="text-xs sm:text-sm text-slate-200/90 truncate mt-0.5 font-medium">
                 {telegramBookingText}
               </p>
