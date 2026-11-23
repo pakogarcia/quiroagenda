@@ -32,7 +32,7 @@ const getInitialServices = (): Service[] => {
         { id: '2', name: 'Masaje Integral (Cuerpo Entero)', duration: 60, price: 40 },
         { id: '3', name: 'Espalda y Cuello', duration: 60, price: 25 },
         { id: '4', name: 'Espalda y Piernas', duration: 60, price: 25 },
-        { id: '5', name: 'Alquimia Massage', duration: 75, price: 30 },
+        { id: '5', name: 'Alquimia Massage', duration: 60, price: 30 },
         { id: '6', name: 'Vulcan Massage (Piedras Calientes)', duration: 60, price: 35 },
         { id: '7', name: 'Candle Massage (Velas de Karité)', duration: 60, price: 35 },
         { id: '8', name: 'Masaje Circulatorio', duration: 60, price: 25 },

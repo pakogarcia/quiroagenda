@@ -90,7 +90,7 @@ const SERVICES: ServiceLink[] = [
     title: 'Alquimia Massage',
     category: 'holistico',
     categoryLabel: 'Experiencia Holística',
-    duration: '75 min',
+    duration: '60 min',
     mainPrice: '30€',
     icon: Sparkles,
     tagline: 'Crema alquímica especial que se transforma en un suntuoso aceite oriental',
